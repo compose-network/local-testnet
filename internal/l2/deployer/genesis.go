@@ -189,6 +189,8 @@ func computeGenesisHashViaGethInit(ctx context.Context, genesisPath string, coor
 	}
 	defer dockerClient.Close()
 
+	user := fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid())
+
 	slog.Info("running geth init", "image", "local/op-geth:dev", "genesisFile", genesisFile)
 	_, err = dockerClient.Run(ctx, docker.RunOptions{
 		Image: "local/op-geth:dev",
@@ -205,6 +207,7 @@ func computeGenesisHashViaGethInit(ctx context.Context, genesisPath string, coor
 			genesisDir: "/genesis",
 			tmpDataDir: "/datadir",
 		},
+		User:       user,
 		AutoRemove: true,
 		StreamLogs: false,
 		CaptureOut: false,
