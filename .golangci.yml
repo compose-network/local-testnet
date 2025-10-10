@@ -1,0 +1,11 @@
+version: "2"
+run:
+  allow-parallel-runners: true
+linters:
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
