@@ -134,7 +134,7 @@ pnpm-debug.log*
 *.tsbuildinfo
 
 # Go
-/bin/
+**/bin/
 /vendor/
 /*.exe
 
@@ -184,3 +184,10 @@ coverage/
 
 # Editor temp files
 ~$*
+
+
+# L2 deployment artifacts
+internal/l2/services/
+internal/l2/state/
+internal/l2/networks/
+.cache/
