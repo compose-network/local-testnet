@@ -53,6 +53,13 @@ func start(ctx context.Context) error {
 		return err
 	}
 
+	env := buildDockerComposeEnv(cfg)
+
+	slog.Info("building op-geth docker image (required for genesis hash computation)")
+	if err := docker.ComposeBuild(ctx, env, "op-geth-a"); err != nil {
+		return err
+	}
+
 	genesisHashes, err := deployer.ExportGenesis(ctx, stateDir, networksDir, cfg.ChainIDs.RollupA, cfg.ChainIDs.RollupB, cfg.Wallet.Address, coordinatorAddress, cfg.GenesisBalanceWei, cfg.CoordinatorPrivateKey)
 	if err != nil {
 		return err
@@ -79,19 +86,15 @@ func start(ctx context.Context) error {
 		return err
 	}
 
-	env := buildDockerComposeEnv(cfg)
-
-	slog.Info("building docker images")
+	slog.Info("building remaining docker images")
+	// Only build one service per unique image to avoid conflicts when building in parallel
+	// op-geth-a already built earlier, op-geth-b uses same image
+	// op-node-a/b, op-batcher-a/b, op-proposer-a/b each share images
 	allServices := []string{
 		"publisher",
-		"op-geth-a",
-		"op-geth-b",
 		"op-node-a",
-		"op-node-b",
 		"op-batcher-a",
-		"op-batcher-b",
 		"op-proposer-a",
-		"op-proposer-b",
 	}
 	if err := docker.ComposeBuild(ctx, env, allServices...); err != nil {
 		return err
