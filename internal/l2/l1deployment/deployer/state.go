@@ -54,16 +54,3 @@ func (s *StateManager) Load() (*domain.DeploymentState, error) {
 
 	return &state, nil
 }
-
-// GetChainDeployment returns the deployment for a specific chain ID
-func (s *StateManager) GetChainDeployment(deployment *domain.DeploymentState, chainID int) (*domain.OpChainDeployment, error) {
-	chainIDHex := fmt.Sprintf("0x%064x", chainID)
-
-	for _, chain := range deployment.OpChainDeployments {
-		if chain.ID == chainIDHex {
-			return &chain, nil
-		}
-	}
-
-	return nil, fmt.Errorf("chain %d not found in deployment", chainID)
-}

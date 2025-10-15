@@ -64,7 +64,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, deployment *
 		secretsGen       = secrets.NewGenerator(writer)
 		contractsGen     = contracts.NewGenerator(writer)
 		runtimeGen       = runtime.NewGenerator()
-		addressExtractor = addresses.NewExtractor(writer, deployer.NewStateManager(o.stateDir, json.NewReader()))
+		addressExtractor = addresses.NewExtractor(writer)
 	)
 
 	var disputeGameFactoryImplAddress string

@@ -13,35 +13,38 @@ import (
 const fileName = "addresses.json"
 
 type (
-	stateManager interface {
-		GetChainDeployment(deployment *domain.DeploymentState, chainID int) (*domain.OpChainDeployment, error)
-	}
-
 	// Extractor extracts L1 contract addresses from deployment state
 	Extractor struct {
-		stateManager stateManager
-		writer       filesystem.Writer
-		logger       *slog.Logger
+		writer filesystem.Writer
+		logger *slog.Logger
 	}
 )
 
 // NewExtractor creates a new address extractor
-func NewExtractor(writer filesystem.Writer, stateManager stateManager) *Extractor {
+func NewExtractor(writer filesystem.Writer) *Extractor {
 	return &Extractor{
-		stateManager: stateManager,
-		writer:       writer,
-		logger:       logger.Named("addresses_extractor"),
+		writer: writer,
+		logger: logger.Named("addresses_extractor"),
 	}
 }
 
 // Extract extracts addresses for a specific chain from deployment
-func (e *Extractor) ExtractDisputeGameFactoryAddr(deployment *domain.DeploymentState, chainID int, path string) (string, error) {
+func (e *Extractor) ExtractDisputeGameFactoryAddr(state *domain.DeploymentState, chainID int, path string) (string, error) {
 	logger := e.logger.With("chain_id", chainID)
 	logger.Info("extracting addresses for chain")
 
-	chainDeployment, err := e.stateManager.GetChainDeployment(deployment, chainID)
-	if err != nil {
-		return "", fmt.Errorf("failed to get chain deployment: %w", err)
+	var (
+		chainDeployment domain.OpChainDeployment
+		found           bool
+	)
+	for _, chain := range state.OpChainDeployments {
+		if chain.ID == fmt.Sprintf("0x%064x", chainID) {
+			chainDeployment = chain
+			found = true
+		}
+	}
+	if !found {
+		return "", fmt.Errorf("failed to get chain deployment")
 	}
 
 	type addr struct {
