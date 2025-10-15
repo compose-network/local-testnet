@@ -45,6 +45,7 @@ func (c *Client) ImageExists(ctx context.Context, imageName string) (bool, error
 		}
 		return false, err
 	}
+
 	return true, nil
 }
 
@@ -122,9 +123,6 @@ func composeRun(ctx context.Context, env map[string]string, args ...string) erro
 	cmd.Env = os.Environ()
 	for k, v := range env {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
-		if k == "OPTIMISM_PATH" || k == "PUBLISHER_PATH" || k == "OP_GETH_PATH" {
-			slog.Debug("docker compose env var", "key", k, "value", v)
-		}
 	}
 
 	cmd.Stdout = os.Stdout
