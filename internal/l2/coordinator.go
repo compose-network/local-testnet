@@ -11,6 +11,7 @@ import (
 	"github.com/compose-network/localnet-control-plane/internal/l2/l1deployment"
 	"github.com/compose-network/localnet-control-plane/internal/l2/l2config"
 	"github.com/compose-network/localnet-control-plane/internal/l2/l2runtime"
+	"github.com/compose-network/localnet-control-plane/internal/logger"
 )
 
 // Coordinator orchestrates the entire L2 deployment process
@@ -18,6 +19,7 @@ type Coordinator struct {
 	rootDir     string
 	stateDir    string // For L1 deployment state
 	networksDir string // For L2 chain configs
+	logger      *slog.Logger
 }
 
 // NewCoordinator creates a new coordinator
@@ -26,11 +28,12 @@ func NewCoordinator(rootDir string) *Coordinator {
 		rootDir:     rootDir,
 		stateDir:    filepath.Join(rootDir, "internal", "l2", "state"),
 		networksDir: filepath.Join(rootDir, "internal", "l2", "networks"),
+		logger:      logger.Named("l2_coordinator"),
 	}
 }
 
 func (c *Coordinator) Deploy(ctx context.Context, cfg configs.L2) error {
-	slog.Info("starting L2 deployment process")
+	c.logger.Info("starting L2 deployment process")
 
 	if err := c.cloneRepositories(ctx, cfg); err != nil {
 		return fmt.Errorf("failed to clone repositories: %w", err)
@@ -53,14 +56,14 @@ func (c *Coordinator) Deploy(ctx context.Context, cfg configs.L2) error {
 		return fmt.Errorf("phase 3 failed: %w", err)
 	}
 
-	slog.Info("L2 deployment completed successfully")
+	c.logger.Info("L2 deployment completed successfully")
 
 	return nil
 }
 
 // cloneRepositories clones all required git repositories
 func (c *Coordinator) cloneRepositories(ctx context.Context, cfg configs.L2) error {
-	slog.Info("cloning required repositories")
+	c.logger.Info("cloning required repositories")
 
 	cloner := git.NewCloner()
 	repos := make([]git.Repository, 0, len(cfg.Repositories))
@@ -78,7 +81,7 @@ func (c *Coordinator) cloneRepositories(ctx context.Context, cfg configs.L2) err
 		return fmt.Errorf("failed to clone repositories: %w", err)
 	}
 
-	slog.Info("repositories cloned successfully")
+	c.logger.Info("repositories cloned successfully")
 
 	return nil
 }
