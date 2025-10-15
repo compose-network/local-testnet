@@ -8,6 +8,9 @@ import (
 var Values Config
 
 type (
+	RepositoryName string
+	L2ChainName    string
+
 	Config struct {
 		L1            L1            `mapstructure:"l1"`
 		L2            L2            `mapstructure:"l2"`
@@ -18,20 +21,20 @@ type (
 	}
 
 	L2 struct {
-		L1ChainID             int                   `mapstructure:"l1-chain-id"`
-		L1ElURL               string                `mapstructure:"l1-el-url"`
-		L1ClURL               string                `mapstructure:"l1-cl-url"`
-		Wallet                Wallet                `mapstructure:"wallet"`
-		CoordinatorPrivateKey string                `mapstructure:"coordinator-private-key"`
-		Repositories          map[string]Repository `mapstructure:"repositories"`
-		ChainIDs              ChainIDs              `mapstructure:"chain-ids"`
-		DeploymentTarget      string                `mapstructure:"deployment-target"`
-		GenesisBalanceWei     string                `mapstructure:"genesis-balance-wei"`
+		L1ChainID             int                           `mapstructure:"l1-chain-id"`
+		L1ElURL               string                        `mapstructure:"l1-el-url"`
+		L1ClURL               string                        `mapstructure:"l1-cl-url"`
+		Wallet                Wallet                        `mapstructure:"wallet"`
+		CoordinatorPrivateKey string                        `mapstructure:"coordinator-private-key"`
+		Repositories          map[RepositoryName]Repository `mapstructure:"repositories"`
+		ChainConfigs          map[L2ChainName]ChainConfig   `mapstructure:"chain-configs"`
+		DeploymentTarget      string                        `mapstructure:"deployment-target"`
+		GenesisBalanceWei     string                        `mapstructure:"genesis-balance-wei"`
 	}
 
-	ChainIDs struct {
-		RollupA int `mapstructure:"rollup-a"`
-		RollupB int `mapstructure:"rollup-b"`
+	ChainConfig struct {
+		ID      int `mapstructure:"id"`
+		RPCPort int `mapstructure:"rpc-port"`
 	}
 
 	Repository struct {
@@ -46,6 +49,15 @@ type (
 
 	Observability struct {
 	}
+)
+
+const (
+	RepositoryNameOpGeth    RepositoryName = "op-geth"
+	RepositoryNameOptimism  RepositoryName = "optimism"
+	RepositoryNamePublisher RepositoryName = "publisher"
+
+	L2ChainNameRollupA L2ChainName = "rollup-a"
+	L2ChainNameRollupB L2ChainName = "rollup-b"
 )
 
 func (c *L2) Validate() error {
@@ -70,7 +82,7 @@ func (c *L2) Validate() error {
 		errs = append(errs, errors.New("l2.wallet.address is required"))
 	}
 
-	requiredRepos := []string{"op-geth", "optimism", "publisher"}
+	requiredRepos := []RepositoryName{RepositoryNameOpGeth, RepositoryNameOptimism, RepositoryNamePublisher}
 	for _, name := range requiredRepos {
 		repo, exists := c.Repositories[name]
 		if !exists {
@@ -85,11 +97,29 @@ func (c *L2) Validate() error {
 		}
 	}
 
-	if c.ChainIDs.RollupA == 0 {
-		errs = append(errs, errors.New("l2.chain-ids.rollup-a is required"))
+	rollupA, hasRollupA := c.ChainConfigs[L2ChainNameRollupA]
+	rollupB, hasRollupB := c.ChainConfigs[L2ChainNameRollupB]
+
+	if !hasRollupA {
+		errs = append(errs, errors.New("l2.chain-configs.rollup-a is required"))
+	} else {
+		if rollupA.ID == 0 {
+			errs = append(errs, errors.New("l2.chain-configs.rollup-a.id is required"))
+		}
+		if rollupA.RPCPort == 0 {
+			errs = append(errs, errors.New("l2.chain-configs.rollup-a.rpc-port is required"))
+		}
 	}
-	if c.ChainIDs.RollupB == 0 {
-		errs = append(errs, errors.New("l2.chain-ids.rollup-b is required"))
+
+	if !hasRollupB {
+		errs = append(errs, errors.New("l2.chain-configs.rollup-b is required"))
+	} else {
+		if rollupB.ID == 0 {
+			errs = append(errs, errors.New("l2.chain-configs.rollup-b.id is required"))
+		}
+		if rollupB.RPCPort == 0 {
+			errs = append(errs, errors.New("l2.chain-configs.rollup-b.rpc-port is required"))
+		}
 	}
 
 	if c.DeploymentTarget == "" {

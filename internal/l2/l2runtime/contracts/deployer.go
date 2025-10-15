@@ -1,0 +1,277 @@
+package contracts
+
+import (
+	"context"
+	"crypto/ecdsa"
+	"encoding/json"
+	"fmt"
+	"log/slog"
+	"math/big"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/compose-network/localnet-control-plane/configs"
+	"github.com/compose-network/localnet-control-plane/internal/logger"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
+)
+
+type (
+	// Deployer deploys L2 helper contracts
+	Deployer struct {
+		rootDir                       string
+		networksDir                   string
+		waitForDeploymentConfirmation bool
+		logger                        *slog.Logger
+	}
+)
+
+// NewDeployer creates a new contract deployer
+func NewDeployer(rootDir, networksDir string) *Deployer {
+	return &Deployer{
+		rootDir:                       rootDir,
+		networksDir:                   networksDir,
+		waitForDeploymentConfirmation: false,
+		logger:                        logger.Named("contracts_deployer"),
+	}
+}
+
+// Deploy deploys helper contracts to all L2 chains and updates contracts.json
+func (d *Deployer) Deploy(ctx context.Context, cfg configs.L2) error {
+	d.logger.Info("deploying L2 helper contracts")
+
+	if err := d.deployContracts(ctx, d.networksDir, cfg); err != nil {
+		d.logger.With("err", err.Error()).Warn("contract deployment failed or timed out")
+		return nil
+	}
+
+	d.logger.Info("L2 helper contracts deployed successfully")
+
+	return nil
+}
+
+// deployContracts deploys helper contracts to rollups using go-ethereum.
+func (d *Deployer) deployContracts(ctx context.Context, networksDir string, cfg configs.L2) error {
+	contractsDir := filepath.Join(d.rootDir, "internal", "l2", "l2runtime", "contracts", "compiled")
+
+	if _, err := os.Stat(contractsDir); os.IsNotExist(err) {
+		return fmt.Errorf("contracts directory not found. Directory: '%s'", contractsDir)
+	}
+
+	d.logger.Info("loading precompiled contracts")
+	compiledContracts, err := loadCompiledContracts(contractsDir)
+	if err != nil {
+		return fmt.Errorf("failed to load compiled contracts: %w", err)
+	}
+
+	d.logger.With("len", len(compiledContracts)).Info("precompiled contracts loaded")
+
+	addresses := make([]map[contractName]string, 0)
+	for chainName, chainConfig := range cfg.ChainConfigs {
+		url := fmt.Sprintf("http://localhost:%d", chainConfig.RPCPort)
+		d.logger.With("chain_name", chainName).With("url", url).Info("waiting for rollup RPC")
+		if err := waitForRPC(ctx, url); err != nil {
+			return err
+		}
+
+		d.logger.Info("deploying contracts to L2")
+		addr, err := d.deployToChain(ctx, url, cfg.CoordinatorPrivateKey, compiledContracts)
+		if err != nil {
+			return fmt.Errorf("failed to deploy to %s: %w", chainName, err)
+		}
+
+		directory := filepath.Join(networksDir, string(chainName))
+		if err := writeContractJSON(filepath.Join(directory, "contracts.json"), addr, uint64(chainConfig.ID)); err != nil {
+			return fmt.Errorf("failed to write contracts.json for %s: %w", chainName, err)
+		}
+
+		addresses = append(addresses, addr)
+	}
+
+	if !addressesMatch(addresses...) {
+		return fmt.Errorf("contract addresses differ between rollups")
+	}
+
+	d.logger.Info("contracts deployed successfully")
+
+	return nil
+}
+
+func waitForRPC(ctx context.Context, url string) error {
+	client, err := ethclient.DialContext(ctx, url)
+	if err == nil {
+		defer client.Close()
+	}
+
+	for range 120 {
+		client, err := ethclient.DialContext(ctx, url)
+		if err == nil {
+			defer client.Close()
+			_, err := client.BlockNumber(ctx)
+			if err == nil {
+				return nil
+			}
+		}
+		time.Sleep(1 * time.Second)
+	}
+
+	return fmt.Errorf("timed out waiting for RPC at %s", url)
+}
+
+func (d *Deployer) deployToChain(ctx context.Context, rpcURL, coordinatorPrivateKey string, contracts map[contractName]compiledContract) (map[contractName]string, error) {
+	d.logger.With("url", rpcURL).Info("dialing the L2 RPC")
+	client, err := ethclient.DialContext(ctx, rpcURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to %s: %w", rpcURL, err)
+	}
+	defer client.Close()
+
+	privateKey, err := crypto.HexToECDSA(strings.TrimPrefix(coordinatorPrivateKey, "0x"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse private key: %w", err)
+	}
+
+	d.logger.Info("fetching chain ID")
+	chainID, err := client.ChainID(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get chain ID: %w", err)
+	}
+	d.logger.With("chain_id", chainID).Info("chain ID was fetched")
+
+	addresses := make(map[contractName]string)
+
+	d.logger.Info("deploying contracts")
+
+	publicKeyECDSA, ok := privateKey.Public().(*ecdsa.PublicKey)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast public key to ECDSA")
+	}
+
+	mailboxAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[contractNameMailbox], crypto.PubkeyToAddress(*publicKeyECDSA))
+	if err != nil {
+		return nil, fmt.Errorf("failed to deploy Mailbox: %w", err)
+	}
+	addresses[contractNameMailbox] = mailboxAddr.Hex()
+	d.logger.Info("deployed Mailbox", "address", mailboxAddr.Hex())
+
+	pingPongAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[contractNamePingPong], mailboxAddr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to deploy PingPong: %w", err)
+	}
+	addresses[contractNamePingPong] = pingPongAddr.Hex()
+	d.logger.Info("deployed PingPong", "address", pingPongAddr.Hex())
+
+	bridgeAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[contractNameBridge], mailboxAddr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to deploy Bridge: %w", err)
+	}
+	addresses[contractNameBridge] = bridgeAddr.Hex()
+	d.logger.Info("deployed Bridge", "address", bridgeAddr.Hex())
+
+	myTokenAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[contractNameMyToken])
+	if err != nil {
+		return nil, fmt.Errorf("failed to deploy MyToken: %w", err)
+	}
+	addresses[contractNameMyToken] = myTokenAddr.Hex()
+	d.logger.Info("deployed MyToken", "address", myTokenAddr.Hex())
+
+	return addresses, nil
+}
+
+func (d *Deployer) deployContract(ctx context.Context, client *ethclient.Client, privateKey *ecdsa.PrivateKey, chainID *big.Int, contract compiledContract, constructorArgs ...any) (common.Address, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
+	if err != nil {
+		return common.Address{}, fmt.Errorf("failed to create transactor: %w", err)
+	}
+
+	gasPrice, err := client.SuggestGasPrice(ctx)
+	if err != nil {
+		return common.Address{}, fmt.Errorf("failed to get gas price: %w", err)
+	}
+
+	auth.Context = ctx
+	auth.GasLimit = uint64(10_000_000)
+	auth.GasPrice = gasPrice
+
+	address, tx, _, err := bind.DeployContract(auth, contract.ABI, contract.Bytecode, client, constructorArgs...)
+	if err != nil {
+		return common.Address{}, fmt.Errorf("failed to deploy contract: %w", err)
+	}
+
+	d.logger.
+		With("address", address).
+		With("tx_hash", tx.Hash().Hex()).
+		Info("contract deployment transaction sent")
+
+	if d.waitForDeploymentConfirmation {
+		receipt, err := bind.WaitMined(ctx, client, tx)
+		if err != nil {
+			return common.Address{}, fmt.Errorf("failed to wait for transaction: %w", err)
+		}
+
+		if receipt.Status != types.ReceiptStatusSuccessful {
+			return common.Address{}, fmt.Errorf("contract deployment failed with status %d", receipt.Status)
+		}
+	}
+
+	return address, nil
+}
+
+func writeContractJSON(path string, addresses map[contractName]string, chainID uint64) error {
+	payload := map[string]any{
+		"chainInfo": map[string]any{
+			"chainId": chainID,
+		},
+		"addresses": addresses,
+	}
+
+	if err := writeJSON(path, payload); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func writeJSON(path string, data any) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return fmt.Errorf("failed to create directory for %s: %w", path, err)
+	}
+
+	content, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal JSON for %s: %w", path, err)
+	}
+
+	if err := os.WriteFile(path, append(content, '\n'), 0644); err != nil {
+		return fmt.Errorf("failed to write %s: %w", path, err)
+	}
+
+	return nil
+}
+
+func addressesMatch(addresses ...map[contractName]string) bool {
+	if len(addresses) < 2 {
+		return true
+	}
+
+	first := addresses[0]
+	for i := 1; i < len(addresses); i++ {
+		if len(first) != len(addresses[i]) {
+			return false
+		}
+		for key, firstValue := range first {
+			if otherValue, ok := addresses[i][key]; !ok || !strings.EqualFold(firstValue, otherValue) {
+				return false
+			}
+		}
+	}
+	return true
+}

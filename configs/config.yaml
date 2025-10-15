@@ -10,9 +10,13 @@ l2:
   wallet:
     private-key: YOUR_PRIVATE_KEY_HERE
     address: YOUR_ADDRESS_HERE
-  chain-ids:
-    rollup-a: 77777
-    rollup-b: 88888
+  chain-configs:
+    rollup-a: 
+      id: 77777
+      rpc-port: 18545
+    rollup-b: 
+      id: 88888
+      rpc-port: 28545
   deployment-target: live  # "live" or "calldata"
   genesis-balance-wei: "100000000000000000"  # 0.1 ETH for funded accounts
   repositories:
@@ -21,7 +25,7 @@ l2:
       branch: stage
     optimism:
       url: https://github.com/ethereum-optimism/optimism.git
-      branch: op-node/v1.13.6
+      branch: op-node/v1.13.7
     publisher:
       url: git@github.com:ssvlabs/rollup-shared-publisher.git
       branch: stage

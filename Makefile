@@ -64,7 +64,7 @@ show-l2:
 
 .PHONY: clean-l2
 clean-l2:
-	docker compose -f internal/l2/deploy/docker-compose.yml down -v
+	docker compose -f internal/l2/l2runtime/docker/docker-compose.yml down -v
 	docker ps -aq --filter "label=${L2_LABEL}" | xargs -r docker rm -f
 	rm -rf ./internal/l2/state ./internal/l2/networks ./.cache
 ######
