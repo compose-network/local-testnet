@@ -119,8 +119,7 @@ func (o *Deployer) ensureImage(ctx context.Context) error {
 		return fmt.Errorf("failed to get absolute root path: %w", err)
 	}
 
-	dockerfilePath := filepath.Join("internal", "l2", "deploy", dockerfileName)
-	if err := o.docker.BuildImage(ctx, dockerfilePath, absRootDir, imageWithTag); err != nil {
+	if err := o.docker.BuildImage(ctx, dockerfileName, absRootDir, imageWithTag); err != nil {
 		return fmt.Errorf("failed to build image: '%s', %w", imageWithTag, err)
 	}
 
@@ -142,7 +141,7 @@ func (o *Deployer) Apply(ctx context.Context, l1RpcURL, deployerPrivateKey, depl
 		Image: imageWithTag,
 		Cmd: []string{
 			"apply",
-			fmt.Sprintf("--deployment-target=%s", deploymentTarget),
+			"--deployment-target", deploymentTarget,
 		},
 		Env: []string{
 			"HOME=/work",

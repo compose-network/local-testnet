@@ -13,39 +13,25 @@ import (
 const fileName = "addresses.json"
 
 type (
-	// Extractor extracts L1 contract addresses from deployment state
-	Extractor struct {
+	// Generator extracts L1 contract addresses from deployment state and writes 'addresses.json'
+	Generator struct {
 		writer filesystem.Writer
 		logger *slog.Logger
 	}
 )
 
-// NewExtractor creates a new address extractor
-func NewExtractor(writer filesystem.Writer) *Extractor {
-	return &Extractor{
+// NewGenerator creates a new generator
+func NewGenerator(writer filesystem.Writer) *Generator {
+	return &Generator{
 		writer: writer,
 		logger: logger.Named("addresses_extractor"),
 	}
 }
 
 // Extract extracts addresses for a specific chain from deployment
-func (e *Extractor) ExtractDisputeGameFactoryAddr(state *domain.DeploymentState, chainID int, path string) (string, error) {
+func (e *Generator) Generate(chainDeployment *domain.OpChainDeployment, chainID int, path string) error {
 	logger := e.logger.With("chain_id", chainID)
 	logger.Info("extracting addresses for chain")
-
-	var (
-		chainDeployment domain.OpChainDeployment
-		found           bool
-	)
-	for _, chain := range state.OpChainDeployments {
-		if chain.ID == fmt.Sprintf("0x%064x", chainID) {
-			chainDeployment = chain
-			found = true
-		}
-	}
-	if !found {
-		return "", fmt.Errorf("failed to get chain deployment")
-	}
 
 	type addr struct {
 		OptimismPortal     string `json:"OPTIMISM_PORTAL,omitempty"`
@@ -67,8 +53,8 @@ func (e *Extractor) ExtractDisputeGameFactoryAddr(state *domain.DeploymentState,
 		With("file_path", filePath).
 		Info("addresses extracted successfully. Writing file")
 	if err := e.writer.WriteJSON(filePath, addresses); err != nil {
-		return "", fmt.Errorf("failed to write '%s' for chain %d: %w", fileName, chainID, err)
+		return fmt.Errorf("failed to write '%s' for chain %d: %w", fileName, chainID, err)
 	}
 
-	return chainDeployment.DisputeGameFactoryProxyAddress, nil
+	return nil
 }

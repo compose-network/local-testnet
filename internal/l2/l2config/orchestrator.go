@@ -46,7 +46,7 @@ func NewOrchestrator(rootDir, stateDir, networksDir string) *Orchestrator {
 }
 
 // Execute runs Phase 2: Generate all L2 configuration files
-func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, deployment *domain.DeploymentState) (string, error) {
+func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, stateDeployment *domain.DeploymentState) (string, error) {
 	o.logger.Info("Phase 2: Starting L2 configuration generation")
 
 	dockerClient, err := docker.New()
@@ -64,7 +64,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, deployment *
 		secretsGen       = secrets.NewGenerator(writer)
 		contractsGen     = contracts.NewGenerator(writer)
 		runtimeGen       = runtime.NewGenerator()
-		addressExtractor = addresses.NewExtractor(writer)
+		addressGenerator = addresses.NewGenerator(writer)
 	)
 
 	var disputeGameFactoryImplAddress string
@@ -75,18 +75,18 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, deployment *
 		logger := o.logger.With("chain_name", chainName).With("chain_id", chainConfig.ID)
 		logger.Info("generating l2 chain configuration")
 
-		// Find the chain deployment in state.json (ID is 32-byte hex string)
 		var chainDeployment *domain.OpChainDeployment
-		chainIDHex := fmt.Sprintf("0x%064x", chainConfig.ID) // 64-character hex (32 bytes)
-		for i := range deployment.OpChainDeployments {
-			if deployment.OpChainDeployments[i].ID == chainIDHex {
-				chainDeployment = &deployment.OpChainDeployments[i]
+		for _, deployment := range stateDeployment.OpChainDeployments {
+			if deployment.ID == fmt.Sprintf("0x%064x", chainConfig.ID) {
+				chainDeployment = &deployment
 				break
 			}
 		}
 		if chainDeployment == nil {
-			return "", fmt.Errorf("chain deployment not found for chain ID %d (%s)", chainConfig.ID, chainIDHex)
+			return "", fmt.Errorf("chain deployment not found for chain ID %d", chainConfig.ID)
 		}
+
+		disputeGameFactoryImplAddress = chainDeployment.DisputeGameFactoryProxyAddress
 
 		sequencerAddress, err := crypto.AddressFromPrivateKey(cfg.CoordinatorPrivateKey)
 		if err != nil {
@@ -121,20 +121,19 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, deployment *
 			return "", fmt.Errorf("failed to generate password for chain %d: %w", chainConfig.ID, err)
 		}
 
-		addr, err := addressExtractor.ExtractDisputeGameFactoryAddr(deployment, chainConfig.ID, configPath)
+		err = addressGenerator.Generate(chainDeployment, chainConfig.ID, configPath)
 		if err != nil {
-			return "", fmt.Errorf("failed to extract addresses for chain %d: %w", chainConfig.ID, err)
+			return "", fmt.Errorf("failed to generator addresses for chain %d: %w", chainConfig.ID, err)
 		}
 
 		if err := contractsGen.GeneratePlaceholders(configPath, chainConfig.ID); err != nil {
 			return "", fmt.Errorf("failed to generate contract placeholders for chain %d: %w", chainConfig.ID, err)
 		}
 
-		if err := runtimeGen.Generate(deployment.ImplementationsDeployment.DisputeGameFactoryImplAddress, configPath); err != nil {
+		if err := runtimeGen.Generate(stateDeployment.ImplementationsDeployment.DisputeGameFactoryImplAddress, configPath); err != nil {
 			return "", fmt.Errorf("failed to generate runtime file, %w", err)
 		}
 
-		disputeGameFactoryImplAddress = addr
 	}
 
 	o.logger.Info("Phase 2: L2 configuration generation completed successfully")
