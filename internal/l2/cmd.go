@@ -3,6 +3,7 @@ package l2
 import (
 	"fmt"
 	"log/slog"
+	"os"
 
 	"github.com/compose-network/localnet-control-plane/configs"
 	"github.com/spf13/cobra"
@@ -18,13 +19,19 @@ var CMD = &cobra.Command{
 			return err
 		}
 
-		slog.Info("config validation successful. Starting l2 services...")
+		slog.Info("config validation successful. Starting l2 deployment...")
 
-		if err := start(cmd.Context()); err != nil {
-			return fmt.Errorf("error occurred starting l2: %w", err)
+		rootDir, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("failed to get working directory: %w", err)
 		}
 
-		slog.Info("l2 services started successfully")
+		coordinator := NewCoordinator(rootDir)
+		if err := coordinator.Deploy(cmd.Context(), configs.Values.L2); err != nil {
+			return fmt.Errorf("l2 deployment failed: %w", err)
+		}
+
+		slog.Info("l2 deployment completed successfully")
 
 		return nil
 	},
