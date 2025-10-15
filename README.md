@@ -1,77 +1,76 @@
-<!-- This is a comment in Markdown 
-
-🛠 Repository Setup Instructions
-
-After forking or cloning this template, run the following:
-
-1. Replace all occurrences of 'template-repository' with your actual repo name:
-   sed -i 's/template-repository/your-repo-name/g' README.md
-
-2. Fill in all TODO sections below.
-
-3. Update [.github/CODEOWNERS](.github/CODEOWNERS) to reflect your team or maintainers.
-
-4. Check `.gitignore` and `.dockerignore` files and modify them according to your project's structure.
-
-5. Update GitHub Actions in `.github/workflows/` if needed (e.g., rename, add secrets).
-
--->
 <p align="center"><img src="https://framerusercontent.com/images/9FedKxMYLZKR9fxBCYj90z78.png?scale-down-to=512&width=893&height=363" alt="SSV Network"></p>
 
-<img src="https://github.com/ssvlabs/template-repository/actions/workflows/main.yml/badge.svg" alt="Check" />
 <a href="https://discord.com/invite/ssvnetworkofficial"><img src="https://img.shields.io/badge/discord-%23ssvlabs-8A2BE2.svg" alt="Discord" /></a>
+
+<img src="https://github.com/ssvlabs/local-testnet/actions/workflows/workflow-feature.yml/badge.svg" alt="Check" />
 
 ## ✨ Introduction
 
-<!-- Describe the purpose of this repository. -->
-This project provides a foundational structure for [describe your use case: e.g., smart contracts, node operators, CLI tools].
+Localnet Control Plane is a CLI tool for managing local L1 and L2 Ethereum test networks. It provides a complete local development environment for testing Ethereum applications with multiple L2 rollups.
+
+## 📋 Prerequisites
+
+- Docker and Docker Compose
+- Go 1.25+
+- Kurtosis (for L1 network)
 
 ## ⚙️  How to Build
 
 ```bash
 # Clone the repo
-git clone https://github.com/compose-network/template-repository.git
+git clone https://github.com/compose-network/localnet-control-plane.git
 
 # Navigate
-cd your-repo-name
+cd localnet-control-plane
 
-# Install dependencies
-TODO
-
-# Build the code
-TODO
+# Build the binary
+make build
 ```
 
+The binary will be available at `cmd/localnet/bin/localnet`.
 
-## 🚀 How to Run
+## 🚀 Entry Points
 
+The tool provides three main entry points, each managing a different part of the local network:
+
+### L1 Network (`localnet l1`)
+Manages the Layer 1 Ethereum test network using Kurtosis. Deploys execution and consensus clients along with SSV nodes via the `github.com/ssvlabs/ssv-mini` package
+
+### L2 Network (`localnet l2`)
+Manages Layer 2 rollup networks. Orchestrates a three-phase deployment:
+1. **Phase 1**: Deploys L1 contracts using op-deployer
+2. **Phase 2**: Generates L2 configuration files (genesis, rollup config, secrets)
+3. **Phase 3**: Starts L2 runtime services (op-geth, op-node, batcher, proposer) and deploys L2 contracts
+
+Supports multiple L2 chains (rollup-a, rollup-b) with configurable chain IDs and RPC ports.
+
+### Observability (`localnet observability`)
+Manages the observability stack for monitoring and debugging. Deploys a Docker-based infrastructure including Grafana (dashboards), Prometheus (metrics), Loki (logs), Tempo (traces), and Alloy (data collection). Provides real-time visibility into network behavior and performance.
+
+## 🔧 Usage
 
 ```bash
-# Run the main service
-npm start
-# or
-go run main.go
-# or
-python app.py
+# Build and run (based on what's enabled in config.yaml)
+make run
+
+# Or run specific components:
+make run-l1              # Start L1 network
+make run-l2              # Start L2 networks
+make run-observability   # Start observability stack
+
+# Inspect running services:
+make show-l1             # Show Kurtosis enclave
+make show-l2             # Show L2 docker containers
+make show-observability  # Show observability containers
+
+# Clean up:
+make clean               # Clean all components
+make clean-l1            # Clean L1 (Kurtosis)
+make clean-l2            # Clean L2 (docker containers + generated files)
+make clean-observability # Clean observability stack
 ```
 
-## 🧪 Testing
-
-```bash
-npm test
-# or
-go test ./...
-# or
-pytest
-```
-
-
-## Contributing
-
-We welcome community contributions!
-
-- See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-- Create a branch, push your changes, and open a PR.
+Configuration is managed via `configs/config.yaml`.
 
 ## License
 
