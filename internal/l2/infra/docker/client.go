@@ -115,7 +115,7 @@ func composeRun(ctx context.Context, env map[string]string, args ...string) erro
 		return fmt.Errorf("ROOT_DIR not set in environment")
 	}
 
-	fullArgs := append([]string{"compose", "-f", "internal/l2/deploy/docker-compose.yml"}, args...)
+	fullArgs := append([]string{"compose", "-f", "internal/l2/l2runtime/docker/docker-compose.yml"}, args...)
 	cmd := exec.CommandContext(ctx, "docker", fullArgs...)
 	cmd.Dir = rootDir
 

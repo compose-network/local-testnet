@@ -49,8 +49,8 @@ services:
       COORDINATOR_PRIVATE_KEY: "${COORDINATOR_PRIVATE_KEY}"
     volumes:
       - rollup-a-geth:/data
-      - ../networks/rollup-a:/config:ro
-      - ../networks/rollup-b:/config_b:ro
+      - ../../networks/rollup-a:/config:ro
+      - ../../networks/rollup-b:/config_b:ro
     ports:
       - "${ROLLUP_A_RPC_PORT}:8545"
       - "18546:8546"
@@ -143,7 +143,7 @@ services:
   op-node-a:
     build:
       context: ${OPTIMISM_PATH}
-      dockerfile: ../../deploy/optimism.Dockerfile
+      dockerfile: ../../l2runtime/docker/optimism.Dockerfile
       target: op-node
     image: local/op-node:dev
     container_name: op-node-a
@@ -170,14 +170,14 @@ services:
       OP_NODE_LOG_LEVEL: "info"
     volumes:
       - rollup-a-opnode:/data
-      - ../networks/rollup-a:/config:ro
+      - ../../networks/rollup-a:/config:ro
     ports:
       - "19545:9545"
 
   op-batcher-a:
     build:
       context: ${OPTIMISM_PATH}
-      dockerfile: ../../deploy/optimism.Dockerfile
+      dockerfile: ../../l2runtime/docker/optimism.Dockerfile
       target: op-batcher
     image: local/op-batcher:dev
     container_name: op-batcher-a
@@ -203,7 +203,7 @@ services:
   op-proposer-a:
     build:
       context: ${OPTIMISM_PATH}
-      dockerfile: ../../deploy/optimism.Dockerfile
+      dockerfile: ../../l2runtime/docker/optimism.Dockerfile
       target: op-proposer
     image: local/op-proposer:dev
     container_name: op-proposer-a
@@ -212,7 +212,7 @@ services:
     depends_on:
       - op-node-a
     env_file:
-      - ../networks/rollup-a/runtime.env
+      - ../../networks/rollup-a/runtime.env
     environment:
       OP_PROPOSER_L1_ETH_RPC: "${L1_EL_URL}"
       OP_PROPOSER_ROLLUP_RPC: "http://op-node-a:9545"
@@ -242,8 +242,8 @@ services:
       COORDINATOR_PRIVATE_KEY: "${COORDINATOR_PRIVATE_KEY}"
     volumes:
       - rollup-b-geth:/data
-      - ../networks/rollup-b:/config:ro
-      - ../networks/rollup-a:/config_a:ro
+      - ../../networks/rollup-b:/config:ro
+      - ../../networks/rollup-a:/config_a:ro
     ports:
       - "${ROLLUP_B_RPC_PORT}:8545"
       - "28546:8546"
@@ -336,7 +336,7 @@ services:
   op-node-b:
     build:
       context: ${OPTIMISM_PATH}
-      dockerfile: ../../deploy/optimism.Dockerfile
+      dockerfile: ../../l2runtime/docker/optimism.Dockerfile
       target: op-node
     image: local/op-node:dev
     container_name: op-node-b
@@ -363,14 +363,14 @@ services:
       OP_NODE_LOG_LEVEL: "info"
     volumes:
       - rollup-b-opnode:/data
-      - ../networks/rollup-b:/config:ro
+      - ../../networks/rollup-b:/config:ro
     ports:
       - "29545:9545"
 
   op-batcher-b:
     build:
       context: ${OPTIMISM_PATH}
-      dockerfile: ../../deploy/optimism.Dockerfile
+      dockerfile: ../../l2runtime/docker/optimism.Dockerfile
       target: op-batcher
     image: local/op-batcher:dev
     container_name: op-batcher-b
@@ -396,7 +396,7 @@ services:
   op-proposer-b:
     build:
       context: ${OPTIMISM_PATH}
-      dockerfile: ../../deploy/optimism.Dockerfile
+      dockerfile: ../../l2runtime/docker/optimism.Dockerfile
       target: op-proposer
     image: local/op-proposer:dev
     container_name: op-proposer-b
@@ -405,7 +405,7 @@ services:
     depends_on:
       - op-node-b
     env_file:
-      - ../networks/rollup-b/runtime.env
+      - ../../networks/rollup-b/runtime.env
     environment:
       OP_PROPOSER_L1_ETH_RPC: "${L1_EL_URL}"
       OP_PROPOSER_ROLLUP_RPC: "http://op-node-b:9545"
@@ -456,7 +456,7 @@ services:
       blockscout-a:
         condition: service_started
     env_file:
-      - ../networks/rollup-a/blockscout-frontend.env
+      - ../../networks/rollup-a/blockscout-frontend.env
 
   blockscout-a-proxy:
     image: nginx:1.27-alpine
@@ -472,7 +472,7 @@ services:
     ports:
       - "19000:80"
     volumes:
-      - ../networks/rollup-a/blockscout-nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../../networks/rollup-a/blockscout-nginx.conf:/etc/nginx/conf.d/default.conf:ro
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1/api/health"]
       interval: 20s
@@ -494,7 +494,7 @@ services:
       op-geth-a:
         condition: service_started
     env_file:
-      - ../networks/rollup-a/blockscout.env
+      - ../../networks/rollup-a/blockscout.env
     environment:
       RELEASE_LINK: "Compose Rollup A"
     command: >
@@ -546,7 +546,7 @@ services:
       blockscout-b:
         condition: service_started
     env_file:
-      - ../networks/rollup-b/blockscout-frontend.env
+      - ../../networks/rollup-b/blockscout-frontend.env
 
   blockscout-b-proxy:
     image: nginx:1.27-alpine
@@ -562,7 +562,7 @@ services:
     ports:
       - "29000:80"
     volumes:
-      - ../networks/rollup-b/blockscout-nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../../networks/rollup-b/blockscout-nginx.conf:/etc/nginx/conf.d/default.conf:ro
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1/api/health"]
       interval: 20s
@@ -584,7 +584,7 @@ services:
       op-geth-b:
         condition: service_started
     env_file:
-      - ../networks/rollup-b/blockscout.env
+      - ../../networks/rollup-b/blockscout.env
     environment:
       RELEASE_LINK: "Compose Rollup B"
     command: >
