@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/compose-network/localnet-control-plane/internal/logger"
 	"github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/client"
@@ -16,7 +17,8 @@ import (
 )
 
 type Client struct {
-	cli *client.Client
+	cli    *client.Client
+	logger *slog.Logger
 }
 
 // New creates a new Docker client.
@@ -26,7 +28,7 @@ func New() (*Client, error) {
 		return nil, err
 	}
 
-	return &Client{cli: cli}, nil
+	return &Client{cli: cli, logger: logger.Named("docker_client")}, nil
 }
 
 // Close closes the Docker client connection.
@@ -43,13 +45,12 @@ func (c *Client) ImageExists(ctx context.Context, imageName string) (bool, error
 		}
 		return false, err
 	}
+
 	return true, nil
 }
 
 // BuildImage builds a Docker image from a Dockerfile.
 func (c *Client) BuildImage(ctx context.Context, dockerfilePath, contextPath, tag string) error {
-	slog.Info("building docker image", "tag", tag, "dockerfile", dockerfilePath)
-
 	buildContext, err := archive.TarWithOptions(contextPath, &archive.TarOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to create build context: %w", err)
@@ -77,14 +78,47 @@ func (c *Client) BuildImage(ctx context.Context, dockerfilePath, contextPath, ta
 		return fmt.Errorf("error reading build output: %w", err)
 	}
 
-	slog.Info("docker image built successfully", "tag", tag)
+	c.logger.With("tag", tag).Info("docker image built successfully")
 	return nil
 }
 
+// ComposeBuild builds docker compose services.
+func ComposeBuild(ctx context.Context, env map[string]string, services ...string) error {
+	args := append([]string{"build", "--parallel"}, services...)
+	return composeRun(ctx, env, args...)
+}
+
+// ComposeUp starts docker compose services in detached mode.
+func ComposeUp(ctx context.Context, env map[string]string, services ...string) error {
+	args := append([]string{"up", "-d"}, services...)
+	return composeRun(ctx, env, args...)
+}
+
+// ComposeRestart restarts docker compose services.
+func ComposeRestart(ctx context.Context, env map[string]string, services ...string) error {
+	args := append([]string{"restart"}, services...)
+	return composeRun(ctx, env, args...)
+}
+
+// ComposeDown stops docker compose services.
+func ComposeDown(ctx context.Context, env map[string]string, removeVolumes bool) error {
+	args := []string{"down"}
+	if removeVolumes {
+		args = append(args, "-v")
+	}
+	return composeRun(ctx, env, args...)
+}
+
 // ComposeRun executes a docker compose command with environment variables.
-func ComposeRun(ctx context.Context, env map[string]string, args ...string) error {
-	fullArgs := append([]string{"compose", "-f", "internal/l2/deploy/docker-compose.yml"}, args...)
+func composeRun(ctx context.Context, env map[string]string, args ...string) error {
+	rootDir := env["ROOT_DIR"]
+	if rootDir == "" {
+		return fmt.Errorf("ROOT_DIR not set in environment")
+	}
+
+	fullArgs := append([]string{"compose", "-f", "internal/l2/l2runtime/docker/docker-compose.yml"}, args...)
 	cmd := exec.CommandContext(ctx, "docker", fullArgs...)
+	cmd.Dir = rootDir
 
 	cmd.Env = os.Environ()
 	for k, v := range env {
@@ -94,38 +128,9 @@ func ComposeRun(ctx context.Context, env map[string]string, args ...string) erro
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	slog.Debug("running docker compose command", "args", strings.Join(args, " "))
-
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("docker compose %s failed: %w", strings.Join(args, " "), err)
 	}
 
 	return nil
-}
-
-// ComposeBuild builds docker compose services.
-func ComposeBuild(ctx context.Context, env map[string]string, services ...string) error {
-	args := append([]string{"build", "--parallel"}, services...)
-	return ComposeRun(ctx, env, args...)
-}
-
-// ComposeUp starts docker compose services in detached mode.
-func ComposeUp(ctx context.Context, env map[string]string, services ...string) error {
-	args := append([]string{"up", "-d"}, services...)
-	return ComposeRun(ctx, env, args...)
-}
-
-// ComposeRestart restarts docker compose services.
-func ComposeRestart(ctx context.Context, env map[string]string, services ...string) error {
-	args := append([]string{"restart"}, services...)
-	return ComposeRun(ctx, env, args...)
-}
-
-// ComposeDown stops docker compose services.
-func ComposeDown(ctx context.Context, env map[string]string, removeVolumes bool) error {
-	args := []string{"down"}
-	if removeVolumes {
-		args = append(args, "-v")
-	}
-	return ComposeRun(ctx, env, args...)
 }
