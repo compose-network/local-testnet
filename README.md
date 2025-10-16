@@ -2,8 +2,6 @@
 
 <a href="https://discord.com/invite/ssvnetworkofficial"><img src="https://img.shields.io/badge/discord-%23ssvlabs-8A2BE2.svg" alt="Discord" /></a>
 
-<img src="https://github.com/ssvlabs/local-testnet/actions/workflows/workflow-feature.yml/badge.svg" alt="Check" />
-
 ## ✨ Introduction
 
 Localnet Control Plane is a CLI tool for managing local L1 and L2 Ethereum test networks. It provides a complete local development environment for testing Ethereum applications with multiple L2 rollups.
@@ -34,9 +32,13 @@ The binary will be available at `cmd/localnet/bin/localnet`.
 The tool provides three main entry points, each managing a different part of the local network:
 
 ### L1 Network (`localnet l1`)
+[Architecture](https://github.com/compose-network/local-testnet/blob/main/docs/l1-architecture.png)
+
 Manages the Layer 1 Ethereum test network using Kurtosis. Deploys execution and consensus clients along with SSV nodes via the `github.com/ssvlabs/ssv-mini` package
 
 ### L2 Network (`localnet l2`)
+[Architecture](https://github.com/compose-network/local-testnet/blob/main/docs/l2-architecture.png)
+
 Manages Layer 2 rollup networks. Orchestrates a three-phase deployment:
 1. **Phase 1**: Deploys L1 contracts using op-deployer
 2. **Phase 2**: Generates L2 configuration files (genesis, rollup config, secrets)
