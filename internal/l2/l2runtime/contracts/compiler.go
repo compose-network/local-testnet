@@ -33,7 +33,7 @@ func NewCompiler(contractsDir, contractsSourceDir, outputDir string) *Compiler {
 	}
 }
 
-// Compile compiles all Solidity contracts and generates contracts.json
+// Compile compiles Solidity contracts and persists the output
 func (c *Compiler) Compile(ctx context.Context) error {
 	c.logger.
 		With("contracts_dir", c.contractsRootDir).
@@ -44,7 +44,6 @@ func (c *Compiler) Compile(ctx context.Context) error {
 		return fmt.Errorf("failed to install dependencies: %w", err)
 	}
 
-	// Compile only the contracts we need (defined in contracts map)
 	compiledContracts := make(map[contractName]compiledContract)
 	for name := range contracts {
 		c.logger.With("name", name).Info("compiling contract")
@@ -58,10 +57,10 @@ func (c *Compiler) Compile(ctx context.Context) error {
 	}
 
 	if err := c.writeContractsJSON(compiledContracts); err != nil {
-		return fmt.Errorf("failed to write contracts.json: %w", err)
+		return fmt.Errorf("failed to write %s: %w", contractsFileName, err)
 	}
 
-	c.logger.Info("contracts compiled successfully", "output", filepath.Join(c.outputDir, "contracts.json"))
+	c.logger.Info("contracts compiled successfully")
 
 	return nil
 }
@@ -117,7 +116,7 @@ func (c *Compiler) writeContractsJSON(contracts map[contractName]compiledContrac
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 
-	outputPath := filepath.Join(c.outputDir, "contracts.json")
+	outputPath := filepath.Join(c.outputDir, contractsFileName)
 
 	data, err := json.MarshalIndent(contracts, "", "  ")
 	if err != nil {
@@ -125,7 +124,7 @@ func (c *Compiler) writeContractsJSON(contracts map[contractName]compiledContrac
 	}
 
 	if err := os.WriteFile(outputPath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write contracts.json: %w", err)
+		return fmt.Errorf("failed to write %s: %w", contractsFileName, err)
 	}
 
 	return nil

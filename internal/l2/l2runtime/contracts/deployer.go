@@ -22,7 +22,7 @@ import (
 )
 
 type (
-	// Deployer deploys L2 helper contracts
+	// Deployer deploys L2 contracts
 	Deployer struct {
 		rootDir                       string
 		networksDir                   string
@@ -41,21 +41,21 @@ func NewDeployer(rootDir, networksDir string) *Deployer {
 	}
 }
 
-// Deploy deploys helper contracts to all L2 chains and updates contracts.json
+// Deploy deploys L2 contracts
 func (d *Deployer) Deploy(ctx context.Context, cfg configs.L2) error {
-	d.logger.Info("deploying L2 helper contracts")
+	d.logger.Info("deploying L2 contracts")
 
 	if err := d.deployContracts(ctx, cfg); err != nil {
 		d.logger.With("err", err.Error()).Warn("contract deployment failed or timed out")
 		return nil
 	}
 
-	d.logger.Info("L2 helper contracts deployed successfully")
+	d.logger.Info("L2 contracts deployed successfully")
 
 	return nil
 }
 
-// deployContracts deploys helper contracts to rollups using go-ethereum.
+// deployContracts deploys contracts to rollups using go-ethereum.
 func (d *Deployer) deployContracts(ctx context.Context, cfg configs.L2) error {
 	compiledContractsDir := filepath.Join(d.rootDir, "internal", "l2", "l2runtime", "contracts", "compiled")
 	if _, err := os.Stat(compiledContractsDir); os.IsNotExist(err) {
@@ -85,8 +85,8 @@ func (d *Deployer) deployContracts(ctx context.Context, cfg configs.L2) error {
 		}
 
 		directory := filepath.Join(d.networksDir, string(chainName))
-		if err := writeContractJSON(filepath.Join(directory, "contracts.json"), addr, uint64(chainConfig.ID)); err != nil {
-			return fmt.Errorf("failed to write contracts.json for %s: %w", chainName, err)
+		if err := writeContractJSON(filepath.Join(directory, contractsFileName), addr, uint64(chainConfig.ID)); err != nil {
+			return fmt.Errorf("failed to write %s for %s: %w", contractsFileName, chainName, err)
 		}
 
 		addresses = append(addresses, addr)

@@ -2,6 +2,8 @@ package contracts
 
 import "github.com/ethereum/go-ethereum/accounts/abi"
 
+const contractsFileName = "contracts.json"
+
 type (
 	contractName     string
 	compiledContract struct {
