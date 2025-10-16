@@ -2,8 +2,6 @@
 
 <a href="https://discord.com/invite/ssvnetworkofficial"><img src="https://img.shields.io/badge/discord-%23ssvlabs-8A2BE2.svg" alt="Discord" /></a>
 
-<img src="https://github.com/ssvlabs/local-testnet/actions/workflows/workflow-feature.yml/badge.svg" alt="Check" />
-
 ## ✨ Introduction
 
 Localnet Control Plane is a CLI tool for managing local L1 and L2 Ethereum test networks. It provides a complete local development environment for testing Ethereum applications with multiple L2 rollups.
