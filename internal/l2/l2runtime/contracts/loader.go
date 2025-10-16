@@ -11,10 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type compiledContract struct {
-	ABI      abi.ABI
-	Bytecode []byte
-}
+
 
 func loadCompiledContracts(contractsDir string) (map[contractName]compiledContract, error) {
 	compiledPath := filepath.Join(contractsDir, "contracts.json")

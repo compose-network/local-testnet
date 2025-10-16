@@ -1,6 +1,14 @@
 package contracts
 
-type contractName string
+import "github.com/ethereum/go-ethereum/accounts/abi"
+
+type (
+	contractName     string
+	compiledContract struct {
+		ABI      abi.ABI
+		Bytecode []byte
+	}
+)
 
 const (
 	contractNameBridge   = "Bridge"
