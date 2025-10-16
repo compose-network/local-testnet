@@ -67,6 +67,12 @@ clean-l2:
 	docker compose -f internal/l2/l2runtime/docker/docker-compose.yml down -v
 	docker ps -aq --filter "label=${L2_LABEL}" | xargs -r docker rm -f
 	rm -rf ./internal/l2/state ./internal/l2/networks ./.cache
+
+## Compile L2 contracts ##
+.PHONY: run-l2-compile
+run-l2-compile: build
+	${BINARY_PATH} l2 compile
+
 ######
 
 ### Observability ###
