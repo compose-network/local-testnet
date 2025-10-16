@@ -64,7 +64,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, stateDeploym
 		secretsGen       = secrets.NewGenerator(writer)
 		contractsGen     = contracts.NewGenerator(writer)
 		runtimeGen       = runtime.NewGenerator()
-		addressGenerator = addresses.NewGenerator(writer)
+	)
 	)
 
 	var disputeGameFactoryImplAddress string
@@ -119,11 +119,6 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, stateDeploym
 
 		if err := secretsGen.GeneratePassword(configPath); err != nil {
 			return "", fmt.Errorf("failed to generate password for chain %d: %w", chainConfig.ID, err)
-		}
-
-		err = addressGenerator.Generate(chainDeployment, chainConfig.ID, configPath)
-		if err != nil {
-			return "", fmt.Errorf("failed to generator addresses for chain %d: %w", chainConfig.ID, err)
 		}
 
 		if err := contractsGen.GeneratePlaceholders(configPath, chainConfig.ID); err != nil {
