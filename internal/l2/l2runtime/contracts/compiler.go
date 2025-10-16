@@ -17,19 +17,17 @@ import (
 
 // Compiler compiles Solidity L2 contracts
 type Compiler struct {
-	contractsRootDir   string
-	contractsSourceDir string
-	outputDir          string
-	logger             *slog.Logger
+	contractsRootDir string
+	outputDir        string
+	logger           *slog.Logger
 }
 
 // NewCompiler creates a new contract compiler
-func NewCompiler(contractsDir, contractsSourceDir, outputDir string) *Compiler {
+func NewCompiler(contractsRootDir, outputDir string) *Compiler {
 	return &Compiler{
-		contractsRootDir:   contractsDir,
-		contractsSourceDir: contractsSourceDir,
-		outputDir:          outputDir,
-		logger:             logger.Named("contracts_compiler"),
+		contractsRootDir: contractsRootDir,
+		outputDir:        outputDir,
+		logger:           logger.Named("contracts_compiler"),
 	}
 }
 
