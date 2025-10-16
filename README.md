@@ -32,9 +32,13 @@ The binary will be available at `cmd/localnet/bin/localnet`.
 The tool provides three main entry points, each managing a different part of the local network:
 
 ### L1 Network (`localnet l1`)
+[Architecture](https://github.com/compose-network/local-testnet/blob/main/docs/l1-architecture.png)
+
 Manages the Layer 1 Ethereum test network using Kurtosis. Deploys execution and consensus clients along with SSV nodes via the `github.com/ssvlabs/ssv-mini` package
 
 ### L2 Network (`localnet l2`)
+[Architecture](https://github.com/compose-network/local-testnet/blob/main/docs/l2-architecture.png)
+
 Manages Layer 2 rollup networks. Orchestrates a three-phase deployment:
 1. **Phase 1**: Deploys L1 contracts using op-deployer
 2. **Phase 2**: Generates L2 configuration files (genesis, rollup config, secrets)
