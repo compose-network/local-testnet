@@ -54,7 +54,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2) (*domain.Dep
 	defer dockerClient.Close()
 
 	o.logger.Info("instantiating Deployer")
-	opDeployer := deployer.NewDeployer(o.rootDir, o.stateDir, dockerClient)
+	opDeployer := deployer.NewDeployer(o.rootDir, o.stateDir, cfg.OPDeployerVersion, dockerClient)
 
 	o.logger.Info("initializing Deployer")
 	if err := opDeployer.Init(ctx, cfg.L1ChainID, cfg.ChainConfigs); err != nil {

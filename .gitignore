@@ -191,3 +191,6 @@ internal/l2/services/
 internal/l2/state/
 internal/l2/networks/
 .cache/
+
+# Configuration file
+**/config.yaml

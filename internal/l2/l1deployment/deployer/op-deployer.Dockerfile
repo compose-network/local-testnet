@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
-ARG OP_DEPLOYER_VERSION=0.3.3
+
+ARG OP_DEPLOYER_VERSION
 ARG OP_DEPLOYER_TAG=op-deployer/v${OP_DEPLOYER_VERSION}
 ARG OP_DEPLOYER_ARCHIVE=op-deployer-${OP_DEPLOYER_VERSION}-linux-amd64.tar.gz
 

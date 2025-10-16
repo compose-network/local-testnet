@@ -58,7 +58,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, stateDeploym
 	var (
 		writer = json.NewWriter()
 
-		opDeployer       = deployer.NewDeployer(o.rootDir, o.stateDir, dockerClient)
+		opDeployer       = deployer.NewDeployer(o.rootDir, o.stateDir, cfg.OPDeployerVersion, dockerClient)
 		genesisGen       = genesis.NewGenerator(opDeployer, dockerClient, writer)
 		rollupGen        = rollup.NewGenerator(json.NewReader(), opDeployer, writer)
 		secretsGen       = secrets.NewGenerator(writer)

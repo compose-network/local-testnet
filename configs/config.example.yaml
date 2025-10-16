@@ -1,0 +1,32 @@
+l1:
+
+observability:
+
+l2:
+  l1-chain-id: 1
+  l1-el-url: http://127.0.0.1:8080
+  l1-cl-url: http://127.0.0.2:8080
+  coordinator-private-key: 0x0000000000000000000000000000000000000000000000000000000000000000
+  wallet:
+    private-key: 0000000000000000000000000000000000000000000000000000000000000000
+    address: 0x0000000000000000000000000000000000000000000
+  chain-configs:
+    rollup-a: 
+      id: 77777
+      rpc-port: 18545
+    rollup-b: 
+      id: 88888
+      rpc-port: 28545
+  deployment-target: live  # "live" or "calldata"
+  genesis-balance-wei: "100000000000000000"  # 0.1 ETH for funded accounts
+  op-deployer-version: 1.0.0
+  repositories:
+    op-geth:
+      url: https://github.com/op-geth.git
+      branch: main
+    optimism:
+      url: https://github.com/optimism.git
+      branch: main
+    publisher:
+      url: https://github.com/publisher.git
+      branch: main

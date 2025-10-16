@@ -26,15 +26,17 @@ var imageWithTag = fmt.Sprintf("%s:%s", imageName, imageTag)
 type Deployer struct {
 	rootDir  string
 	stateDir string
+	version  string
 	docker   *docker.Client
 	logger   *slog.Logger
 }
 
 // NewDeployer creates a new op-deployer wrapper
-func NewDeployer(rootDir, stateDir string, dockerClient *docker.Client) *Deployer {
+func NewDeployer(rootDir, stateDir, version string, dockerClient *docker.Client) *Deployer {
 	return &Deployer{
 		rootDir:  rootDir,
 		stateDir: stateDir,
+		version:  version,
 		docker:   dockerClient,
 		logger:   logger.Named("deployer"),
 	}
@@ -113,13 +115,17 @@ func (o *Deployer) ensureImage(ctx context.Context) error {
 		return nil
 	}
 
-	slog.Info("building image")
+	logger.With("version", o.version).Info("building image")
 	absRootDir, err := filepath.Abs(o.rootDir)
 	if err != nil {
 		return fmt.Errorf("failed to get absolute root path: %w", err)
 	}
 
-	if err := o.docker.BuildImage(ctx, dockerfileName, absRootDir, imageWithTag); err != nil {
+	buildArgs := map[string]*string{
+		"OP_DEPLOYER_VERSION": &o.version,
+	}
+
+	if err := o.docker.BuildImage(ctx, dockerfileName, absRootDir, imageWithTag, buildArgs); err != nil {
 		return fmt.Errorf("failed to build image: '%s', %w", imageWithTag, err)
 	}
 

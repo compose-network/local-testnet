@@ -50,7 +50,7 @@ func (c *Client) ImageExists(ctx context.Context, imageName string) (bool, error
 }
 
 // BuildImage builds a Docker image from a Dockerfile.
-func (c *Client) BuildImage(ctx context.Context, dockerfilePath, contextPath, tag string) error {
+func (c *Client) BuildImage(ctx context.Context, dockerfilePath, contextPath, tag string, buildArgs map[string]*string) error {
 	buildContext, err := archive.TarWithOptions(contextPath, &archive.TarOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to create build context: %w", err)
@@ -61,6 +61,7 @@ func (c *Client) BuildImage(ctx context.Context, dockerfilePath, contextPath, ta
 		Tags:       []string{tag},
 		Dockerfile: dockerfilePath,
 		Remove:     true,
+		BuildArgs:  buildArgs,
 	}
 
 	resp, err := c.cli.ImageBuild(ctx, buildContext, buildOptions)

@@ -30,6 +30,7 @@ type (
 		ChainConfigs          map[L2ChainName]ChainConfig   `mapstructure:"chain-configs"`
 		DeploymentTarget      string                        `mapstructure:"deployment-target"`
 		GenesisBalanceWei     string                        `mapstructure:"genesis-balance-wei"`
+		OPDeployerVersion     string                        `mapstructure:"op-deployer-version"`
 	}
 
 	ChainConfig struct {
@@ -126,6 +127,10 @@ func (c *L2) Validate() error {
 		errs = append(errs, errors.New("l2.deployment-target is required"))
 	} else if c.DeploymentTarget != "live" && c.DeploymentTarget != "calldata" {
 		errs = append(errs, errors.New("l2.deployment-target must be either 'live' or 'calldata'"))
+	}
+
+	if c.OPDeployerVersion == "" {
+		errs = append(errs, errors.New("l2.op-deployer-version is required"))
 	}
 
 	if len(errs) > 0 {
