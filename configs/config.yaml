@@ -19,6 +19,7 @@ l2:
       rpc-port: 28545
   deployment-target: live  # "live" or "calldata"
   genesis-balance-wei: "100000000000000000"  # 0.1 ETH for funded accounts
+  op-deployer-version: 0.3.3
   repositories:
     op-geth:
       url: https://github.com/ssvlabs/op-geth.git
