@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	dockerfileName = "op-deployer.Dockerfile"
+	dockerfileName = "internal/l2/l1deployment/deployer/op-deployer.Dockerfile"
 	imageName      = "op-deployer"
 	imageTag       = "local"
 )
