@@ -73,6 +73,47 @@ clean-l2:
 run-l2-compile: build
 	${BINARY_PATH} l2 compile
 
+## Generate Go bindings from compiled contracts ##
+CONTRACTS_JSON=./internal/l2/l2runtime/contracts/compiled/contracts.json
+BINDINGS_DIR=./internal/l2/l2runtime/contracts/bindings
+
+.PHONY: generate-bindings
+generate-bindings:
+	@echo "Generating Go bindings from compiled contracts..."
+	@if ! command -v abigen >/dev/null 2>&1; then \
+		echo "Error: abigen not found. Install with:"; \
+		echo "  go install github.com/ethereum/go-ethereum/cmd/abigen@latest"; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(CONTRACTS_JSON)" ]; then \
+		echo "Error: $(CONTRACTS_JSON) not found"; \
+		echo "Run 'make run-l2-compile' first"; \
+		exit 1; \
+	fi
+	@mkdir -p $(BINDINGS_DIR)
+	@echo "Generating Bridge binding..."
+	@jq -r '.Bridge.bytecode' $(CONTRACTS_JSON) > /tmp/bridge_bytecode.txt
+	@jq '.Bridge.abi' $(CONTRACTS_JSON) | abigen \
+		--abi - \
+		--bin /tmp/bridge_bytecode.txt \
+		--pkg bindings \
+		--type Bridge \
+		--out $(BINDINGS_DIR)/bridge.go
+	@rm /tmp/bridge_bytecode.txt
+	@echo "  ✓ Generated: $(BINDINGS_DIR)/bridge.go"
+	@echo "Generating MyToken binding..."
+	@jq -r '.MyToken.bytecode' $(CONTRACTS_JSON) > /tmp/mytoken_bytecode.txt
+	@jq '.MyToken.abi' $(CONTRACTS_JSON) | abigen \
+		--abi - \
+		--bin /tmp/mytoken_bytecode.txt \
+		--pkg bindings \
+		--type MyToken \
+		--out $(BINDINGS_DIR)/mytoken.go
+	@rm /tmp/mytoken_bytecode.txt
+	@echo "  ✓ Generated: $(BINDINGS_DIR)/mytoken.go"
+	@echo ""
+	@echo "✓ Bindings generated successfully in $(BINDINGS_DIR)"
+
 ######
 
 ### Observability ###
