@@ -46,8 +46,8 @@ func (d *Deployer) Deploy(ctx context.Context, chainConfigs map[configs.L2ChainN
 	d.logger.Info("deploying L2 contracts")
 
 	if err := d.deployContracts(ctx, chainConfigs, coordinatorPK); err != nil {
-		d.logger.With("err", err.Error()).Warn("contract deployment failed or timed out")
-		return nil
+		d.logger.With("err", err.Error()).Error("contract deployment failed or timed out")
+		return err
 	}
 
 	d.logger.Info("L2 contracts deployed successfully")
@@ -151,7 +151,7 @@ func (d *Deployer) deployToChain(ctx context.Context, rpcURL, coordinatorPrivate
 		return nil, fmt.Errorf("failed to cast public key to ECDSA")
 	}
 
-	mailboxAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[contractNameMailbox], crypto.PubkeyToAddress(*publicKeyECDSA))
+	mailboxAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[contractNameMailbox], crypto.PubkeyToAddress(*publicKeyECDSA), chainID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy Mailbox: %w", err)
 	}
