@@ -12,7 +12,6 @@ import (
 
 	"github.com/compose-network/localnet-control-plane/internal/logger"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 // Compiler compiles Solidity L2 contracts
@@ -42,19 +41,22 @@ func (c *Compiler) Compile(ctx context.Context) error {
 		return fmt.Errorf("failed to install dependencies: %w", err)
 	}
 
-	compiledContracts := make(map[contractName]compiledContract)
+	jsonContracts := make(map[string]map[string]any)
 	for name := range contracts {
 		c.logger.With("name", name).Info("compiling contract")
 
-		contract, err := c.compileContract(ctx, name)
+		abiJSON, bytecodeHex, err := c.compileContractRaw(ctx, name)
 		if err != nil {
 			return fmt.Errorf("failed to compile %s: %w", name, err)
 		}
 
-		compiledContracts[name] = contract
+		jsonContracts[string(name)] = map[string]any{
+			"abi":      json.RawMessage(abiJSON),
+			"bytecode": bytecodeHex,
+		}
 	}
 
-	if err := c.writeContractsJSON(compiledContracts); err != nil {
+	if err := c.writeContractsJSON(jsonContracts); err != nil {
 		return fmt.Errorf("failed to write %s: %w", contractsFileName, err)
 	}
 
@@ -76,19 +78,20 @@ func (c *Compiler) installDependencies(ctx context.Context) error {
 	return nil
 }
 
-func (c *Compiler) compileContract(ctx context.Context, contractName contractName) (compiledContract, error) {
+// compileContractRaw compiles a contract and returns raw JSON ABI and hex bytecode
+func (c *Compiler) compileContractRaw(ctx context.Context, contractName contractName) ([]byte, string, error) {
 	abiCmd := exec.CommandContext(ctx, "forge", "inspect", string(contractName), "abi", "--json")
 	// Forge automatically looks for contracts in src/ subdirectory relative to the working directory
 	abiCmd.Dir = c.contractsRootDir
 
 	abiOutput, err := abiCmd.Output()
 	if err != nil {
-		return compiledContract{}, fmt.Errorf("failed to get ABI for %s: %w", contractName, err)
+		return nil, "", fmt.Errorf("failed to get ABI for %s: %w", contractName, err)
 	}
 
-	parsedABI, err := abi.JSON(strings.NewReader(string(abiOutput)))
-	if err != nil {
-		return compiledContract{}, fmt.Errorf("failed to parse ABI for %s: %w", contractName, err)
+	// Validate that the ABI is valid JSON and parseable
+	if _, err := abi.JSON(strings.NewReader(string(abiOutput))); err != nil {
+		return nil, "", fmt.Errorf("failed to parse ABI for %s: %w", contractName, err)
 	}
 
 	bytecodeCmd := exec.CommandContext(ctx, "forge", "inspect", string(contractName), "bytecode")
@@ -96,20 +99,16 @@ func (c *Compiler) compileContract(ctx context.Context, contractName contractNam
 
 	bytecodeOutput, err := bytecodeCmd.Output()
 	if err != nil {
-		return compiledContract{}, fmt.Errorf("failed to get bytecode for %s: %w", contractName, err)
+		return nil, "", fmt.Errorf("failed to get bytecode for %s: %w", contractName, err)
 	}
 
 	bytecodeStr := strings.TrimSpace(string(bytecodeOutput))
-	bytecodeHex := strings.TrimPrefix(bytecodeStr, "0x")
-	bytecode := common.Hex2Bytes(bytecodeHex)
 
-	return compiledContract{
-		ABI:      parsedABI,
-		Bytecode: bytecode,
-	}, nil
+	// Return raw ABI JSON and hex string with 0x prefix
+	return abiOutput, bytecodeStr, nil
 }
 
-func (c *Compiler) writeContractsJSON(contracts map[contractName]compiledContract) error {
+func (c *Compiler) writeContractsJSON(contracts map[string]map[string]any) error {
 	if err := os.MkdirAll(c.outputDir, 0755); err != nil {
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
