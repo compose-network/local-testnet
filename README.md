@@ -11,12 +11,13 @@ Localnet Control Plane is a CLI tool for managing local L1 and L2 Ethereum test 
 - Docker and Docker Compose
 - Go 1.25+
 - Kurtosis (for L1 network)
+- Foundry/Forge (for L2 contract compilation)
 
 ## ⚙️  How to Build
 
 ```bash
 # Clone the repo
-git clone https://github.com/compose-network/localnet-control-plane.git
+git clone https://github.com/compose-network/local-testnet.git
 
 # Navigate
 cd localnet-control-plane
@@ -46,6 +47,12 @@ Manages Layer 2 rollup networks. Orchestrates a three-phase deployment:
 
 Supports multiple L2 chains (rollup-a, rollup-b) with configurable chain IDs and RPC ports.
 
+#### L2 Contract Compilation (`localnet l2 compile`)
+
+Compiles Solidity contracts from the publisher repository. This command generates/updates `contracts.json` in `internal/l2/l2runtime/contracts/compiled/`
+
+**Note:** Requires Foundry/Forge to be installed locally.
+
 ### Observability (`localnet observability`)
 Manages the observability stack for monitoring and debugging. Deploys a Docker-based infrastructure including Grafana (dashboards), Prometheus (metrics), Loki (logs), Tempo (traces), and Alloy (data collection). Provides real-time visibility into network behavior and performance.
 
@@ -58,6 +65,7 @@ make run
 # Or run specific components:
 make run-l1              # Start L1 network
 make run-l2              # Start L2 networks
+make run-l2-compile      # Compile L2 contracts from publisher repo
 make run-observability   # Start observability stack
 
 # Inspect running services:

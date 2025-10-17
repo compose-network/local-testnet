@@ -42,10 +42,10 @@ func NewDeployer(rootDir, networksDir string) *Deployer {
 }
 
 // Deploy deploys L2 contracts
-func (d *Deployer) Deploy(ctx context.Context, cfg configs.L2) error {
+func (d *Deployer) Deploy(ctx context.Context, chainConfigs map[configs.L2ChainName]configs.ChainConfig, coordinatorPK string) error {
 	d.logger.Info("deploying L2 contracts")
 
-	if err := d.deployContracts(ctx, cfg); err != nil {
+	if err := d.deployContracts(ctx, chainConfigs, coordinatorPK); err != nil {
 		d.logger.With("err", err.Error()).Warn("contract deployment failed or timed out")
 		return nil
 	}
@@ -56,7 +56,7 @@ func (d *Deployer) Deploy(ctx context.Context, cfg configs.L2) error {
 }
 
 // deployContracts deploys contracts to rollups using go-ethereum.
-func (d *Deployer) deployContracts(ctx context.Context, cfg configs.L2) error {
+func (d *Deployer) deployContracts(ctx context.Context, chainConfigs map[configs.L2ChainName]configs.ChainConfig, coordinatorPK string) error {
 	compiledContractsDir := filepath.Join(d.rootDir, "internal", "l2", "l2runtime", "contracts", "compiled")
 	if _, err := os.Stat(compiledContractsDir); os.IsNotExist(err) {
 		return fmt.Errorf("contracts directory not found. Directory: '%s'", compiledContractsDir)
@@ -71,7 +71,7 @@ func (d *Deployer) deployContracts(ctx context.Context, cfg configs.L2) error {
 	d.logger.With("len", len(compiledContracts)).Info("precompiled contracts loaded")
 
 	addresses := make([]map[contractName]string, 0)
-	for chainName, chainConfig := range cfg.ChainConfigs {
+	for chainName, chainConfig := range chainConfigs {
 		url := fmt.Sprintf("http://localhost:%d", chainConfig.RPCPort)
 		d.logger.With("chain_name", chainName).With("url", url).Info("waiting for rollup RPC")
 		if err := waitForRPC(ctx, url); err != nil {
@@ -79,7 +79,7 @@ func (d *Deployer) deployContracts(ctx context.Context, cfg configs.L2) error {
 		}
 
 		d.logger.Info("deploying contracts to L2")
-		addr, err := d.deployToChain(ctx, url, cfg.CoordinatorPrivateKey, compiledContracts)
+		addr, err := d.deployToChain(ctx, url, coordinatorPK, compiledContracts)
 		if err != nil {
 			return fmt.Errorf("failed to deploy to %s: %w", chainName, err)
 		}

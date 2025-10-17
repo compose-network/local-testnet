@@ -3,6 +3,7 @@ package docker
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
@@ -71,12 +72,32 @@ func (c *Client) BuildImage(ctx context.Context, dockerfilePath, contextPath, ta
 	defer resp.Body.Close()
 
 	scanner := bufio.NewScanner(resp.Body)
+	var buildError error
 	for scanner.Scan() {
-		slog.Debug(scanner.Text())
+		line := scanner.Text()
+		c.logger.Debug(line)
+
+		// Parse JSON output to detect errors
+		var msg struct {
+			Error       string `json:"error"`
+			ErrorDetail struct {
+				Message string `json:"message"`
+			} `json:"errorDetail"`
+		}
+		if err := json.Unmarshal([]byte(line), &msg); err == nil {
+			if msg.Error != "" {
+				buildError = fmt.Errorf("build failed: %s", msg.Error)
+				c.logger.Error("docker build error", "error", msg.Error)
+			}
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("error reading build output: %w", err)
+	}
+
+	if buildError != nil {
+		return buildError
 	}
 
 	c.logger.With("tag", tag).Info("docker image built successfully")
