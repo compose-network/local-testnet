@@ -73,6 +73,15 @@ clean-l2:
 run-l2-compile: build
 	${BINARY_PATH} l2 compile
 
+## Debug bridge ##
+.PHONY: debug-bridge
+debug-bridge: build
+	${BINARY_PATH} l2 debug-bridge --mode=debug
+
+.PHONY: check-bridge
+check-bridge: build
+	${BINARY_PATH} l2 debug-bridge --mode=check
+
 ######
 
 ### Observability ###

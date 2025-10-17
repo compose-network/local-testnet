@@ -6,11 +6,13 @@ import (
 	"os"
 
 	"github.com/compose-network/localnet-control-plane/configs"
+	"github.com/compose-network/localnet-control-plane/internal/l2/debug"
 	"github.com/spf13/cobra"
 )
 
 func init() {
 	CMD.AddCommand(compileCmd)
+	CMD.AddCommand(debug.CMD)
 }
 
 var CMD = &cobra.Command{

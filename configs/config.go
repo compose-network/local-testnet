@@ -31,6 +31,13 @@ type (
 		DeploymentTarget      string                        `mapstructure:"deployment-target"`
 		GenesisBalanceWei     string                        `mapstructure:"genesis-balance-wei"`
 		OPDeployerVersion     string                        `mapstructure:"op-deployer-version"`
+		DebugBridge           DebugBridgeConfig             `mapstructure:"debug-bridge"`
+	}
+
+	DebugBridgeConfig struct {
+		PublisherStatsURL string `mapstructure:"publisher-stats-url"`
+		DefaultBlocks     int    `mapstructure:"default-blocks"`
+		DefaultLogWindow  string `mapstructure:"default-log-window"`
 	}
 
 	ChainConfig struct {
