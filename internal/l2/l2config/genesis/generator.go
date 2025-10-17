@@ -31,16 +31,18 @@ type (
 		deployer deployer
 		docker   *docker.Client
 		writer   filesystem.Writer
+		rootDir  string
 		logger   *slog.Logger
 	}
 )
 
 // NewGenerator creates a new genesis generator
-func NewGenerator(deployer deployer, docker *docker.Client, writer filesystem.Writer) *Generator {
+func NewGenerator(deployer deployer, docker *docker.Client, writer filesystem.Writer, rootDir string) *Generator {
 	return &Generator{
 		deployer: deployer,
 		docker:   docker,
 		writer:   writer,
+		rootDir:  rootDir,
 		logger:   logger.Named("genesis_generator"),
 	}
 }
@@ -144,6 +146,10 @@ func (g *Generator) computeGenesisHash(ctx context.Context, genesis map[string]a
 
 	const opGethImage = "local/op-geth:dev"
 
+	if err := g.ensureOpGethImage(ctx, opGethImage); err != nil {
+		return "", fmt.Errorf("failed to ensure op-geth image: %w", err)
+	}
+
 	g.logger.With("image", opGethImage).Info("running geth init")
 	_, err = g.docker.Run(ctx, docker.RunOptions{
 		Image: opGethImage,
@@ -198,4 +204,32 @@ func (g *Generator) computeGenesisHash(ctx context.Context, genesis map[string]a
 	}
 
 	return genesisHash.Hex(), nil
+}
+
+// ensureOpGethImage checks if op-geth image exists, and builds it if not
+func (g *Generator) ensureOpGethImage(ctx context.Context, imageName string) error {
+	exists, err := g.docker.ImageExists(ctx, imageName)
+	if err != nil {
+		return fmt.Errorf("failed to check if image exists: %w", err)
+	}
+
+	if exists {
+		g.logger.Info("op-geth image already exists")
+		return nil
+	}
+
+	g.logger.Info("op-geth image not found, building it using docker compose")
+
+	env := map[string]string{
+		"ROOT_DIR":     g.rootDir,
+		"OP_GETH_PATH": filepath.Join(g.rootDir, "internal", "l2", "services", "op-geth"),
+	}
+
+	if err := docker.ComposeBuild(ctx, env, "op-geth-a"); err != nil {
+		return fmt.Errorf("failed to build op-geth image: %w", err)
+	}
+
+	g.logger.Info("op-geth image built successfully")
+
+	return nil
 }

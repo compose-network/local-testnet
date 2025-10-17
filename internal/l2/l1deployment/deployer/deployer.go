@@ -125,7 +125,8 @@ func (o *Deployer) ensureImage(ctx context.Context) error {
 		"OP_DEPLOYER_VERSION": &o.version,
 	}
 
-	if err := o.docker.BuildImage(ctx, dockerfileName, absRootDir, imageWithTag, buildArgs); err != nil {
+	dockerfilePath := filepath.Join("internal", "l2", "l1deployment", "deployer", dockerfileName)
+	if err := o.docker.BuildImage(ctx, dockerfilePath, absRootDir, imageWithTag, buildArgs); err != nil {
 		return fmt.Errorf("failed to build image: '%s', %w", imageWithTag, err)
 	}
 

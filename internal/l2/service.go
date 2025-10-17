@@ -14,25 +14,25 @@ import (
 	"github.com/compose-network/localnet-control-plane/internal/logger"
 )
 
-// Coordinator orchestrates the entire L2 deployment process
-type Coordinator struct {
+// Service orchestrates the entire L2 deployment process
+type Service struct {
 	rootDir     string
 	stateDir    string // For L1 deployment state
 	networksDir string // For L2 chain configs
 	logger      *slog.Logger
 }
 
-// NewCoordinator creates a new coordinator
-func NewCoordinator(rootDir string) *Coordinator {
-	return &Coordinator{
+// NewService creates a new l2 service
+func NewService(rootDir string) *Service {
+	return &Service{
 		rootDir:     rootDir,
 		stateDir:    filepath.Join(rootDir, "internal", "l2", "state"),
 		networksDir: filepath.Join(rootDir, "internal", "l2", "networks"),
-		logger:      logger.Named("l2_coordinator"),
+		logger:      logger.Named("l2_service"),
 	}
 }
 
-func (c *Coordinator) Deploy(ctx context.Context, cfg configs.L2) error {
+func (c *Service) Deploy(ctx context.Context, cfg configs.L2) error {
 	c.logger.Info("starting L2 deployment process")
 
 	if err := c.cloneRepositories(ctx, cfg); err != nil {
@@ -46,13 +46,13 @@ func (c *Coordinator) Deploy(ctx context.Context, cfg configs.L2) error {
 	}
 
 	l2ConfigOrchestrator := l2config.NewOrchestrator(c.rootDir, c.stateDir, c.networksDir)
-	l2Config, err := l2ConfigOrchestrator.Execute(ctx, cfg, deployment)
+	err = l2ConfigOrchestrator.Execute(ctx, cfg, deployment)
 	if err != nil {
 		return fmt.Errorf("phase 2 failed: %w", err)
 	}
 
 	l2Orchestrator := l2runtime.NewOrchestrator(c.rootDir, c.networksDir)
-	if err := l2Orchestrator.Execute(ctx, cfg, l2Config); err != nil {
+	if err := l2Orchestrator.Execute(ctx, cfg); err != nil {
 		return fmt.Errorf("phase 3 failed: %w", err)
 	}
 
@@ -62,7 +62,7 @@ func (c *Coordinator) Deploy(ctx context.Context, cfg configs.L2) error {
 }
 
 // cloneRepositories clones all required git repositories
-func (c *Coordinator) cloneRepositories(ctx context.Context, cfg configs.L2) error {
+func (c *Service) cloneRepositories(ctx context.Context, cfg configs.L2) error {
 	c.logger.Info("cloning required repositories")
 
 	cloner := git.NewCloner()

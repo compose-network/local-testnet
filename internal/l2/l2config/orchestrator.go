@@ -11,7 +11,6 @@ import (
 	"github.com/compose-network/localnet-control-plane/internal/l2/infra/docker"
 	"github.com/compose-network/localnet-control-plane/internal/l2/infra/filesystem/json"
 	"github.com/compose-network/localnet-control-plane/internal/l2/l1deployment/deployer"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l2config/addresses"
 	"github.com/compose-network/localnet-control-plane/internal/l2/l2config/contracts"
 	"github.com/compose-network/localnet-control-plane/internal/l2/l2config/crypto"
 	"github.com/compose-network/localnet-control-plane/internal/l2/l2config/genesis"
@@ -46,28 +45,25 @@ func NewOrchestrator(rootDir, stateDir, networksDir string) *Orchestrator {
 }
 
 // Execute runs Phase 2: Generate all L2 configuration files
-func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, stateDeployment *domain.DeploymentState) (string, error) {
+func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, stateDeployment *domain.DeploymentState) error {
 	o.logger.Info("Phase 2: Starting L2 configuration generation")
 
 	dockerClient, err := docker.New()
 	if err != nil {
-		return "", fmt.Errorf("failed to create docker client: %w", err)
+		return fmt.Errorf("failed to create docker client: %w", err)
 	}
 	defer dockerClient.Close()
 
 	var (
 		writer = json.NewWriter()
 
-		opDeployer       = deployer.NewDeployer(o.rootDir, o.stateDir, cfg.OPDeployerVersion, dockerClient)
-		genesisGen       = genesis.NewGenerator(opDeployer, dockerClient, writer)
-		rollupGen        = rollup.NewGenerator(json.NewReader(), opDeployer, writer)
-		secretsGen       = secrets.NewGenerator(writer)
-		contractsGen     = contracts.NewGenerator(writer)
-		runtimeGen       = runtime.NewGenerator()
-		addressGenerator = addresses.NewGenerator(writer)
+		opDeployer   = deployer.NewDeployer(o.rootDir, o.stateDir, cfg.OPDeployerVersion, dockerClient)
+		genesisGen   = genesis.NewGenerator(opDeployer, dockerClient, writer, o.rootDir)
+		rollupGen    = rollup.NewGenerator(json.NewReader(), opDeployer, writer)
+		secretsGen   = secrets.NewGenerator(writer)
+		contractsGen = contracts.NewGenerator(writer)
+		runtimeGen   = runtime.NewGenerator()
 	)
-
-	var disputeGameFactoryImplAddress string
 
 	for chainName, chainConfig := range cfg.ChainConfigs {
 		configPath := filepath.Join(o.networksDir, string(chainName))
@@ -83,14 +79,12 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, stateDeploym
 			}
 		}
 		if chainDeployment == nil {
-			return "", fmt.Errorf("chain deployment not found for chain ID %d", chainConfig.ID)
+			return fmt.Errorf("chain deployment not found for chain ID %d", chainConfig.ID)
 		}
-
-		disputeGameFactoryImplAddress = chainDeployment.DisputeGameFactoryProxyAddress
 
 		sequencerAddress, err := crypto.AddressFromPrivateKey(cfg.CoordinatorPrivateKey)
 		if err != nil {
-			return "", fmt.Errorf("failed to derive sequencer address from coordinator PK for chain %d: %w", chainConfig.ID, err)
+			return fmt.Errorf("failed to derive sequencer address from coordinator PK for chain %d: %w", chainConfig.ID, err)
 		}
 
 		logger.Info("generating genesis file")
@@ -104,39 +98,33 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, stateDeploym
 			cfg.CoordinatorPrivateKey,
 		)
 		if err != nil {
-			return "", fmt.Errorf("failed to generate genesis for chain %d: %w", chainConfig.ID, err)
+			return fmt.Errorf("failed to generate genesis for chain %d: %w", chainConfig.ID, err)
 		}
 
 		err = rollupGen.Generate(ctx, chainConfig.ID, configPath, genesisHash, chainDeployment.StartBlock.Hash, chainDeployment.StartBlock.Number)
 		if err != nil {
-			return "", fmt.Errorf("failed to generate rollup for chain %d: %w", chainConfig.ID, err)
+			return fmt.Errorf("failed to generate rollup for chain %d: %w", chainConfig.ID, err)
 		}
 
 		err = secretsGen.GenerateJWT(configPath)
 		if err != nil {
-			return "", fmt.Errorf("failed to generate JWT for chain %d: %w", chainConfig.ID, err)
+			return fmt.Errorf("failed to generate JWT for chain %d: %w", chainConfig.ID, err)
 		}
 
 		if err := secretsGen.GeneratePassword(configPath); err != nil {
-			return "", fmt.Errorf("failed to generate password for chain %d: %w", chainConfig.ID, err)
-		}
-
-		err = addressGenerator.Generate(chainDeployment, chainConfig.ID, configPath)
-		if err != nil {
-			return "", fmt.Errorf("failed to generator addresses for chain %d: %w", chainConfig.ID, err)
+			return fmt.Errorf("failed to generate password for chain %d: %w", chainConfig.ID, err)
 		}
 
 		if err := contractsGen.GeneratePlaceholders(configPath, chainConfig.ID); err != nil {
-			return "", fmt.Errorf("failed to generate contract placeholders for chain %d: %w", chainConfig.ID, err)
+			return fmt.Errorf("failed to generate contract placeholders for chain %d: %w", chainConfig.ID, err)
 		}
 
 		if err := runtimeGen.Generate(stateDeployment.ImplementationsDeployment.DisputeGameFactoryImplAddress, configPath); err != nil {
-			return "", fmt.Errorf("failed to generate runtime file, %w", err)
+			return fmt.Errorf("failed to generate runtime file, %w", err)
 		}
-
 	}
 
 	o.logger.Info("Phase 2: L2 configuration generation completed successfully")
 
-	return disputeGameFactoryImplAddress, nil
+	return nil
 }
