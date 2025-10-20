@@ -23,7 +23,7 @@ type OpChainDeployment struct {
 	StartBlock                     StartBlock `json:"startBlock"`
 }
 
-// StartBlock represents the L1 block 
+// StartBlock represents the L1 block
 // where the rollup starts
 type StartBlock struct {
 	Hash   string `json:"hash"`

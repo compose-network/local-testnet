@@ -4,7 +4,7 @@
 
 ## ✨ Introduction
 
-Localnet Control Plane is a CLI tool for managing local L1 and L2 Ethereum test networks. It provides a complete local development environment for testing Ethereum applications with multiple L2 rollups.
+Local testnet is a CLI tool for managing local L1 and L2 Ethereum test networks. It provides a complete local development environment for testing Ethereum applications with multiple L2 rollups.
 
 ## 📋 Prerequisites
 

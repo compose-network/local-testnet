@@ -39,20 +39,23 @@ func (c *Service) Deploy(ctx context.Context, cfg configs.L2) error {
 		return fmt.Errorf("failed to clone repositories: %w", err)
 	}
 
+	c.logger.Info("running phase 1 - L1 deployments")
 	l1Orchestrator := l1deployment.NewOrchestrator(c.rootDir, c.stateDir)
-	deployment, err := l1Orchestrator.Execute(ctx, cfg)
+	deployment, gameFactoryAddr, err := l1Orchestrator.Execute(ctx, cfg)
 	if err != nil {
 		return fmt.Errorf("phase 1 failed: %w", err)
 	}
 
+	c.logger.Info("running phase 2 - L2 config generation")
 	l2ConfigOrchestrator := l2config.NewOrchestrator(c.rootDir, c.stateDir, c.networksDir)
 	err = l2ConfigOrchestrator.Execute(ctx, cfg, deployment)
 	if err != nil {
 		return fmt.Errorf("phase 2 failed: %w", err)
 	}
 
+	c.logger.Info("running phase 3 - L2 launch")
 	l2Orchestrator := l2runtime.NewOrchestrator(c.rootDir, c.networksDir)
-	if err := l2Orchestrator.Execute(ctx, cfg); err != nil {
+	if err := l2Orchestrator.Execute(ctx, cfg, gameFactoryAddr); err != nil {
 		return fmt.Errorf("phase 3 failed: %w", err)
 	}
 

@@ -30,3 +30,13 @@ l2:
     publisher:
       url: https://github.com/publisher.git
       branch: main
+  dispute:
+    network-name: "network-name"
+    explorer-url: "http://127.0.0.1:8080"
+    explorer-api-url: "http://127.0.0.1:8080/api"
+    verifier-address: "0x0000000000000000000000000000000000000000000" 
+    owner-address: "0x0000000000000000000000000000000000000000000" # can be equal to wallet.address
+    proposer-address: "0x0000000000000000000000000000000000000000000" # can be equal to wallet.address
+    aggregation-vkey: "0x0000000000000000000000000000000000000000000000000000000000000000"
+    admin-address: "0x0000000000000000000000000000000000000000000" # can be equal to wallet.address
+    starting-superblock-number: 0
