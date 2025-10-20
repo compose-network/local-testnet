@@ -14,9 +14,9 @@ import (
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/ethdb/pebble"
 
-	"github.com/compose-network/localnet-control-plane/internal/l2/infra/docker"
-	"github.com/compose-network/localnet-control-plane/internal/l2/infra/filesystem"
-	"github.com/compose-network/localnet-control-plane/internal/logger"
+	"github.com/compose-network/local-testnet/internal/l2/infra/docker"
+	"github.com/compose-network/local-testnet/internal/l2/infra/filesystem"
+	"github.com/compose-network/local-testnet/internal/logger"
 )
 
 const genesisFileName = "genesis.json"

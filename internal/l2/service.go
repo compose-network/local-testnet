@@ -6,12 +6,12 @@ import (
 	"log/slog"
 	"path/filepath"
 
-	"github.com/compose-network/localnet-control-plane/configs"
-	"github.com/compose-network/localnet-control-plane/internal/l2/infra/git"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l1deployment"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l2config"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l2runtime"
-	"github.com/compose-network/localnet-control-plane/internal/logger"
+	"github.com/compose-network/local-testnet/configs"
+	"github.com/compose-network/local-testnet/internal/l2/infra/git"
+	"github.com/compose-network/local-testnet/internal/l2/l1deployment"
+	"github.com/compose-network/local-testnet/internal/l2/l2config"
+	"github.com/compose-network/local-testnet/internal/l2/l2runtime"
+	"github.com/compose-network/local-testnet/internal/logger"
 )
 
 // Service orchestrates the entire L2 deployment process

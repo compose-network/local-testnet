@@ -6,11 +6,11 @@ import (
 	"log/slog"
 	"path/filepath"
 
-	"github.com/compose-network/localnet-control-plane/configs"
-	"github.com/compose-network/localnet-control-plane/internal/l2/infra/docker"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l2runtime/contracts"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l2runtime/services"
-	"github.com/compose-network/localnet-control-plane/internal/logger"
+	"github.com/compose-network/local-testnet/configs"
+	"github.com/compose-network/local-testnet/internal/l2/infra/docker"
+	"github.com/compose-network/local-testnet/internal/l2/l2runtime/contracts"
+	"github.com/compose-network/local-testnet/internal/l2/l2runtime/services"
+	"github.com/compose-network/local-testnet/internal/logger"
 )
 
 // Orchestrator coordinates Phase 3: L2 runtime operations

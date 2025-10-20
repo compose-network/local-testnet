@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/compose-network/localnet-control-plane/configs"
-	"github.com/compose-network/localnet-control-plane/internal/l2/domain"
-	"github.com/compose-network/localnet-control-plane/internal/l2/infra/docker"
-	"github.com/compose-network/localnet-control-plane/internal/l2/infra/filesystem/json"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l1deployment/deployer"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l2config/crypto"
-	"github.com/compose-network/localnet-control-plane/internal/logger"
+	"github.com/compose-network/local-testnet/configs"
+	"github.com/compose-network/local-testnet/internal/l2/domain"
+	"github.com/compose-network/local-testnet/internal/l2/infra/docker"
+	"github.com/compose-network/local-testnet/internal/l2/infra/filesystem/json"
+	"github.com/compose-network/local-testnet/internal/l2/l1deployment/deployer"
+	"github.com/compose-network/local-testnet/internal/l2/l2config/crypto"
+	"github.com/compose-network/local-testnet/internal/logger"
 )
 
 /*

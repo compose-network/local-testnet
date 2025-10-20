@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/compose-network/localnet-control-plane/internal/l2/domain"
-	"github.com/compose-network/localnet-control-plane/internal/l2/infra/filesystem"
-	"github.com/compose-network/localnet-control-plane/internal/logger"
+	"github.com/compose-network/local-testnet/internal/l2/domain"
+	"github.com/compose-network/local-testnet/internal/l2/infra/filesystem"
+	"github.com/compose-network/local-testnet/internal/logger"
 )
 
 const stateFile = "state.json"
