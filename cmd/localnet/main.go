@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-const appName = "localnet-control-plane"
+const appName = "local-testnet"
 
 var rootCmd = &cobra.Command{
 	Use:   appName,

@@ -20,7 +20,7 @@ Localnet Control Plane is a CLI tool for managing local L1 and L2 Ethereum test 
 git clone https://github.com/compose-network/local-testnet.git
 
 # Navigate
-cd localnet-control-plane
+cd local-testnet
 
 # Build the binary
 make build
