@@ -6,11 +6,13 @@ import (
 	"os"
 
 	"github.com/compose-network/localnet-control-plane/configs"
+	"github.com/compose-network/localnet-control-plane/internal/l2/bridge"
 	"github.com/spf13/cobra"
 )
 
 func init() {
 	CMD.AddCommand(compileCmd)
+	CMD.AddCommand(bridge.CMD)
 }
 
 var CMD = &cobra.Command{

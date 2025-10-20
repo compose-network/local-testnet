@@ -73,6 +73,11 @@ clean-l2:
 run-l2-compile: build
 	${BINARY_PATH} l2 compile
 
+## Bridge commands ##
+.PHONY: bridge-send
+bridge-send: build
+	${BINARY_PATH} l2 bridge send
+
 ## Generate Go bindings from compiled contracts ##
 CONTRACTS_JSON=./internal/l2/l2runtime/contracts/compiled/contracts.json
 BINDINGS_DIR=./internal/l2/l2runtime/contracts/bindings
@@ -113,6 +118,30 @@ generate-bindings:
 	@echo "  ✓ Generated: $(BINDINGS_DIR)/mytoken.go"
 	@echo ""
 	@echo "✓ Bindings generated successfully in $(BINDINGS_DIR)"
+
+## Generate protobuf Go code ##
+PROTO_DIR=./internal/l2/proto
+PROTO_FILE=$(PROTO_DIR)/rollup/v1/messages.proto
+
+.PHONY: generate-proto
+generate-proto:
+	@echo "Generating protobuf Go code..."
+	@if ! command -v protoc >/dev/null 2>&1; then \
+		echo "Error: protoc not found. Install with:"; \
+		echo "  brew install protobuf (macOS)"; \
+		echo "  apt-get install protobuf-compiler (Linux)"; \
+		exit 1; \
+	fi
+	@if ! command -v protoc-gen-go >/dev/null 2>&1; then \
+		echo "Error: protoc-gen-go not found. Install with:"; \
+		echo "  go install google.golang.org/protobuf/cmd/protoc-gen-go@latest"; \
+		exit 1; \
+	fi
+	@echo "Generating from $(PROTO_FILE)..."
+	@protoc --go_out=. --go_opt=paths=source_relative $(PROTO_FILE)
+	@echo "  ✓ Generated: $(PROTO_DIR)/rollup/v1/messages.pb.go"
+	@echo ""
+	@echo "✓ Protobuf code generated successfully"
 
 ######
 

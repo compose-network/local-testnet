@@ -11,10 +11,10 @@ l2:
     private-key: 0000000000000000000000000000000000000000000000000000000000000000
     address: 0x0000000000000000000000000000000000000000000
   chain-configs:
-    rollup-a: 
+    rollup-a:
       id: 77777
       rpc-port: 18545
-    rollup-b: 
+    rollup-b:
       id: 88888
       rpc-port: 28545
   deployment-target: live  # "live" or "calldata"
