@@ -12,6 +12,8 @@ Local testnet is a CLI tool for managing local L1 and L2 Ethereum test networks.
 - Go 1.25+
 - Kurtosis (for L1 network)
 - Foundry/Forge (for L2 contract compilation)
+- [just](https://github.com/casey/just) (for L2 contract deployment)
+- jq (for L2 contract deployment)
 
 ## ⚙️  How to Build
 
