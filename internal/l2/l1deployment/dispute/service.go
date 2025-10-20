@@ -13,6 +13,7 @@ import (
 
 	"github.com/compose-network/local-testnet/configs"
 	"github.com/compose-network/local-testnet/internal/logger"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // Service handles dispute game factory deployment
@@ -26,12 +27,9 @@ type Service struct {
 
 // NewService creates a new dispute deployment service
 func NewService(rootDir string, cfg configs.L2) *Service {
-	// Contracts are located in the L1-settlement subdirectory
-	contractsDir := filepath.Join(rootDir, "internal", "l2", "services", string(configs.RepositoryNameComposeContracts), "L1-settlement")
-
 	return &Service{
 		rootDir:      rootDir,
-		contractsDir: contractsDir,
+		contractsDir: filepath.Join(rootDir, "internal", "l2", "services", string(configs.RepositoryNameComposeContracts), "L1-settlement"),
 		deployerPK:   cfg.Wallet.PrivateKey,
 		cfg:          cfg,
 		logger:       logger.Named("dispute_deployer"),
@@ -39,47 +37,42 @@ func NewService(rootDir string, cfg configs.L2) *Service {
 }
 
 // Deploy executes the full deployment workflow and returns DisputeGameFactory proxy address
-func (s *Service) Deploy(ctx context.Context) (string, error) {
+func (s *Service) Deploy(ctx context.Context) (common.Address, error) {
 	s.logger.Info("starting dispute contracts deployment")
 
 	if _, err := os.Stat(s.contractsDir); os.IsNotExist(err) {
-		return "", fmt.Errorf("L1-settlement directory not found at %s. Make sure compose-contracts repository is cloned first", s.contractsDir)
-	}
-
-	justfilePath := filepath.Join(s.contractsDir, "justfile")
-	if _, err := os.Stat(justfilePath); os.IsNotExist(err) {
-		return "", fmt.Errorf("justfile not found in %s. The compose-contracts/L1-settlement may not be properly set up", s.contractsDir)
+		return common.Address{}, fmt.Errorf("L1-settlement directory not found at %s. Make sure compose-contracts repository is cloned first", s.contractsDir)
 	}
 
 	s.logger.Info("generating networks.toml")
 	if err := s.generateNetworksToml(); err != nil {
-		return "", fmt.Errorf("failed to generate networks.toml: %w", err)
+		return common.Address{}, fmt.Errorf("failed to generate networks.toml: %w", err)
 	}
 
 	s.logger.Info("generating .env file")
 	if err := s.generateEnvFile(); err != nil {
-		return "", fmt.Errorf("failed to generate .env file: %w", err)
+		return common.Address{}, fmt.Errorf("failed to generate .env file: %w", err)
 	}
 
 	s.logger.Info("running just setup")
 	if err := s.runJustCommand(ctx, "setup"); err != nil {
-		return "", fmt.Errorf("failed to run just setup: %w", err)
+		return common.Address{}, fmt.Errorf("failed to run just setup: %w", err)
 	}
 
 	s.logger.Info("running just build")
 	if err := s.runJustCommand(ctx, "build"); err != nil {
-		return "", fmt.Errorf("failed to run just build: %w", err)
+		return common.Address{}, fmt.Errorf("failed to run just build: %w", err)
 	}
 
-	s.logger.Info("running just deploy-network localnet")
-	if err := s.runJustCommand(ctx, "deploy-network", "localnet"); err != nil {
-		return "", fmt.Errorf("failed to deploy to localnet: %w", err)
+	s.logger.Info("running just deploy")
+	if err := s.runJustCommand(ctx, "deploy-network", s.cfg.Dispute.NetworkName); err != nil {
+		return common.Address{}, fmt.Errorf("failed to deploy network '%s': %w", s.cfg.Dispute.NetworkName, err)
 	}
 
 	s.logger.Info("parsing deployments.json")
 	addr, err := s.parseDisputeGameFactoryAddress()
 	if err != nil {
-		return "", fmt.Errorf("failed to parse DisputeGameFactory address: %w", err)
+		return common.Address{}, fmt.Errorf("failed to parse DisputeGameFactory address: %w", err)
 	}
 
 	s.logger.With("address", addr).Info("dispute contracts deployed successfully")
@@ -89,8 +82,7 @@ func (s *Service) Deploy(ctx context.Context) (string, error) {
 
 // generateNetworksToml creates networks.toml from template and config
 func (s *Service) generateNetworksToml() error {
-	templatePath := filepath.Join(s.rootDir, "internal", "l2", "l1deployment", "dispute", "networks.tmpl")
-	tmpl, err := template.ParseFiles(templatePath)
+	tmpl, err := template.ParseFiles(filepath.Join(s.rootDir, "internal", "l2", "l1deployment", "dispute", "networks.tmpl"))
 	if err != nil {
 		return fmt.Errorf("failed to parse template file: %w", err)
 	}
@@ -189,12 +181,12 @@ func (s *Service) runJustCommand(ctx context.Context, args ...string) error {
 }
 
 // parseDisputeGameFactoryAddress reads deployments.json and extracts DisputeGameFactory proxy address
-func (s *Service) parseDisputeGameFactoryAddress() (string, error) {
+func (s *Service) parseDisputeGameFactoryAddress() (common.Address, error) {
 	deploymentsPath := filepath.Join(s.contractsDir, "deployments.json")
 
 	data, err := os.ReadFile(deploymentsPath)
 	if err != nil {
-		return "", fmt.Errorf("failed to read deployments.json: %w", err)
+		return common.Address{}, fmt.Errorf("failed to read deployments.json: %w", err)
 	}
 
 	var deployments map[string]struct {
@@ -204,17 +196,17 @@ func (s *Service) parseDisputeGameFactoryAddress() (string, error) {
 	}
 
 	if err := json.Unmarshal(data, &deployments); err != nil {
-		return "", fmt.Errorf("failed to parse deployments.json: %w", err)
+		return common.Address{}, fmt.Errorf("failed to parse deployments.json: %w", err)
 	}
 
-	localnet, ok := deployments["localnet"]
+	network, ok := deployments[s.cfg.Dispute.NetworkName]
 	if !ok {
-		return "", fmt.Errorf("localnet deployment not found in deployments.json")
+		return common.Address{}, fmt.Errorf("%s deployment not found in deployments.json", s.cfg.Dispute.NetworkName)
 	}
 
-	if localnet.DisputeGameFactory.Proxy == "" {
-		return "", fmt.Errorf("DisputeGameFactory proxy address is empty")
+	if network.DisputeGameFactory.Proxy == "" {
+		return common.Address{}, fmt.Errorf("DisputeGameFactory proxy address is empty")
 	}
 
-	return localnet.DisputeGameFactory.Proxy, nil
+	return common.HexToAddress(network.DisputeGameFactory.Proxy), nil
 }

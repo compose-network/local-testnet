@@ -19,7 +19,7 @@ l2:
       rpc-port: 28545
   deployment-target: live  # "live" or "calldata"
   genesis-balance-wei: "100000000000000000"  # 0.1 ETH for funded accounts
-  op-deployer-version: 1.0.0
+  op-deployer-version: 1.0.0 #https://github.com/ethereum-optimism/optimism/releases
   repositories:
     op-geth:
       url: https://github.com/op-geth.git
@@ -31,9 +31,9 @@ l2:
       url: https://github.com/publisher.git
       branch: main
   dispute:
-    network-name: "network-name"
-    explorer-url: "http://127.0.0.1:8080"
-    explorer-api-url: "http://127.0.0.1:8080/api"
+    network-name: network-name # e.g. hoodi
+    explorer-url: http://127.0.0.1:8080 # e.g. http://hoodi.etherscan.io
+    explorer-api-url: http://127.0.0.1:8080/api # e.g. http://hoodi.etherscan.io/api
     verifier-address: "0x0000000000000000000000000000000000000000000" 
     owner-address: "0x0000000000000000000000000000000000000000000" # can be equal to wallet.address
     proposer-address: "0x0000000000000000000000000000000000000000000" # can be equal to wallet.address

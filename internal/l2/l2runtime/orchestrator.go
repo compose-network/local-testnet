@@ -11,6 +11,7 @@ import (
 	"github.com/compose-network/local-testnet/internal/l2/l2runtime/contracts"
 	"github.com/compose-network/local-testnet/internal/l2/l2runtime/services"
 	"github.com/compose-network/local-testnet/internal/logger"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // Orchestrator coordinates Phase 3: L2 runtime operations
@@ -35,7 +36,7 @@ func NewOrchestrator(rootDir, networksDir string) *Orchestrator {
 }
 
 // Execute runs Phase 3: Build images, start services, deploy contracts
-func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryAddr string) error {
+func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryAddr common.Address) error {
 	o.logger.Info("Phase 3: Starting L2 runtime operations")
 
 	env := o.buildDockerComposeEnv(cfg, gameFactoryAddr)
@@ -70,7 +71,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryA
 }
 
 // buildDockerComposeEnv creates environment variables for docker-compose
-func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr string) map[string]string {
+func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr common.Address) map[string]string {
 	env := make(map[string]string)
 
 	env["ROOT_DIR"] = o.rootDir
@@ -93,7 +94,7 @@ func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr str
 	env["ROLLUP_B_CHAIN_ID"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupB].ID)
 	env["ROLLUP_B_RPC_PORT"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupB].RPCPort)
 
-	env["SP_L1_DISPUTE_GAME_FACTORY"] = gameFactoryAddr
+	env["SP_L1_DISPUTE_GAME_FACTORY"] = gameFactoryAddr.Hex()
 
 	return env
 }
