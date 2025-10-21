@@ -30,6 +30,9 @@ l2:
     publisher:
       url: https://github.com/publisher.git
       branch: main
+    compose-contracts:
+      url: https://github.com/contracts.git
+      branch: main
   dispute:
     network-name: network-name # e.g. hoodi
     explorer-url: http://127.0.0.1:8080 # e.g. http://hoodi.etherscan.io
