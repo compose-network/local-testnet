@@ -31,6 +31,19 @@ type (
 		DeploymentTarget      string                        `mapstructure:"deployment-target"`
 		GenesisBalanceWei     string                        `mapstructure:"genesis-balance-wei"`
 		OPDeployerVersion     string                        `mapstructure:"op-deployer-version"`
+		Dispute               DisputeConfig                 `mapstructure:"dispute"`
+	}
+
+	DisputeConfig struct {
+		NetworkName              string `mapstructure:"network-name"`
+		ExplorerURL              string `mapstructure:"explorer-url"`
+		ExplorerAPIURL           string `mapstructure:"explorer-api-url"`
+		VerifierAddress          string `mapstructure:"verifier-address"`
+		OwnerAddress             string `mapstructure:"owner-address"`
+		ProposerAddress          string `mapstructure:"proposer-address"`
+		AggregationVkey          string `mapstructure:"aggregation-vkey"`
+		StartingSuperblockNumber int    `mapstructure:"starting-superblock-number"`
+		AdminAddress             string `mapstructure:"admin-address"`
 	}
 
 	ChainConfig struct {
@@ -53,9 +66,10 @@ type (
 )
 
 const (
-	RepositoryNameOpGeth    RepositoryName = "op-geth"
-	RepositoryNameOptimism  RepositoryName = "optimism"
-	RepositoryNamePublisher RepositoryName = "publisher"
+	RepositoryNameOpGeth           RepositoryName = "op-geth"
+	RepositoryNameOptimism         RepositoryName = "optimism"
+	RepositoryNamePublisher        RepositoryName = "publisher"
+	RepositoryNameComposeContracts RepositoryName = "compose-contracts"
 
 	L2ChainNameRollupA L2ChainName = "rollup-a"
 	L2ChainNameRollupB L2ChainName = "rollup-b"
@@ -131,6 +145,26 @@ func (c *L2) Validate() error {
 
 	if c.OPDeployerVersion == "" {
 		errs = append(errs, errors.New("l2.op-deployer-version is required"))
+	}
+
+	// Validate dispute config
+	if c.Dispute.NetworkName == "" {
+		errs = append(errs, errors.New("l2.dispute.network-name is required"))
+	}
+	if c.Dispute.VerifierAddress == "" {
+		errs = append(errs, errors.New("l2.dispute.verifier-address is required"))
+	}
+	if c.Dispute.OwnerAddress == "" {
+		errs = append(errs, errors.New("l2.dispute.owner-address is required"))
+	}
+	if c.Dispute.ProposerAddress == "" {
+		errs = append(errs, errors.New("l2.dispute.proposer-address is required"))
+	}
+	if c.Dispute.AggregationVkey == "" {
+		errs = append(errs, errors.New("l2.dispute.aggregation-vkey is required"))
+	}
+	if c.Dispute.AdminAddress == "" {
+		errs = append(errs, errors.New("l2.dispute.admin-address is required"))
 	}
 
 	if len(errs) > 0 {

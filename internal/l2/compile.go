@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/compose-network/localnet-control-plane/configs"
-	"github.com/compose-network/localnet-control-plane/internal/l2/infra/git"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l2runtime/contracts"
+	"github.com/compose-network/local-testnet/configs"
+	"github.com/compose-network/local-testnet/internal/l2/infra/git"
+	"github.com/compose-network/local-testnet/internal/l2/l2runtime/contracts"
 	"github.com/spf13/cobra"
 )
 

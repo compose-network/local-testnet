@@ -4,7 +4,7 @@
 
 ## ✨ Introduction
 
-Localnet Control Plane is a CLI tool for managing local L1 and L2 Ethereum test networks. It provides a complete local development environment for testing Ethereum applications with multiple L2 rollups.
+Local testnet is a CLI tool for managing local L1 and L2 Ethereum test networks. It provides a complete local development environment for testing Ethereum applications with multiple L2 rollups.
 
 ## 📋 Prerequisites
 
@@ -12,6 +12,8 @@ Localnet Control Plane is a CLI tool for managing local L1 and L2 Ethereum test 
 - Go 1.25+
 - Kurtosis (for L1 network)
 - Foundry/Forge (for L2 contract compilation)
+- [just](https://github.com/casey/just) (for L2 contract deployment)
+- jq (for L2 contract deployment)
 
 ## ⚙️  How to Build
 
@@ -20,7 +22,7 @@ Localnet Control Plane is a CLI tool for managing local L1 and L2 Ethereum test 
 git clone https://github.com/compose-network/local-testnet.git
 
 # Navigate
-cd localnet-control-plane
+cd local-testnet
 
 # Build the binary
 make build

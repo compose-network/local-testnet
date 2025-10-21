@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/compose-network/localnet-control-plane/internal/logger"
+	"github.com/compose-network/local-testnet/internal/logger"
 )
 
 // Repository represents a git repository to clone
