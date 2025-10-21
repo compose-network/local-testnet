@@ -1,4 +1,4 @@
-module github.com/compose-network/localnet-control-plane
+module github.com/compose-network/local-testnet
 
 go 1.25
 

@@ -6,12 +6,12 @@ import (
 	"log/slog"
 	"path/filepath"
 
-	"github.com/compose-network/localnet-control-plane/configs"
-	"github.com/compose-network/localnet-control-plane/internal/l2/infra/git"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l1deployment"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l2config"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l2runtime"
-	"github.com/compose-network/localnet-control-plane/internal/logger"
+	"github.com/compose-network/local-testnet/configs"
+	"github.com/compose-network/local-testnet/internal/l2/infra/git"
+	"github.com/compose-network/local-testnet/internal/l2/l1deployment"
+	"github.com/compose-network/local-testnet/internal/l2/l2config"
+	"github.com/compose-network/local-testnet/internal/l2/l2runtime"
+	"github.com/compose-network/local-testnet/internal/logger"
 )
 
 // Service orchestrates the entire L2 deployment process
@@ -39,20 +39,23 @@ func (c *Service) Deploy(ctx context.Context, cfg configs.L2) error {
 		return fmt.Errorf("failed to clone repositories: %w", err)
 	}
 
+	c.logger.Info("running phase 1 - L1 deployments")
 	l1Orchestrator := l1deployment.NewOrchestrator(c.rootDir, c.stateDir)
-	deployment, err := l1Orchestrator.Execute(ctx, cfg)
+	deploymentState, err := l1Orchestrator.Execute(ctx, cfg)
 	if err != nil {
 		return fmt.Errorf("phase 1 failed: %w", err)
 	}
 
+	c.logger.Info("running phase 2 - L2 config generation")
 	l2ConfigOrchestrator := l2config.NewOrchestrator(c.rootDir, c.stateDir, c.networksDir)
-	err = l2ConfigOrchestrator.Execute(ctx, cfg, deployment)
+	err = l2ConfigOrchestrator.Execute(ctx, cfg, deploymentState)
 	if err != nil {
 		return fmt.Errorf("phase 2 failed: %w", err)
 	}
 
+	c.logger.Info("running phase 3 - L2 launch")
 	l2Orchestrator := l2runtime.NewOrchestrator(c.rootDir, c.networksDir)
-	if err := l2Orchestrator.Execute(ctx, cfg); err != nil {
+	if err := l2Orchestrator.Execute(ctx, cfg, deploymentState.DisputeGameFactoryAddress); err != nil {
 		return fmt.Errorf("phase 3 failed: %w", err)
 	}
 

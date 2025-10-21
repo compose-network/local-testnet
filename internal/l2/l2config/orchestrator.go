@@ -6,18 +6,18 @@ import (
 	"log/slog"
 	"path/filepath"
 
-	"github.com/compose-network/localnet-control-plane/configs"
-	"github.com/compose-network/localnet-control-plane/internal/l2/domain"
-	"github.com/compose-network/localnet-control-plane/internal/l2/infra/docker"
-	"github.com/compose-network/localnet-control-plane/internal/l2/infra/filesystem/json"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l1deployment/deployer"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l2config/contracts"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l2config/crypto"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l2config/genesis"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l2config/rollup"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l2config/runtime"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l2config/secrets"
-	"github.com/compose-network/localnet-control-plane/internal/logger"
+	"github.com/compose-network/local-testnet/configs"
+	"github.com/compose-network/local-testnet/internal/l2/infra/docker"
+	"github.com/compose-network/local-testnet/internal/l2/infra/filesystem/json"
+	"github.com/compose-network/local-testnet/internal/l2/l1deployment"
+	"github.com/compose-network/local-testnet/internal/l2/l1deployment/deployer"
+	"github.com/compose-network/local-testnet/internal/l2/l2config/contracts"
+	"github.com/compose-network/local-testnet/internal/l2/l2config/crypto"
+	"github.com/compose-network/local-testnet/internal/l2/l2config/genesis"
+	"github.com/compose-network/local-testnet/internal/l2/l2config/rollup"
+	"github.com/compose-network/local-testnet/internal/l2/l2config/runtime"
+	"github.com/compose-network/local-testnet/internal/l2/l2config/secrets"
+	"github.com/compose-network/local-testnet/internal/logger"
 )
 
 // Orchestrator coordinates Phase 2: L2 configuration generation
@@ -45,7 +45,7 @@ func NewOrchestrator(rootDir, stateDir, networksDir string) *Orchestrator {
 }
 
 // Execute runs Phase 2: Generate all L2 configuration files
-func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, stateDeployment *domain.DeploymentState) error {
+func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, deploymentState l1deployment.DeploymentState) error {
 	o.logger.Info("Phase 2: Starting L2 configuration generation")
 
 	dockerClient, err := docker.New()
@@ -71,15 +71,9 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, stateDeploym
 		logger := o.logger.With("chain_name", chainName).With("chain_id", chainConfig.ID)
 		logger.Info("generating l2 chain configuration")
 
-		var chainDeployment *domain.OpChainDeployment
-		for _, deployment := range stateDeployment.OpChainDeployments {
-			if deployment.ID == fmt.Sprintf("0x%064x", chainConfig.ID) {
-				chainDeployment = &deployment
-				break
-			}
-		}
-		if chainDeployment == nil {
-			return fmt.Errorf("chain deployment not found for chain ID %d", chainConfig.ID)
+		startBlock, ok := deploymentState.StartBlocks[chainName]
+		if !ok {
+			return fmt.Errorf("start block not found for chain %s", chainName)
 		}
 
 		sequencerAddress, err := crypto.AddressFromPrivateKey(cfg.CoordinatorPrivateKey)
@@ -101,7 +95,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, stateDeploym
 			return fmt.Errorf("failed to generate genesis for chain %d: %w", chainConfig.ID, err)
 		}
 
-		err = rollupGen.Generate(ctx, chainConfig.ID, configPath, genesisHash, chainDeployment.StartBlock.Hash, chainDeployment.StartBlock.Number)
+		err = rollupGen.Generate(ctx, chainConfig.ID, configPath, genesisHash, startBlock.Hash, startBlock.Number)
 		if err != nil {
 			return fmt.Errorf("failed to generate rollup for chain %d: %w", chainConfig.ID, err)
 		}
@@ -119,7 +113,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, stateDeploym
 			return fmt.Errorf("failed to generate contract placeholders for chain %d: %w", chainConfig.ID, err)
 		}
 
-		if err := runtimeGen.Generate(stateDeployment.ImplementationsDeployment.DisputeGameFactoryImplAddress, configPath); err != nil {
+		if err := runtimeGen.Generate(deploymentState.DisputeGameFactoryImplAddressOP.Hex(), configPath); err != nil {
 			return fmt.Errorf("failed to generate runtime file, %w", err)
 		}
 	}

@@ -6,11 +6,12 @@ import (
 	"log/slog"
 	"path/filepath"
 
-	"github.com/compose-network/localnet-control-plane/configs"
-	"github.com/compose-network/localnet-control-plane/internal/l2/infra/docker"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l2runtime/contracts"
-	"github.com/compose-network/localnet-control-plane/internal/l2/l2runtime/services"
-	"github.com/compose-network/localnet-control-plane/internal/logger"
+	"github.com/compose-network/local-testnet/configs"
+	"github.com/compose-network/local-testnet/internal/l2/infra/docker"
+	"github.com/compose-network/local-testnet/internal/l2/l2runtime/contracts"
+	"github.com/compose-network/local-testnet/internal/l2/l2runtime/services"
+	"github.com/compose-network/local-testnet/internal/logger"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // Orchestrator coordinates Phase 3: L2 runtime operations
@@ -35,10 +36,10 @@ func NewOrchestrator(rootDir, networksDir string) *Orchestrator {
 }
 
 // Execute runs Phase 3: Build images, start services, deploy contracts
-func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2) error {
+func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryAddr common.Address) error {
 	o.logger.Info("Phase 3: Starting L2 runtime operations")
 
-	env := o.buildDockerComposeEnv(cfg)
+	env := o.buildDockerComposeEnv(cfg, gameFactoryAddr)
 
 	o.logger.With("env", env).Info("environment variables were constructed. Building compose services")
 	if err := o.buildComposeServices(ctx, env); err != nil {
@@ -70,7 +71,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2) error {
 }
 
 // buildDockerComposeEnv creates environment variables for docker-compose
-func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2) map[string]string {
+func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr common.Address) map[string]string {
 	env := make(map[string]string)
 
 	env["ROOT_DIR"] = o.rootDir
@@ -93,7 +94,7 @@ func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2) map[string]string {
 	env["ROLLUP_B_CHAIN_ID"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupB].ID)
 	env["ROLLUP_B_RPC_PORT"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupB].RPCPort)
 
-	env["SP_L1_DISPUTE_GAME_FACTORY"] = "0x0000000000000000000000000000000000000000" //TODO: implement deployment feature
+	env["SP_L1_DISPUTE_GAME_FACTORY"] = gameFactoryAddr.Hex()
 
 	return env
 }

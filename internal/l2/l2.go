@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/compose-network/localnet-control-plane/configs"
+	"github.com/compose-network/local-testnet/configs"
 	"github.com/spf13/cobra"
 )
 

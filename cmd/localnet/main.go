@@ -4,16 +4,16 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/compose-network/localnet-control-plane/configs"
-	"github.com/compose-network/localnet-control-plane/internal/l1"
-	"github.com/compose-network/localnet-control-plane/internal/l2"
-	"github.com/compose-network/localnet-control-plane/internal/logger"
-	"github.com/compose-network/localnet-control-plane/internal/observability"
+	"github.com/compose-network/local-testnet/configs"
+	"github.com/compose-network/local-testnet/internal/l1"
+	"github.com/compose-network/local-testnet/internal/l2"
+	"github.com/compose-network/local-testnet/internal/logger"
+	"github.com/compose-network/local-testnet/internal/observability"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-const appName = "localnet-control-plane"
+const appName = "local-testnet"
 
 var rootCmd = &cobra.Command{
 	Use:   appName,
