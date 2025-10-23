@@ -151,33 +151,33 @@ func (d *Deployer) deployToChain(ctx context.Context, rpcURL, coordinatorPrivate
 		return nil, fmt.Errorf("failed to cast public key to ECDSA")
 	}
 
-	mailboxAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[ContractNameMailbox], crypto.PubkeyToAddress(*publicKeyECDSA), chainID)
+	mailboxAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[ContractNameMailbox], crypto.PubkeyToAddress(*publicKeyECDSA))
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy Mailbox: %w", err)
 	}
 	addresses[ContractNameMailbox] = mailboxAddr.Hex()
-	d.logger.Info("deployed Mailbox", "address", mailboxAddr.Hex())
+	d.logger.Info("deployed", "contract", ContractNameMailbox, "address", mailboxAddr.Hex())
 
 	pingPongAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[ContractNamePingPong], mailboxAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy PingPong: %w", err)
 	}
 	addresses[ContractNamePingPong] = pingPongAddr.Hex()
-	d.logger.Info("deployed PingPong", "address", pingPongAddr.Hex())
+	d.logger.Info("deployed", "contract", ContractNamePingPong, "address", pingPongAddr.Hex())
 
 	bridgeAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[ContractNameBridge], mailboxAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy Bridge: %w", err)
 	}
 	addresses[ContractNameBridge] = bridgeAddr.Hex()
-	d.logger.Info("deployed Bridge", "address", bridgeAddr.Hex())
+	d.logger.Info("deployed", "contract", ContractNameBridge, "address", bridgeAddr.Hex())
 
-	myTokenAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[ContractNameBridgeableToken])
+	tokenAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[ContractNameBridgeableToken], bridgeAddr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to deploy MyToken: %w", err)
+		return nil, fmt.Errorf("failed to deploy BridgeableToken: %w", err)
 	}
-	addresses[ContractNameBridgeableToken] = myTokenAddr.Hex()
-	d.logger.Info("deployed MyToken", "address", myTokenAddr.Hex())
+	addresses[ContractNameBridgeableToken] = tokenAddr.Hex()
+	d.logger.Info("deployed", "contract", ContractNameBridgeableToken, "address", tokenAddr.Hex())
 
 	return addresses, nil
 }
