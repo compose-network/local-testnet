@@ -146,12 +146,12 @@ func (d *Deployer) deployToChain(ctx context.Context, rpcURL, coordinatorPrivate
 
 	d.logger.Info("deploying contracts")
 
-	publicKeyECDSA, ok := privateKey.Public().(*ecdsa.PublicKey)
+	coordinatorPubKey, ok := privateKey.Public().(*ecdsa.PublicKey)
 	if !ok {
 		return nil, fmt.Errorf("failed to cast public key to ECDSA")
 	}
 
-	mailboxAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[ContractNameMailbox], crypto.PubkeyToAddress(*publicKeyECDSA))
+	mailboxAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[ContractNameMailbox], crypto.PubkeyToAddress(*coordinatorPubKey))
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy Mailbox: %w", err)
 	}
@@ -178,6 +178,13 @@ func (d *Deployer) deployToChain(ctx context.Context, rpcURL, coordinatorPrivate
 	}
 	addresses[ContractNameBridgeableToken] = tokenAddr.Hex()
 	d.logger.Info("deployed", "contract", ContractNameBridgeableToken, "address", tokenAddr.Hex())
+
+	stagedMailboxAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[ContractNameStagedMailbox], crypto.PubkeyToAddress(*coordinatorPubKey))
+	if err != nil {
+		return nil, fmt.Errorf("failed to deploy StagedMailbox: %w", err)
+	}
+	addresses[ContractNameStagedMailbox] = stagedMailboxAddr.Hex()
+	d.logger.Info("deployed", "contract", ContractNameStagedMailbox, "address", stagedMailboxAddr.Hex())
 
 	return addresses, nil
 }
