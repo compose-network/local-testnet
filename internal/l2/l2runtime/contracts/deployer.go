@@ -70,7 +70,7 @@ func (d *Deployer) deployContracts(ctx context.Context, chainConfigs map[configs
 
 	d.logger.With("len", len(compiledContracts)).Info("precompiled contracts loaded")
 
-	addresses := make([]map[contractName]string, 0)
+	addresses := make([]map[ContractName]string, 0)
 	for chainName, chainConfig := range chainConfigs {
 		url := fmt.Sprintf("http://localhost:%d", chainConfig.RPCPort)
 		d.logger.With("chain_name", chainName).With("url", url).Info("waiting for rollup RPC")
@@ -122,7 +122,7 @@ func waitForRPC(ctx context.Context, url string) error {
 	return fmt.Errorf("timed out waiting for RPC at %s", url)
 }
 
-func (d *Deployer) deployToChain(ctx context.Context, rpcURL, coordinatorPrivateKey string, contracts map[contractName]compiledContract) (map[contractName]string, error) {
+func (d *Deployer) deployToChain(ctx context.Context, rpcURL, coordinatorPrivateKey string, contracts map[ContractName]CompiledContract) (map[ContractName]string, error) {
 	d.logger.With("url", rpcURL).Info("dialing the L2 RPC")
 	client, err := ethclient.DialContext(ctx, rpcURL)
 	if err != nil {
@@ -142,7 +142,7 @@ func (d *Deployer) deployToChain(ctx context.Context, rpcURL, coordinatorPrivate
 	}
 	d.logger.With("chain_id", chainID).Info("chain ID was fetched")
 
-	addresses := make(map[contractName]string)
+	addresses := make(map[ContractName]string)
 
 	d.logger.Info("deploying contracts")
 
@@ -151,38 +151,38 @@ func (d *Deployer) deployToChain(ctx context.Context, rpcURL, coordinatorPrivate
 		return nil, fmt.Errorf("failed to cast public key to ECDSA")
 	}
 
-	mailboxAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[contractNameMailbox], crypto.PubkeyToAddress(*publicKeyECDSA), chainID)
+	mailboxAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[ContractNameMailbox], crypto.PubkeyToAddress(*publicKeyECDSA), chainID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy Mailbox: %w", err)
 	}
-	addresses[contractNameMailbox] = mailboxAddr.Hex()
+	addresses[ContractNameMailbox] = mailboxAddr.Hex()
 	d.logger.Info("deployed Mailbox", "address", mailboxAddr.Hex())
 
-	pingPongAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[contractNamePingPong], mailboxAddr)
+	pingPongAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[ContractNamePingPong], mailboxAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy PingPong: %w", err)
 	}
-	addresses[contractNamePingPong] = pingPongAddr.Hex()
+	addresses[ContractNamePingPong] = pingPongAddr.Hex()
 	d.logger.Info("deployed PingPong", "address", pingPongAddr.Hex())
 
-	bridgeAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[contractNameBridge], mailboxAddr)
+	bridgeAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[ContractNameBridge], mailboxAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy Bridge: %w", err)
 	}
-	addresses[contractNameBridge] = bridgeAddr.Hex()
+	addresses[ContractNameBridge] = bridgeAddr.Hex()
 	d.logger.Info("deployed Bridge", "address", bridgeAddr.Hex())
 
-	myTokenAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[contractNameMyToken])
+	myTokenAddr, err := d.deployContract(ctx, client, privateKey, chainID, contracts[ContractNameBridgeableToken])
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy MyToken: %w", err)
 	}
-	addresses[contractNameMyToken] = myTokenAddr.Hex()
+	addresses[ContractNameBridgeableToken] = myTokenAddr.Hex()
 	d.logger.Info("deployed MyToken", "address", myTokenAddr.Hex())
 
 	return addresses, nil
 }
 
-func (d *Deployer) deployContract(ctx context.Context, client *ethclient.Client, privateKey *ecdsa.PrivateKey, chainID *big.Int, contract compiledContract, constructorArgs ...any) (common.Address, error) {
+func (d *Deployer) deployContract(ctx context.Context, client *ethclient.Client, privateKey *ecdsa.PrivateKey, chainID *big.Int, contract CompiledContract, constructorArgs ...any) (common.Address, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
@@ -224,7 +224,7 @@ func (d *Deployer) deployContract(ctx context.Context, client *ethclient.Client,
 	return address, nil
 }
 
-func writeContractJSON(path string, addresses map[contractName]string, chainID uint64) error {
+func writeContractJSON(path string, addresses map[ContractName]string, chainID uint64) error {
 	payload := map[string]any{
 		"chainInfo": map[string]any{
 			"chainId": chainID,
@@ -256,7 +256,7 @@ func writeJSON(path string, data any) error {
 	return nil
 }
 
-func addressesMatch(addresses ...map[contractName]string) bool {
+func addressesMatch(addresses ...map[ContractName]string) bool {
 	if len(addresses) < 2 {
 		return true
 	}
