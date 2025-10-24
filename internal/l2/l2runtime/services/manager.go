@@ -41,25 +41,6 @@ func (m *Manager) StartInitial(ctx context.Context, env map[string]string) error
 	return nil
 }
 
-// RestartInitial restarts publisher and op-geth after contract deployment
-func (m *Manager) RestartInitial(ctx context.Context, env map[string]string) error {
-	services := []string{
-		"publisher",
-		"op-geth-a",
-		"op-geth-b",
-	}
-
-	m.logger.With("services", services).Info("restarting services to apply helper configuration")
-
-	if err := docker.ComposeRestart(ctx, env, services...); err != nil {
-		return fmt.Errorf("failed to restart initial services: %w", err)
-	}
-
-	m.logger.Info("initial services restarted successfully")
-
-	return nil
-}
-
 // StartFinal starts final services (op-node, batcher, proposer)
 func (m *Manager) StartFinal(ctx context.Context, env map[string]string) error {
 	finalServices := []string{

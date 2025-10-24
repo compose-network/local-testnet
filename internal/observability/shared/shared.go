@@ -4,7 +4,8 @@ import "github.com/docker/docker/api/types/container"
 
 const (
 	ObservabilityNetworkName = "observability-net"
-	LocalnetNetworkName      = "kt-localnet"
+	L1NetworkName            = "kt-localnet"
+	L2NetworkName            = "localnet-l2"
 )
 
 var (
