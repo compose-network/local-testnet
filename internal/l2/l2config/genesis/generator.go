@@ -102,7 +102,7 @@ func (g *Generator) Generate(ctx context.Context, chainID int, path string, wall
 	config["isthmusTime"] = 0
 
 	g.logger.Info("computing genesis hash")
-	hash, err := g.computeGenesisHash(ctx, genesis, coordinatorPrivateKey)
+	hash, err := g.computeGenesisHash(ctx, chainID, genesis, coordinatorPrivateKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to compute genesis hash: %w", err)
 	}
@@ -121,7 +121,7 @@ func (g *Generator) Generate(ctx context.Context, chainID int, path string, wall
 }
 
 // computeGenesisHash computes the genesis block hash
-func (g *Generator) computeGenesisHash(ctx context.Context, genesis map[string]any, coordinatorPrivateKey string) (string, error) {
+func (g *Generator) computeGenesisHash(ctx context.Context, chainID int, genesis map[string]any, coordinatorPrivateKey string) (string, error) {
 	tmpDir, err := os.MkdirTemp("", "genesis-*")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp dir: %w", err)
@@ -154,6 +154,7 @@ func (g *Generator) computeGenesisHash(ctx context.Context, genesis map[string]a
 	_, err = g.docker.Run(ctx, docker.RunOptions{
 		Image: opGethImage,
 		Cmd: []string{
+			fmt.Sprintf("--networkid=%d", chainID),
 			"init",
 			"--state.scheme=hash",
 			"--datadir=/datadir",

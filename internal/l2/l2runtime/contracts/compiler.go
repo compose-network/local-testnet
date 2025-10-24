@@ -31,7 +31,7 @@ func NewCompiler(contractsRootDir, outputDir string) *Compiler {
 }
 
 // Compile compiles Solidity contracts and persists the output
-func (c *Compiler) Compile(ctx context.Context) error {
+func (c *Compiler) Compile(ctx context.Context, contractNames []string) error {
 	c.logger.
 		With("contracts_dir", c.contractsRootDir).
 		Info("starting contract compilation")
@@ -42,7 +42,7 @@ func (c *Compiler) Compile(ctx context.Context) error {
 	}
 
 	jsonContracts := make(map[string]map[string]any)
-	for name := range contracts {
+	for _, name := range contractNames {
 		c.logger.With("name", name).Info("compiling contract")
 
 		abiJSON, bytecodeHex, err := c.compileContractRaw(ctx, name)
@@ -79,8 +79,8 @@ func (c *Compiler) installDependencies(ctx context.Context) error {
 }
 
 // compileContractRaw compiles a contract and returns raw JSON ABI and hex bytecode
-func (c *Compiler) compileContractRaw(ctx context.Context, contractName contractName) ([]byte, string, error) {
-	abiCmd := exec.CommandContext(ctx, "forge", "inspect", string(contractName), "abi", "--json")
+func (c *Compiler) compileContractRaw(ctx context.Context, contractName string) ([]byte, string, error) {
+	abiCmd := exec.CommandContext(ctx, "forge", "inspect", contractName, "abi", "--json")
 	// Forge automatically looks for contracts in src/ subdirectory relative to the working directory
 	abiCmd.Dir = c.contractsRootDir
 
@@ -94,7 +94,7 @@ func (c *Compiler) compileContractRaw(ctx context.Context, contractName contract
 		return nil, "", fmt.Errorf("failed to parse ABI for %s: %w", contractName, err)
 	}
 
-	bytecodeCmd := exec.CommandContext(ctx, "forge", "inspect", string(contractName), "bytecode")
+	bytecodeCmd := exec.CommandContext(ctx, "forge", "inspect", contractName, "bytecode")
 	bytecodeCmd.Dir = c.contractsRootDir
 
 	bytecodeOutput, err := bytecodeCmd.Output()

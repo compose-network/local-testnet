@@ -100,7 +100,7 @@ services:
         fi
         if [ ! -f /data/geth/chaindata/CURRENT ]; then
           echo '[*] initializing op-geth datadir'
-          GETH_COORDINATOR_KEY="$$COORDINATOR_KEY" geth init --state.scheme=hash --datadir /data /config/genesis.json
+          GETH_COORDINATOR_KEY="$$COORDINATOR_KEY" geth --networkid=$${ROLLUP_CHAIN_ID} init --state.scheme=hash --datadir /data /config/genesis.json
           if [ ! -d /data/keystore ] || [ -z $$(ls -A /data/keystore 2>/dev/null) ]; then
             if [ -n "$$WALLET_PRIVATE_KEY" ]; then
               printf '%s' "$${WALLET_PRIVATE_KEY}" | sed 's/^0x//' | geth account import --datadir /data --password /config/password.txt /dev/stdin >/dev/null
@@ -293,7 +293,7 @@ services:
         fi
         if [ ! -f /data/geth/chaindata/CURRENT ]; then
           echo '[*] initializing op-geth datadir'
-          GETH_COORDINATOR_KEY="$$COORDINATOR_KEY" geth init --state.scheme=hash --datadir /data /config/genesis.json
+          GETH_COORDINATOR_KEY="$$COORDINATOR_KEY" geth --networkid=$${ROLLUP_CHAIN_ID} init --state.scheme=hash --datadir /data /config/genesis.json
           if [ ! -d /data/keystore ] || [ -z $$(ls -A /data/keystore 2>/dev/null) ]; then
             if [ -n "$$WALLET_PRIVATE_KEY" ]; then
               printf '%s' "$${WALLET_PRIVATE_KEY}" | sed 's/^0x//' | geth account import --datadir /data --password /config/password.txt /dev/stdin >/dev/null
