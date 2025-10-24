@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func loadCompiledContracts(contractsDir string) (map[ContractName]CompiledContract, error) {
+func LoadCompiledContracts(contractsDir string) (map[ContractName]CompiledContract, error) {
 	compiledPath := filepath.Join(contractsDir, contractsFileName)
 	data, err := os.ReadFile(compiledPath)
 	if err != nil {
@@ -41,6 +41,7 @@ func loadCompiledContracts(contractsDir string) (map[ContractName]CompiledContra
 		if _, ok := Contracts[ContractName(name)]; ok {
 			loadedContracts[ContractName(name)] = CompiledContract{
 				ABI:      parsedABI,
+				RawABI:   string(contract.ABI),
 				Bytecode: bytecode,
 			}
 		}

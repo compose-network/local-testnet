@@ -3,10 +3,10 @@ module github.com/compose-network/local-testnet
 go 1.25
 
 require (
-	github.com/docker/docker v28.5.0+incompatible
-	github.com/docker/go-connections v0.5.0
-	github.com/ethereum/go-ethereum v1.16.4
-	github.com/kurtosis-tech/kurtosis/api/golang v1.11.1
+	github.com/docker/docker v28.5.1+incompatible
+	github.com/docker/go-connections v0.6.0
+	github.com/ethereum/go-ethereum v1.16.5
+	github.com/kurtosis-tech/kurtosis/api/golang v1.11.2
 	github.com/moby/go-archive v0.1.0
 )
 

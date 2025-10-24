@@ -8,6 +8,7 @@ type (
 	ContractName     string
 	CompiledContract struct {
 		ABI      abi.ABI
+		RawABI   string
 		Bytecode []byte
 	}
 )

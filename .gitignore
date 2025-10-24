@@ -194,3 +194,6 @@ internal/l2/networks/
 
 # Configuration file
 **/config.yaml
+
+# Output file
+output.yaml
