@@ -3,8 +3,10 @@ package l2
 import (
 	"fmt"
 	"log/slog"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/compose-network/local-testnet/configs"
 	"github.com/compose-network/local-testnet/internal/l2/infra/git"
@@ -14,8 +16,8 @@ import (
 
 var compileCmd = &cobra.Command{
 	Use:   "compile",
-	Short: "Compile L2 contracts from publisher repository",
-	Long:  "Compiles Solidity contracts from the publisher repository and generates contracts.json with ABIs and bytecodes",
+	Short: "Compile L2 contracts from contracts repository",
+	Long:  "Compiles Solidity contracts for L2 deployment and generates contracts.json with ABIs and bytecodes",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		slog.Info("running contract compilation command")
 		ctx := cmd.Context()
@@ -24,14 +26,15 @@ var compileCmd = &cobra.Command{
 			return fmt.Errorf("failed to get working directory: %w", err)
 		}
 
-		slog.With("name", configs.RepositoryNamePublisher).Info("fetching repository settings from configuration before cloning")
+		repositoryName := configs.RepositoryNameComposeContracts
+		slog.With("name", repositoryName).Info("fetching repository settings from configuration before cloning")
 		var (
-			publisherRepo git.Repository
+			contractsRepo git.Repository
 			found         bool
 		)
 		for name, repo := range configs.Values.L2.Repositories {
-			if name == configs.RepositoryNamePublisher {
-				publisherRepo = git.Repository{
+			if name == repositoryName {
+				contractsRepo = git.Repository{
 					Name: string(name),
 					URL:  repo.URL,
 					Ref:  repo.Branch,
@@ -41,23 +44,27 @@ var compileCmd = &cobra.Command{
 			}
 		}
 		if !found {
-			return fmt.Errorf("could not find: '%s' repository in the configuration", configs.RepositoryNamePublisher)
+			return fmt.Errorf("could not find: '%s' repository in the configuration", repositoryName)
 		}
 
 		slog.Info("cloning repositories")
 		cloner := git.NewCloner()
-		if err := cloner.Clone(ctx, filepath.Join(rootDir, "internal", "l2", "services"), publisherRepo); err != nil {
+		if err := cloner.Clone(ctx, filepath.Join(rootDir, "internal", "l2", "services"), contractsRepo); err != nil {
 			return fmt.Errorf("failed to clone repository: '%w'", err)
 		}
 
-		publisherContractsDir := filepath.Join(rootDir, "internal", "l2", "services", "publisher", "contracts")
 		compiler := contracts.NewCompiler(
-			publisherContractsDir,
+			filepath.Join(rootDir, "internal", "l2", "services", "compose-contracts", "L2"),
 			filepath.Join(rootDir, "internal", "l2", "l2runtime", "contracts", "compiled"),
 		)
 
-		slog.Info("starting contract compilation")
-		if err := compiler.Compile(ctx); err != nil {
+		var contractToCompile []string
+		for _, contractName := range slices.Collect(maps.Keys(contracts.Contracts)) {
+			contractToCompile = append(contractToCompile, string(contractName))
+		}
+
+		slog.Info("starting contract compilation", "contracts", contractToCompile)
+		if err := compiler.Compile(ctx, contractToCompile); err != nil {
 			return fmt.Errorf("contract compilation failed: %w", err)
 		}
 

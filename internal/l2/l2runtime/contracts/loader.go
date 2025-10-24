@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func loadCompiledContracts(contractsDir string) (map[contractName]compiledContract, error) {
+func loadCompiledContracts(contractsDir string) (map[ContractName]CompiledContract, error) {
 	compiledPath := filepath.Join(contractsDir, contractsFileName)
 	data, err := os.ReadFile(compiledPath)
 	if err != nil {
@@ -27,7 +27,7 @@ func loadCompiledContracts(contractsDir string) (map[contractName]compiledContra
 		return nil, fmt.Errorf("failed to parse compiled contracts: %w", err)
 	}
 
-	loadedContracts := make(map[contractName]compiledContract)
+	loadedContracts := make(map[ContractName]CompiledContract)
 
 	for name, contract := range result {
 		parsedABI, err := abi.JSON(strings.NewReader(string(contract.ABI)))
@@ -38,8 +38,8 @@ func loadCompiledContracts(contractsDir string) (map[contractName]compiledContra
 		bytecodeHex := strings.TrimPrefix(contract.Bytecode, "0x")
 		bytecode := common.Hex2Bytes(bytecodeHex)
 
-		if _, ok := contracts[contractName(name)]; ok {
-			loadedContracts[contractName(name)] = compiledContract{
+		if _, ok := Contracts[ContractName(name)]; ok {
+			loadedContracts[ContractName(name)] = CompiledContract{
 				ABI:      parsedABI,
 				Bytecode: bytecode,
 			}
