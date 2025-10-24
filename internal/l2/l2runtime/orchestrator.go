@@ -58,10 +58,6 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryA
 		return nil, fmt.Errorf("failed to deploy contracts: %w", err)
 	}
 
-	if err := serviceManager.RestartInitial(ctx, env); err != nil {
-		return nil, fmt.Errorf("failed to restart initial services: %w", err)
-	}
-
 	if err := serviceManager.StartFinal(ctx, env); err != nil {
 		return nil, fmt.Errorf("failed to start final services: %w", err)
 	}
