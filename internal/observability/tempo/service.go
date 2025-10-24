@@ -76,5 +76,11 @@ func Start(ctx context.Context, client *client.Client) error {
 
 	logger.Info("container started")
 
+	if err := shared.AttachToLocalnetNetworks(ctx, client, resp.ID); err != nil {
+		return errors.Join(err, errors.New("failed to attach container to localnet networks"))
+	}
+
+	logger.Info("container attached to localnet networks")
+
 	return nil
 }

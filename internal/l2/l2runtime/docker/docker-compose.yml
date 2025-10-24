@@ -7,6 +7,8 @@ services:
     container_name: publisher
     labels:
       - "stack=localnet-l2"
+    networks:
+      - localnet-l2
     environment:
       SERVER_LISTEN_ADDR: ":8080"
       METRICS_ENABLED: "true"
@@ -41,6 +43,8 @@ services:
     container_name: op-geth-a
     labels:
       - "stack=localnet-l2"
+    networks:
+      - localnet-l2
     environment:
       ROLLUP_CHAIN_ID: "${ROLLUP_A_CHAIN_ID}"
       WALLET_PRIVATE_KEY: "${WALLET_PRIVATE_KEY}"
@@ -139,6 +143,8 @@ services:
     container_name: op-node-a
     labels:
       - "stack=localnet-l2"
+    networks:
+      - localnet-l2
     depends_on:
       op-geth-a:
         condition: service_healthy
@@ -173,6 +179,8 @@ services:
     container_name: op-batcher-a
     labels:
       - "stack=localnet-l2"
+    networks:
+      - localnet-l2
     depends_on:
       - op-node-a
     environment:
@@ -199,6 +207,8 @@ services:
     container_name: op-proposer-a
     labels:
       - "stack=localnet-l2"
+    networks:
+      - localnet-l2
     depends_on:
       - op-node-a
     env_file:
@@ -224,6 +234,8 @@ services:
     container_name: op-geth-b
     labels:
       - "stack=localnet-l2"
+    networks:
+      - localnet-l2
     environment:
       ROLLUP_CHAIN_ID: "${ROLLUP_B_CHAIN_ID}"
       WALLET_PRIVATE_KEY: "${WALLET_PRIVATE_KEY}"
@@ -325,6 +337,8 @@ services:
     container_name: op-node-b
     labels:
       - "stack=localnet-l2"
+    networks:
+      - localnet-l2
     depends_on:
       op-geth-b:
         condition: service_healthy
@@ -359,6 +373,8 @@ services:
     container_name: op-batcher-b
     labels:
       - "stack=localnet-l2"
+    networks:
+      - localnet-l2
     depends_on:
       - op-node-b
     environment:
@@ -385,6 +401,8 @@ services:
     container_name: op-proposer-b
     labels:
       - "stack=localnet-l2"
+    networks:
+      - localnet-l2
     depends_on:
       - op-node-b
     env_file:
@@ -407,3 +425,10 @@ volumes:
   rollup-b-geth:
   rollup-a-opnode:
   rollup-b-opnode:
+
+networks:
+  localnet-l2:
+    driver: bridge
+    name: localnet-l2
+    labels:
+      stack: localnet-l2

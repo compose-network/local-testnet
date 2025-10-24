@@ -77,22 +77,19 @@ func Start(ctx context.Context, client *client.Client) error {
 		return errors.Join(err, errors.New("failed to create container"))
 	}
 
-	logger.
-		With("ID", resp.ID).
-		With("localnet_network", shared.LocalnetNetworkName).
-		Info("container created. Connecting to localnet network")
-
-	if err := client.NetworkConnect(ctx, shared.LocalnetNetworkName, resp.ID, nil); err != nil {
-		return errors.Join(err, errors.New("failed to connect Alloy to localnet network"))
-	}
-
-	logger.Info("network connected. Starting...")
+	logger.With("ID", resp.ID).Info("container created. Starting...")
 
 	if err := client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
 		return errors.Join(err, errors.New("failed to start container"))
 	}
 
 	logger.Info("container started")
+
+	if err := shared.AttachToLocalnetNetworks(ctx, client, resp.ID); err != nil {
+		return errors.Join(err, errors.New("failed to attach container to localnet networks"))
+	}
+
+	logger.Info("container attached to localnet networks")
 
 	return nil
 }
