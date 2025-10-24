@@ -36,38 +36,39 @@ func NewOrchestrator(rootDir, networksDir string) *Orchestrator {
 }
 
 // Execute runs Phase 3: Build images, start services, deploy contracts
-func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryAddr common.Address) error {
+func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryAddr common.Address) (map[configs.L2ChainName]map[contracts.ContractName]common.Address, error) {
 	o.logger.Info("Phase 3: Starting L2 runtime operations")
 
 	env := o.buildDockerComposeEnv(cfg, gameFactoryAddr)
 
 	o.logger.With("env", env).Info("environment variables were constructed. Building compose services")
 	if err := o.buildComposeServices(ctx, env); err != nil {
-		return fmt.Errorf("failed to build compose services: %w", err)
+		return nil, fmt.Errorf("failed to build compose services: %w", err)
 	}
 
 	o.logger.Info("docker-compose services built successfully")
 	serviceManager := services.NewManager(o.rootDir)
 	if err := serviceManager.StartInitial(ctx, env); err != nil {
-		return fmt.Errorf("failed to start initial services: %w", err)
+		return nil, fmt.Errorf("failed to start initial services: %w", err)
 	}
 
 	contractDeployer := contracts.NewDeployer(o.rootDir, o.networksDir)
-	if err := contractDeployer.Deploy(ctx, cfg.ChainConfigs, cfg.CoordinatorPrivateKey); err != nil {
-		return fmt.Errorf("failed to deploy contracts: %w", err)
+	deployedContracts, err := contractDeployer.Deploy(ctx, cfg.ChainConfigs, cfg.CoordinatorPrivateKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to deploy contracts: %w", err)
 	}
 
 	if err := serviceManager.RestartInitial(ctx, env); err != nil {
-		return fmt.Errorf("failed to restart initial services: %w", err)
+		return nil, fmt.Errorf("failed to restart initial services: %w", err)
 	}
 
 	if err := serviceManager.StartFinal(ctx, env); err != nil {
-		return fmt.Errorf("failed to start final services: %w", err)
+		return nil, fmt.Errorf("failed to start final services: %w", err)
 	}
 
 	o.logger.Info("Phase 3: L2 runtime operations completed successfully")
 
-	return nil
+	return deployedContracts, nil
 }
 
 // buildDockerComposeEnv creates environment variables for docker-compose

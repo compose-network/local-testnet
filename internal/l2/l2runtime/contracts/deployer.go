@@ -41,64 +41,77 @@ func NewDeployer(rootDir, networksDir string) *Deployer {
 	}
 }
 
-// Deploy deploys L2 contracts
-func (d *Deployer) Deploy(ctx context.Context, chainConfigs map[configs.L2ChainName]configs.ChainConfig, coordinatorPK string) error {
+// Deploy deploys L2 contracts and returns the deployed addresses
+func (d *Deployer) Deploy(ctx context.Context, chainConfigs map[configs.L2ChainName]configs.ChainConfig, coordinatorPK string) (map[configs.L2ChainName]map[ContractName]common.Address, error) {
 	d.logger.Info("deploying L2 contracts")
 
-	if err := d.deployContracts(ctx, chainConfigs, coordinatorPK); err != nil {
+	deployments, err := d.deployContracts(ctx, chainConfigs, coordinatorPK)
+	if err != nil {
 		d.logger.With("err", err.Error()).Error("contract deployment failed or timed out")
-		return err
+		return nil, err
 	}
 
 	d.logger.Info("L2 contracts deployed successfully")
 
-	return nil
+	return deployments, nil
 }
 
 // deployContracts deploys contracts to rollups using go-ethereum.
-func (d *Deployer) deployContracts(ctx context.Context, chainConfigs map[configs.L2ChainName]configs.ChainConfig, coordinatorPK string) error {
+func (d *Deployer) deployContracts(ctx context.Context, chainConfigs map[configs.L2ChainName]configs.ChainConfig, coordinatorPK string) (map[configs.L2ChainName]map[ContractName]common.Address, error) {
 	compiledContractsDir := filepath.Join(d.rootDir, "internal", "l2", "l2runtime", "contracts", "compiled")
 	if _, err := os.Stat(compiledContractsDir); os.IsNotExist(err) {
-		return fmt.Errorf("contracts directory not found. Directory: '%s'", compiledContractsDir)
+		return nil, fmt.Errorf("contracts directory not found. Directory: '%s'", compiledContractsDir)
 	}
 
 	d.logger.Info("loading precompiled contracts")
-	compiledContracts, err := loadCompiledContracts(compiledContractsDir)
+	compiledContracts, err := LoadCompiledContracts(compiledContractsDir)
 	if err != nil {
-		return fmt.Errorf("failed to load compiled contracts: %w", err)
+		return nil, fmt.Errorf("failed to load compiled contracts: %w", err)
 	}
 
 	d.logger.With("len", len(compiledContracts)).Info("precompiled contracts loaded")
 
-	addresses := make([]map[ContractName]string, 0)
+	deployments := make(map[configs.L2ChainName]map[ContractName]common.Address)
 	for chainName, chainConfig := range chainConfigs {
 		url := fmt.Sprintf("http://localhost:%d", chainConfig.RPCPort)
 		d.logger.With("chain_name", chainName).With("url", url).Info("waiting for rollup RPC")
 		if err := waitForRPC(ctx, url); err != nil {
-			return err
+			return nil, err
 		}
 
 		d.logger.Info("deploying contracts to L2")
-		addr, err := d.deployToChain(ctx, url, coordinatorPK, compiledContracts)
+		addressStrings, err := d.deployToChain(ctx, url, coordinatorPK, compiledContracts)
 		if err != nil {
-			return fmt.Errorf("failed to deploy to %s: %w", chainName, err)
+			return nil, fmt.Errorf("failed to deploy to %s: %w", chainName, err)
+		}
+
+		// Convert string addresses to common.Address
+		addressMap := make(map[ContractName]common.Address)
+		for contractName, addrStr := range addressStrings {
+			addressMap[contractName] = common.HexToAddress(addrStr)
+		}
+		deployments[chainName] = addressMap
+	}
+
+	if !addressesMatchAcrossChains(deployments) {
+		return nil, fmt.Errorf("contract addresses differ between rollups")
+	}
+
+	for chainName, addresses := range deployments {
+		addressStrings := make(map[ContractName]string)
+		for contractName, addr := range addresses {
+			addressStrings[contractName] = addr.Hex()
 		}
 
 		directory := filepath.Join(d.networksDir, string(chainName))
-		if err := writeContractJSON(filepath.Join(directory, contractsFileName), addr, uint64(chainConfig.ID)); err != nil {
-			return fmt.Errorf("failed to write %s for %s: %w", contractsFileName, chainName, err)
+		if err := writeContractJSON(filepath.Join(directory, contractsFileName), addressStrings, uint64(chainConfigs[chainName].ID)); err != nil {
+			return nil, fmt.Errorf("failed to write %s for %s: %w", contractsFileName, chainName, err)
 		}
-
-		addresses = append(addresses, addr)
-	}
-
-	if !addressesMatch(addresses...) {
-		return fmt.Errorf("contract addresses differ between rollups")
 	}
 
 	d.logger.Info("contracts deployed successfully")
 
-	return nil
+	return deployments, nil
 }
 
 func waitForRPC(ctx context.Context, url string) error {
@@ -263,21 +276,39 @@ func writeJSON(path string, data any) error {
 	return nil
 }
 
-func addressesMatch(addresses ...map[ContractName]string) bool {
-	if len(addresses) < 2 {
+// addressesMatchAcrossChains verifies that all chains deployed the same contracts at the same addresses
+func addressesMatchAcrossChains(deployments map[configs.L2ChainName]map[ContractName]common.Address) bool {
+	if len(deployments) < 2 {
 		return true
 	}
 
-	first := addresses[0]
-	for i := 1; i < len(addresses); i++ {
-		if len(first) != len(addresses[i]) {
+	var firstChain configs.L2ChainName
+	var firstDeployment map[ContractName]common.Address
+	for chainName, deployment := range deployments {
+		firstChain = chainName
+		firstDeployment = deployment
+		break
+	}
+
+	for chainName, deployment := range deployments {
+		if chainName == firstChain {
+			continue
+		}
+
+		if len(firstDeployment) != len(deployment) {
 			return false
 		}
-		for key, firstValue := range first {
-			if otherValue, ok := addresses[i][key]; !ok || !strings.EqualFold(firstValue, otherValue) {
+
+		for contractName, firstAddr := range firstDeployment {
+			otherAddr, ok := deployment[contractName]
+			if !ok {
+				return false
+			}
+			if firstAddr != otherAddr {
 				return false
 			}
 		}
 	}
+
 	return true
 }
