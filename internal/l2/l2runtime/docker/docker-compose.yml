@@ -71,33 +71,13 @@ services:
       - |
         set -eu
 
-        get_mailbox_addr() {
-          local file="$1"
-          local addr=""
-          local attempts=0
-          while true; do
-            attempts=$$((attempts + 1))
-            if [ -s "$$file" ]; then
-              addr=$(sed -n 's/.*"Mailbox"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$$file" | head -n1 || true)
-              if [ -n "$$addr" ] && printf '%s\n' "$$addr" | grep -Eq '^0x[0-9a-fA-F]{40}$'; then
-                printf '%s' "$$addr"
-                return 0
-              fi
-            fi
-            if [ $$attempts -ge 60 ]; then
-              echo "[error] mailbox address not available in $$file after $$attempts checks" >&2
-              exit 1
-            fi
-            echo "[wait] mailbox address unavailable in $$file (attempt $$attempts)" >&2
-            sleep 1
-          done
-        }
-
         COORDINATOR_KEY=$${COORDINATOR_PRIVATE_KEY:-}
         if [ -z "$$COORDINATOR_KEY" ]; then
           echo "[error] COORDINATOR_PRIVATE_KEY is required" >&2
           exit 1
         fi
+
+        # Initialize geth if needed
         if [ ! -f /data/geth/chaindata/CURRENT ]; then
           echo '[*] initializing op-geth datadir'
           GETH_COORDINATOR_KEY="$$COORDINATOR_KEY" geth --networkid=$${ROLLUP_CHAIN_ID} init --state.scheme=hash --datadir /data /config/genesis.json
@@ -110,31 +90,41 @@ services:
             fi
           fi
         fi
+
         SEQUENCER_KEY=$${SEQUENCER_PRIVATE_KEY:-$${WALLET_PRIVATE_KEY:-}}
         if [ -z "$$SEQUENCER_KEY" ]; then
           echo "[error] SEQUENCER_PRIVATE_KEY is required" >&2
           exit 1
         fi
+
+        echo "[*] Starting geth"
+
         EXTRA_FLAGS=${EXTRA_OP_GETH_FLAGS:-}
-        MAILBOX_A=$(get_mailbox_addr /config/contracts.json)
-        MAILBOX_B=$(get_mailbox_addr /config_b/contracts.json)
         exec geth \
           --verbosity=4 \
           --datadir /data \
-          --http --http.addr=0.0.0.0 --http.port=8545 --http.corsdomain='*' --http.vhosts='*' \
-          --http.api=web3,debug,eth,txpool,net,engine,compose,miner \
-          --ws --ws.addr=0.0.0.0 --ws.port=8546 --ws.origins='*' --ws.api=debug,eth,txpool,net,engine \
-          --authrpc.addr=0.0.0.0 --authrpc.port=8551 --authrpc.vhosts='*' --authrpc.jwtsecret=/config/jwt.txt \
+          --http \
+          --http.addr=0.0.0.0 \
+          --http.port=8545 \
+          --http.corsdomain='*' \
+          --http.vhosts='*' \
+          --http.api=web3,debug,eth,txpool,net,engine,compose \
+          --ws \
+          --ws.addr=0.0.0.0 \
+          --ws.port=8546 \
+          --ws.origins='*' \
+          --authrpc.addr=0.0.0.0 \
+          --authrpc.port=8551 \
+          --authrpc.vhosts='*' \
+          --authrpc.jwtsecret=/config/jwt.txt \
           --syncmode=full --gcmode=archive --nodiscover --maxpeers=0 \
           --networkid=$${ROLLUP_CHAIN_ID} \
-          --metrics --metrics.addr=0.0.0.0 --metrics.port=6060 \
-          --rollup.disabletxpoolgossip=true \
-          --rpc.allow-unprotected-txs \
+          --metrics \
+          --metrics.addr=0.0.0.0 \
+          --metrics.port=6060 \
           --sp.addr=publisher:8080 \
           --sp.listen.addr=:9898 \
           --sequencer.addrs=${ROLLUP_B_CHAIN_ID}:op-geth-b:9898 \
-          --mailbox.addr-a=$${MAILBOX_A} \
-          --mailbox.addr-b=$${MAILBOX_B} \
           --sequencer.key=$${SEQUENCER_KEY} \
           --rollup.computependingblock=true \
           --coordinator.key=$${COORDINATOR_KEY} \
@@ -264,33 +254,13 @@ services:
       - |
         set -eu
 
-        get_mailbox_addr() {
-          local file="$1"
-          local addr=""
-          local attempts=0
-          while true; do
-            attempts=$$((attempts + 1))
-            if [ -s "$$file" ]; then
-              addr=$(sed -n 's/.*"Mailbox"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$$file" | head -n1 || true)
-              if [ -n "$$addr" ] && printf '%s\n' "$$addr" | grep -Eq '^0x[0-9a-fA-F]{40}$'; then
-                printf '%s' "$$addr"
-                return 0
-              fi
-            fi
-            if [ $$attempts -ge 60 ]; then
-              echo "[error] mailbox address not available in $$file after $$attempts checks" >&2
-              exit 1
-            fi
-            echo "[wait] mailbox address unavailable in $$file (attempt $$attempts)" >&2
-            sleep 1
-          done
-        }
-
         COORDINATOR_KEY=$${COORDINATOR_PRIVATE_KEY:-}
         if [ -z "$$COORDINATOR_KEY" ]; then
           echo "[error] COORDINATOR_PRIVATE_KEY is required" >&2
           exit 1
         fi
+
+        # Initialize geth if needed
         if [ ! -f /data/geth/chaindata/CURRENT ]; then
           echo '[*] initializing op-geth datadir'
           GETH_COORDINATOR_KEY="$$COORDINATOR_KEY" geth --networkid=$${ROLLUP_CHAIN_ID} init --state.scheme=hash --datadir /data /config/genesis.json
@@ -303,31 +273,44 @@ services:
             fi
           fi
         fi
+
         SEQUENCER_KEY=$${SEQUENCER_PRIVATE_KEY:-$${WALLET_PRIVATE_KEY:-}}
         if [ -z "$$SEQUENCER_KEY" ]; then
           echo "[error] SEQUENCER_PRIVATE_KEY is required" >&2
           exit 1
         fi
+
+        echo "[*] Starting geth"
+
         EXTRA_FLAGS=${EXTRA_OP_GETH_FLAGS:-}
-        MAILBOX_A=$(get_mailbox_addr /config_a/contracts.json)
-        MAILBOX_B=$(get_mailbox_addr /config/contracts.json)
         exec geth \
           --verbosity=4 \
           --datadir /data \
-          --http --http.addr=0.0.0.0 --http.port=8545 --http.corsdomain='*' --http.vhosts='*' \
-          --http.api=web3,debug,eth,txpool,net,engine,compose,miner \
-          --ws --ws.addr=0.0.0.0 --ws.port=8546 --ws.origins='*' --ws.api=debug,eth,txpool,net,engine \
-          --authrpc.addr=0.0.0.0 --authrpc.port=8551 --authrpc.vhosts='*' --authrpc.jwtsecret=/config/jwt.txt \
-          --syncmode=full --gcmode=archive --nodiscover --maxpeers=0 \
+          --http \
+          --http.addr=0.0.0.0 \
+          --http.port=8545 \
+          --http.corsdomain='*' \
+          --http.vhosts='*' \
+          --http.api=web3,debug,eth,txpool,net,engine,compose \
+          --ws \
+          --ws.addr=0.0.0.0 \
+          --ws.port=8546 \
+          --ws.origins='*' \
+          --authrpc.addr=0.0.0.0 \
+          --authrpc.port=8551 \
+          --authrpc.vhosts='*' \
+          --authrpc.jwtsecret=/config/jwt.txt \
+          --syncmode=full \
+          --gcmode=archive \
+          --nodiscover \
+          --maxpeers=0 \
           --networkid=$${ROLLUP_CHAIN_ID} \
-          --metrics --metrics.addr=0.0.0.0 --metrics.port=6060 \
-          --rollup.disabletxpoolgossip=true \
-          --rpc.allow-unprotected-txs \
+          --metrics \
+          --metrics.addr=0.0.0.0 \
+          --metrics.port=6060 \
           --sp.addr=publisher:8080 \
           --sp.listen.addr=:9898 \
           --sequencer.addrs=${ROLLUP_A_CHAIN_ID}:op-geth-a:9898 \
-          --mailbox.addr-a=$${MAILBOX_A} \
-          --mailbox.addr-b=$${MAILBOX_B} \
           --sequencer.key=$${SEQUENCER_KEY} \
           --rollup.computependingblock=true \
           --coordinator.key=$${COORDINATOR_KEY} \
