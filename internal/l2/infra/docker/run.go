@@ -13,6 +13,7 @@ import (
 
 type RunOptions struct {
 	Image      string
+	Entrypoint []string
 	Cmd        []string
 	Env        []string
 	Volumes    map[string]string // host:container
@@ -27,6 +28,7 @@ type RunOptions struct {
 func (c *Client) Run(ctx context.Context, opts RunOptions) (string, error) {
 	config := &container.Config{
 		Image:      opts.Image,
+		Entrypoint: opts.Entrypoint,
 		Cmd:        opts.Cmd,
 		Env:        opts.Env,
 		WorkingDir: opts.WorkDir,

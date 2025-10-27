@@ -19,8 +19,10 @@ l2:
       rpc-port: 28545
   deployment-target: live  # "live" or "calldata"
   genesis-balance-wei: "100000000000000000"  # 0.1 ETH for funded accounts
-  op-deployer-version: 1.0.0 #https://github.com/ethereum-optimism/optimism/releases
+  # curl https://us-docker.pkg.dev/v2/oplabs-tools-artifacts/images/{REPOSITORY_NAME}/tags/list to fetch list of available tags
   images:
+    op-deployer:
+      tag: v1.0.0
     op-node: 
       tag: v1.0.0
     op-proposer: 

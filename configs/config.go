@@ -32,7 +32,6 @@ type (
 		Images                map[ImageName]Image           `mapstructure:"images"`
 		DeploymentTarget      string                        `mapstructure:"deployment-target"`
 		GenesisBalanceWei     string                        `mapstructure:"genesis-balance-wei"`
-		OPDeployerVersion     string                        `mapstructure:"op-deployer-version"`
 		Dispute               DisputeConfig                 `mapstructure:"dispute"`
 	}
 
@@ -76,6 +75,7 @@ const (
 	RepositoryNamePublisher        RepositoryName = "publisher"
 	RepositoryNameComposeContracts RepositoryName = "compose-contracts"
 
+	ImageNameOpDeployer ImageName = "op-deployer"
 	ImageNameOpNode     ImageName = "op-node"
 	ImageNameOpProposer ImageName = "op-proposer"
 	ImageNameOpBatcher  ImageName = "op-batcher"
@@ -121,6 +121,18 @@ func (c *L2) Validate() error {
 		}
 	}
 
+	requiredImages := []ImageName{ImageNameOpDeployer, ImageNameOpNode, ImageNameOpProposer, ImageNameOpBatcher}
+	for _, name := range requiredImages {
+		img, exists := c.Images[name]
+		if !exists {
+			errs = append(errs, fmt.Errorf("l2.images.%s is required", name))
+			continue
+		}
+		if img.Tag == "" {
+			errs = append(errs, fmt.Errorf("l2.images.%s.tag is required", name))
+		}
+	}
+
 	rollupA, hasRollupA := c.ChainConfigs[L2ChainNameRollupA]
 	rollupB, hasRollupB := c.ChainConfigs[L2ChainNameRollupB]
 
@@ -150,10 +162,6 @@ func (c *L2) Validate() error {
 		errs = append(errs, errors.New("l2.deployment-target is required"))
 	} else if c.DeploymentTarget != "live" && c.DeploymentTarget != "calldata" {
 		errs = append(errs, errors.New("l2.deployment-target must be either 'live' or 'calldata'"))
-	}
-
-	if c.OPDeployerVersion == "" {
-		errs = append(errs, errors.New("l2.op-deployer-version is required"))
 	}
 
 	// Validate dispute config
