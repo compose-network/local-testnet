@@ -23,27 +23,12 @@ func NewManager(rootDir string) *Manager {
 	}
 }
 
-// StartInitial starts initial services (publisher, op-geth) before contract deployment
-func (m *Manager) StartInitial(ctx context.Context, env map[string]string) error {
-	initialServices := []string{
+// StartAll starts all L2 services
+func (m *Manager) StartAll(ctx context.Context, env map[string]string) error {
+	services := []string{
 		"publisher",
 		"op-geth-a",
 		"op-geth-b",
-	}
-
-	m.logger.With("initial_services", initialServices).Info("starting initial services")
-
-	if err := docker.ComposeUp(ctx, env, initialServices...); err != nil {
-		return fmt.Errorf("failed to start initial services: %w", err)
-	}
-
-	m.logger.Info("initial services started successfully")
-	return nil
-}
-
-// StartFinal starts final services (op-node, batcher, proposer)
-func (m *Manager) StartFinal(ctx context.Context, env map[string]string) error {
-	finalServices := []string{
 		"op-node-a",
 		"op-node-b",
 		"op-batcher-a",
@@ -52,13 +37,12 @@ func (m *Manager) StartFinal(ctx context.Context, env map[string]string) error {
 		"op-proposer-b",
 	}
 
-	m.logger.With("services", finalServices).Info("starting final services")
+	m.logger.With("services", services).Info("starting all L2 services")
 
-	if err := docker.ComposeUp(ctx, env, finalServices...); err != nil {
-		return fmt.Errorf("failed to start final services: %w", err)
+	if err := docker.ComposeUp(ctx, env, services...); err != nil {
+		return fmt.Errorf("failed to start services: %w", err)
 	}
 
-	m.logger.Info("final services started successfully")
-
+	m.logger.Info("all L2 services started successfully")
 	return nil
 }

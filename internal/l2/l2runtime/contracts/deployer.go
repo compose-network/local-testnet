@@ -36,7 +36,7 @@ func NewDeployer(rootDir, networksDir string) *Deployer {
 	return &Deployer{
 		rootDir:                       rootDir,
 		networksDir:                   networksDir,
-		waitForDeploymentConfirmation: false,
+		waitForDeploymentConfirmation: true,
 		logger:                        logger.Named("contracts_deployer"),
 	}
 }
