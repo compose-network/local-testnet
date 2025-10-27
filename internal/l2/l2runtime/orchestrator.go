@@ -48,18 +48,14 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryA
 
 	o.logger.Info("docker-compose services built successfully")
 	serviceManager := services.NewManager(o.rootDir)
-	if err := serviceManager.StartInitial(ctx, env); err != nil {
-		return nil, fmt.Errorf("failed to start initial services: %w", err)
+	if err := serviceManager.StartAll(ctx, env); err != nil {
+		return nil, fmt.Errorf("failed to start L2 services: %w", err)
 	}
 
 	contractDeployer := contracts.NewDeployer(o.rootDir, o.networksDir)
 	deployedContracts, err := contractDeployer.Deploy(ctx, cfg.ChainConfigs, cfg.CoordinatorPrivateKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy contracts: %w", err)
-	}
-
-	if err := serviceManager.StartFinal(ctx, env); err != nil {
-		return nil, fmt.Errorf("failed to start final services: %w", err)
 	}
 
 	o.logger.Info("Phase 3: L2 runtime operations completed successfully")
