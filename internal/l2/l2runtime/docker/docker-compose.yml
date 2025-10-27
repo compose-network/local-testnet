@@ -135,11 +135,7 @@ services:
           $${EXTRA_FLAGS}
 
   op-node-a:
-    build:
-      context: ${OPTIMISM_PATH}
-      dockerfile: ../../l2runtime/docker/optimism.Dockerfile
-      target: op-node
-    image: local/op-node:dev
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-node:v1.13.6
     container_name: op-node-a
     labels:
       - "stack=localnet-l2"
@@ -325,11 +321,7 @@ services:
           $${EXTRA_FLAGS}
 
   op-node-b:
-    build:
-      context: ${OPTIMISM_PATH}
-      dockerfile: ../../l2runtime/docker/optimism.Dockerfile
-      target: op-node
-    image: local/op-node:dev
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-node:v1.13.6
     container_name: op-node-b
     labels:
       - "stack=localnet-l2"
