@@ -79,7 +79,6 @@ func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr com
 
 	env["PUBLISHER_PATH"] = filepath.Join(o.rootDir, "internal", "l2", "services", string(configs.RepositoryNamePublisher))
 	env["OP_GETH_PATH"] = filepath.Join(o.rootDir, "internal", "l2", "services", string(configs.RepositoryNameOpGeth))
-	env["OPTIMISM_PATH"] = filepath.Join(o.rootDir, "internal", "l2", "services", string(configs.RepositoryNameOptimism))
 
 	env["ROLLUP_A_CHAIN_ID"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupA].ID)
 	env["ROLLUP_A_RPC_PORT"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupA].RPCPort)
@@ -89,17 +88,21 @@ func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr com
 
 	env["SP_L1_DISPUTE_GAME_FACTORY"] = gameFactoryAddr.Hex()
 
+	env["OP_BATCHER_IMAGE_TAG"] = cfg.Images[configs.ImageNameOpBatcher].Tag
+	env["OP_NODE_IMAGE_TAG"] = cfg.Images[configs.ImageNameOpNode].Tag
+	env["OP_PROPOSER_IMAGE_TAG"] = cfg.Images[configs.ImageNameOpProposer].Tag
+
 	return env
 }
 
 // buildComposeServices builds services using docker-compose
+// Only builds services that are built from source (publisher, op-geth)
+// op-node, op-batcher, and op-proposer now use public images
 func (o *Orchestrator) buildComposeServices(ctx context.Context, env map[string]string) error {
 	services := []string{
 		"publisher",
 		"op-geth-a",
-		"op-node-a",
-		"op-batcher-a",
-		"op-proposer-a",
+		"op-geth-b",
 	}
 
 	if err := docker.ComposeBuild(ctx, env, services...); err != nil {

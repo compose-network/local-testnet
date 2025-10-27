@@ -112,7 +112,7 @@ services:
           --http.port=8545 \
           --http.corsdomain='*' \
           --http.vhosts='*' \
-          --http.api=web3,debug,eth,txpool,net,engine,compose \
+          --http.api=web3,debug,eth,txpool,net,engine,compose,miner \
           --ws \
           --ws.addr=0.0.0.0 \
           --ws.port=8546 \
@@ -135,11 +135,7 @@ services:
           $${EXTRA_FLAGS}
 
   op-node-a:
-    build:
-      context: ${OPTIMISM_PATH}
-      dockerfile: ../../l2runtime/docker/optimism.Dockerfile
-      target: op-node
-    image: local/op-node:dev
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-node:${OP_NODE_IMAGE_TAG}
     container_name: op-node-a
     labels:
       - "stack=localnet-l2"
@@ -171,11 +167,7 @@ services:
       - "19545:9545"
 
   op-batcher-a:
-    build:
-      context: ${OPTIMISM_PATH}
-      dockerfile: ../../l2runtime/docker/optimism.Dockerfile
-      target: op-batcher
-    image: local/op-batcher:dev
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-batcher:${OP_BATCHER_IMAGE_TAG}
     container_name: op-batcher-a
     labels:
       - "stack=localnet-l2"
@@ -199,11 +191,7 @@ services:
       - "18548:8548"
 
   op-proposer-a:
-    build:
-      context: ${OPTIMISM_PATH}
-      dockerfile: ../../l2runtime/docker/optimism.Dockerfile
-      target: op-proposer
-    image: local/op-proposer:dev
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-proposer:${OP_PROPOSER_IMAGE_TAG}
     container_name: op-proposer-a
     labels:
       - "stack=localnet-l2"
@@ -303,7 +291,7 @@ services:
           --http.port=8545 \
           --http.corsdomain='*' \
           --http.vhosts='*' \
-          --http.api=web3,debug,eth,txpool,net,engine,compose \
+          --http.api=web3,debug,eth,txpool,net,engine,compose,miner \
           --ws \
           --ws.addr=0.0.0.0 \
           --ws.port=8546 \
@@ -329,11 +317,7 @@ services:
           $${EXTRA_FLAGS}
 
   op-node-b:
-    build:
-      context: ${OPTIMISM_PATH}
-      dockerfile: ../../l2runtime/docker/optimism.Dockerfile
-      target: op-node
-    image: local/op-node:dev
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-node:${OP_NODE_IMAGE_TAG}
     container_name: op-node-b
     labels:
       - "stack=localnet-l2"
@@ -365,11 +349,7 @@ services:
       - "29545:9545"
 
   op-batcher-b:
-    build:
-      context: ${OPTIMISM_PATH}
-      dockerfile: ../../l2runtime/docker/optimism.Dockerfile
-      target: op-batcher
-    image: local/op-batcher:dev
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-batcher:${OP_BATCHER_IMAGE_TAG}
     container_name: op-batcher-b
     labels:
       - "stack=localnet-l2"
@@ -393,11 +373,7 @@ services:
       - "28548:8548"
 
   op-proposer-b:
-    build:
-      context: ${OPTIMISM_PATH}
-      dockerfile: ../../l2runtime/docker/optimism.Dockerfile
-      target: op-proposer
-    image: local/op-proposer:dev
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-proposer:${OP_PROPOSER_IMAGE_TAG}
     container_name: op-proposer-b
     labels:
       - "stack=localnet-l2"

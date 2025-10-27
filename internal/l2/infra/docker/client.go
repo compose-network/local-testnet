@@ -13,6 +13,7 @@ import (
 	"github.com/compose-network/local-testnet/internal/logger"
 	"github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types/build"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/moby/go-archive"
 )
@@ -50,6 +51,48 @@ func (c *Client) ImageExists(ctx context.Context, imageName string) (bool, error
 	return true, nil
 }
 
+// PullImage pulls a Docker image from a registry.
+func (c *Client) PullImage(ctx context.Context, imageName string) error {
+	c.logger.With("image", imageName).Info("pulling docker image")
+
+	resp, err := c.cli.ImagePull(ctx, imageName, image.PullOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to pull image: %w", err)
+	}
+	defer resp.Close()
+
+	scanner := bufio.NewScanner(resp)
+	var pullError error
+	for scanner.Scan() {
+		line := scanner.Text()
+		c.logger.Debug(line)
+
+		var msg struct {
+			Error       string `json:"error"`
+			ErrorDetail struct {
+				Message string `json:"message"`
+			} `json:"errorDetail"`
+		}
+		if err := json.Unmarshal([]byte(line), &msg); err == nil {
+			if msg.Error != "" {
+				pullError = fmt.Errorf("pull failed: %s", msg.Error)
+				c.logger.Error("docker pull error", "error", msg.Error)
+			}
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("error reading pull output: %w", err)
+	}
+
+	if pullError != nil {
+		return pullError
+	}
+
+	c.logger.With("image", imageName).Info("docker image pulled successfully")
+	return nil
+}
+
 // BuildImage builds a Docker image from a Dockerfile.
 func (c *Client) BuildImage(ctx context.Context, dockerfilePath, contextPath, tag string, buildArgs map[string]*string) error {
 	buildContext, err := archive.TarWithOptions(contextPath, &archive.TarOptions{})
@@ -77,7 +120,6 @@ func (c *Client) BuildImage(ctx context.Context, dockerfilePath, contextPath, ta
 		line := scanner.Text()
 		c.logger.Debug(line)
 
-		// Parse JSON output to detect errors
 		var msg struct {
 			Error       string `json:"error"`
 			ErrorDetail struct {
