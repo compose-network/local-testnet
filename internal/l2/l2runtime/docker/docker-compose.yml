@@ -112,7 +112,7 @@ services:
           --http.port=8545 \
           --http.corsdomain='*' \
           --http.vhosts='*' \
-          --http.api=web3,debug,eth,txpool,net,engine,compose \
+          --http.api=web3,debug,eth,txpool,net,engine,compose,miner \
           --ws \
           --ws.addr=0.0.0.0 \
           --ws.port=8546 \
@@ -303,7 +303,7 @@ services:
           --http.port=8545 \
           --http.corsdomain='*' \
           --http.vhosts='*' \
-          --http.api=web3,debug,eth,txpool,net,engine,compose \
+          --http.api=web3,debug,eth,txpool,net,engine,compose,miner \
           --ws \
           --ws.addr=0.0.0.0 \
           --ws.port=8546 \
