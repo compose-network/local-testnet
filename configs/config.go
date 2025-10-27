@@ -10,6 +10,7 @@ var Values Config
 type (
 	RepositoryName string
 	L2ChainName    string
+	ImageName      string
 
 	Config struct {
 		L1            L1            `mapstructure:"l1"`
@@ -27,7 +28,8 @@ type (
 		Wallet                Wallet                        `mapstructure:"wallet"`
 		CoordinatorPrivateKey string                        `mapstructure:"coordinator-private-key"`
 		Repositories          map[RepositoryName]Repository `mapstructure:"repositories"`
-		ChainConfigs          map[L2ChainName]ChainConfig   `mapstructure:"chain-configs"`
+		ChainConfigs          map[L2ChainName]Chain         `mapstructure:"chain-configs"`
+		Images                map[ImageName]Image           `mapstructure:"images"`
 		DeploymentTarget      string                        `mapstructure:"deployment-target"`
 		GenesisBalanceWei     string                        `mapstructure:"genesis-balance-wei"`
 		OPDeployerVersion     string                        `mapstructure:"op-deployer-version"`
@@ -46,7 +48,7 @@ type (
 		AdminAddress             string `mapstructure:"admin-address"`
 	}
 
-	ChainConfig struct {
+	Chain struct {
 		ID      int `mapstructure:"id"`
 		RPCPort int `mapstructure:"rpc-port"`
 	}
@@ -54,6 +56,10 @@ type (
 	Repository struct {
 		URL    string `mapstructure:"url"`
 		Branch string `mapstructure:"branch"`
+	}
+
+	Image struct {
+		Tag string `mapstructure:"tag"`
 	}
 
 	Wallet struct {
@@ -67,9 +73,12 @@ type (
 
 const (
 	RepositoryNameOpGeth           RepositoryName = "op-geth"
-	RepositoryNameOptimism         RepositoryName = "optimism"
 	RepositoryNamePublisher        RepositoryName = "publisher"
 	RepositoryNameComposeContracts RepositoryName = "compose-contracts"
+
+	ImageNameOpNode     ImageName = "op-node"
+	ImageNameOpProposer ImageName = "op-proposer"
+	ImageNameOpBatcher  ImageName = "op-batcher"
 
 	L2ChainNameRollupA L2ChainName = "rollup-a"
 	L2ChainNameRollupB L2ChainName = "rollup-b"
@@ -97,7 +106,7 @@ func (c *L2) Validate() error {
 		errs = append(errs, errors.New("l2.wallet.address is required"))
 	}
 
-	requiredRepos := []RepositoryName{RepositoryNameOpGeth, RepositoryNameOptimism, RepositoryNamePublisher}
+	requiredRepos := []RepositoryName{RepositoryNameOpGeth, RepositoryNamePublisher}
 	for _, name := range requiredRepos {
 		repo, exists := c.Repositories[name]
 		if !exists {

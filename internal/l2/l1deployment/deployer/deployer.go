@@ -43,7 +43,7 @@ func NewDeployer(rootDir, stateDir, version string, dockerClient *docker.Client)
 }
 
 // Init initializes the op-deployer state
-func (o *Deployer) Init(ctx context.Context, l1ChainID int, l2Chains map[configs.L2ChainName]configs.ChainConfig) error {
+func (o *Deployer) Init(ctx context.Context, l1ChainID int, l2Chains map[configs.L2ChainName]configs.Chain) error {
 	o.logger.
 		With("state_dir", o.stateDir).
 		Info("initializing deployer state. Ensuring image exists")

@@ -42,7 +42,7 @@ func NewDeployer(rootDir, networksDir string) *Deployer {
 }
 
 // Deploy deploys L2 contracts and returns the deployed addresses
-func (d *Deployer) Deploy(ctx context.Context, chainConfigs map[configs.L2ChainName]configs.ChainConfig, coordinatorPK string) (map[configs.L2ChainName]map[ContractName]common.Address, error) {
+func (d *Deployer) Deploy(ctx context.Context, chainConfigs map[configs.L2ChainName]configs.Chain, coordinatorPK string) (map[configs.L2ChainName]map[ContractName]common.Address, error) {
 	d.logger.Info("deploying L2 contracts")
 
 	deployments, err := d.deployContracts(ctx, chainConfigs, coordinatorPK)
@@ -57,7 +57,7 @@ func (d *Deployer) Deploy(ctx context.Context, chainConfigs map[configs.L2ChainN
 }
 
 // deployContracts deploys contracts to rollups using go-ethereum.
-func (d *Deployer) deployContracts(ctx context.Context, chainConfigs map[configs.L2ChainName]configs.ChainConfig, coordinatorPK string) (map[configs.L2ChainName]map[ContractName]common.Address, error) {
+func (d *Deployer) deployContracts(ctx context.Context, chainConfigs map[configs.L2ChainName]configs.Chain, coordinatorPK string) (map[configs.L2ChainName]map[ContractName]common.Address, error) {
 	compiledContractsDir := filepath.Join(d.rootDir, "internal", "l2", "l2runtime", "contracts", "compiled")
 	if _, err := os.Stat(compiledContractsDir); os.IsNotExist(err) {
 		return nil, fmt.Errorf("contracts directory not found. Directory: '%s'", compiledContractsDir)

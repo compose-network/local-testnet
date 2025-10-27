@@ -20,12 +20,16 @@ l2:
   deployment-target: live  # "live" or "calldata"
   genesis-balance-wei: "100000000000000000"  # 0.1 ETH for funded accounts
   op-deployer-version: 1.0.0 #https://github.com/ethereum-optimism/optimism/releases
+  images:
+    op-node: 
+      tag: v1.0.0
+    op-proposer: 
+      tag: v1.0.0
+    op-batcher: 
+      tag: v1.0.0
   repositories:
     op-geth:
       url: https://github.com/op-geth.git
-      branch: main
-    optimism:
-      url: https://github.com/optimism.git
       branch: main
     publisher:
       url: https://github.com/publisher.git

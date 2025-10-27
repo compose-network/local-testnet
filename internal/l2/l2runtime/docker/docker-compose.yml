@@ -135,7 +135,7 @@ services:
           $${EXTRA_FLAGS}
 
   op-node-a:
-    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-node:v1.13.6
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-node:${OP_NODE_IMAGE_TAG}
     container_name: op-node-a
     labels:
       - "stack=localnet-l2"
@@ -167,7 +167,7 @@ services:
       - "19545:9545"
 
   op-batcher-a:
-    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-batcher:v1.14.0
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-batcher:${OP_BATCHER_IMAGE_TAG}
     container_name: op-batcher-a
     labels:
       - "stack=localnet-l2"
@@ -191,11 +191,7 @@ services:
       - "18548:8548"
 
   op-proposer-a:
-    build:
-      context: ${OPTIMISM_PATH}
-      dockerfile: ../../l2runtime/docker/optimism.Dockerfile
-      target: op-proposer
-    image: local/op-proposer:dev
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-proposer:${OP_PROPOSER_IMAGE_TAG}
     container_name: op-proposer-a
     labels:
       - "stack=localnet-l2"
@@ -321,7 +317,7 @@ services:
           $${EXTRA_FLAGS}
 
   op-node-b:
-    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-node:v1.13.6
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-node:${OP_NODE_IMAGE_TAG}
     container_name: op-node-b
     labels:
       - "stack=localnet-l2"
@@ -353,7 +349,7 @@ services:
       - "29545:9545"
 
   op-batcher-b:
-    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-batcher:v1.14.0
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-batcher:${OP_BATCHER_IMAGE_TAG}
     container_name: op-batcher-b
     labels:
       - "stack=localnet-l2"
@@ -377,11 +373,7 @@ services:
       - "28548:8548"
 
   op-proposer-b:
-    build:
-      context: ${OPTIMISM_PATH}
-      dockerfile: ../../l2runtime/docker/optimism.Dockerfile
-      target: op-proposer
-    image: local/op-proposer:dev
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-proposer:${OP_PROPOSER_IMAGE_TAG}
     container_name: op-proposer-b
     labels:
       - "stack=localnet-l2"
