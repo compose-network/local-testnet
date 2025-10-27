@@ -15,35 +15,34 @@ import (
 )
 
 const (
-	dockerfileName = "op-deployer.Dockerfile"
-	imageName      = "op-deployer"
-	imageTag       = "local"
+	publicImageName = "us-docker.pkg.dev/oplabs-tools-artifacts/images/op-deployer"
 )
-
-var imageWithTag = fmt.Sprintf("%s:%s", imageName, imageTag)
 
 // Deployer wraps the op-deployer tool
 type Deployer struct {
-	rootDir  string
-	stateDir string
-	version  string
-	docker   *docker.Client
-	logger   *slog.Logger
+	rootDir         string
+	stateDir        string
+	imageWithTag    string
+	imageEntrypoint string
+	docker          *docker.Client
+	logger          *slog.Logger
 }
 
 // NewDeployer creates a new op-deployer wrapper
-func NewDeployer(rootDir, stateDir, version string, dockerClient *docker.Client) *Deployer {
+// imageTag should be the version tag (e.g., "v0.3.3")
+func NewDeployer(rootDir, stateDir, imageTag string, dockerClient *docker.Client) *Deployer {
 	return &Deployer{
-		rootDir:  rootDir,
-		stateDir: stateDir,
-		version:  version,
-		docker:   dockerClient,
-		logger:   logger.Named("deployer"),
+		rootDir:         rootDir,
+		stateDir:        stateDir,
+		imageWithTag:    fmt.Sprintf("%s:%s", publicImageName, imageTag),
+		imageEntrypoint: "/usr/local/bin/op-deployer",
+		docker:          dockerClient,
+		logger:          logger.Named("deployer"),
 	}
 }
 
 // Init initializes the op-deployer state
-func (o *Deployer) Init(ctx context.Context, l1ChainID int, l2Chains map[configs.L2ChainName]configs.ChainConfig) error {
+func (o *Deployer) Init(ctx context.Context, l1ChainID int, l2Chains map[configs.L2ChainName]configs.Chain) error {
 	o.logger.
 		With("state_dir", o.stateDir).
 		Info("initializing deployer state. Ensuring image exists")
@@ -72,7 +71,8 @@ func (o *Deployer) Init(ctx context.Context, l1ChainID int, l2Chains map[configs
 
 	o.logger.Info("running docker image")
 	_, err = o.docker.Run(ctx, docker.RunOptions{
-		Image: imageWithTag,
+		Image:      o.imageWithTag,
+		Entrypoint: []string{o.imageEntrypoint},
 		Cmd: []string{
 			"init",
 			"--intent-type", "custom",
@@ -101,13 +101,13 @@ func (o *Deployer) Init(ctx context.Context, l1ChainID int, l2Chains map[configs
 	return nil
 }
 
-// EnsureImage ensures the op-deployer image exists
+// EnsureImage ensures the op-deployer public image exists
 func (o *Deployer) ensureImage(ctx context.Context) error {
-	logger := o.logger.With("image_name", imageName).With("image_tag", imageTag)
+	logger := o.logger.With("image", o.imageWithTag)
 
-	exists, err := o.docker.ImageExists(ctx, imageWithTag)
+	exists, err := o.docker.ImageExists(ctx, o.imageWithTag)
 	if err != nil {
-		return fmt.Errorf("failed to check image: '%s' existence: %w", imageWithTag, err)
+		return fmt.Errorf("failed to check image: '%s' existence: %w", o.imageWithTag, err)
 	}
 
 	if exists {
@@ -115,21 +115,12 @@ func (o *Deployer) ensureImage(ctx context.Context) error {
 		return nil
 	}
 
-	logger.With("version", o.version).Info("building image")
-	absRootDir, err := filepath.Abs(o.rootDir)
-	if err != nil {
-		return fmt.Errorf("failed to get absolute root path: %w", err)
+	logger.Info("pulling public image")
+	if err := o.docker.PullImage(ctx, o.imageWithTag); err != nil {
+		return fmt.Errorf("failed to pull image: '%s', %w", o.imageWithTag, err)
 	}
 
-	buildArgs := map[string]*string{
-		"OP_DEPLOYER_VERSION": &o.version,
-	}
-
-	dockerfilePath := filepath.Join("internal", "l2", "l1deployment", "deployer", dockerfileName)
-	if err := o.docker.BuildImage(ctx, dockerfilePath, absRootDir, imageWithTag, buildArgs); err != nil {
-		return fmt.Errorf("failed to build image: '%s', %w", imageWithTag, err)
-	}
-
+	logger.Info("image pulled successfully")
 	return nil
 }
 
@@ -145,7 +136,8 @@ func (o *Deployer) Apply(ctx context.Context, l1RpcURL, deployerPrivateKey, depl
 	}
 
 	_, err = o.docker.Run(ctx, docker.RunOptions{
-		Image: imageWithTag,
+		Image:      o.imageWithTag,
+		Entrypoint: []string{o.imageEntrypoint},
 		Cmd: []string{
 			"apply",
 			"--deployment-target", deploymentTarget,
@@ -182,7 +174,8 @@ func (o *Deployer) InspectGenesis(ctx context.Context, chainID int) (string, err
 	}
 
 	output, err := o.docker.Run(ctx, docker.RunOptions{
-		Image: imageWithTag,
+		Image:      o.imageWithTag,
+		Entrypoint: []string{o.imageEntrypoint},
 		Cmd: []string{
 			"inspect",
 			"genesis",
@@ -218,7 +211,8 @@ func (o *Deployer) InspectRollup(ctx context.Context, chainID int, outputPath st
 	outputFile := filepath.Base(outputPath)
 
 	_, err = o.docker.Run(ctx, docker.RunOptions{
-		Image: imageWithTag,
+		Image:      o.imageWithTag,
+		Entrypoint: []string{o.imageEntrypoint},
 		Cmd: []string{
 			"inspect",
 			"rollup",

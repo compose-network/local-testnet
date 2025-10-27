@@ -10,6 +10,7 @@ var Values Config
 type (
 	RepositoryName string
 	L2ChainName    string
+	ImageName      string
 
 	Config struct {
 		L1            L1            `mapstructure:"l1"`
@@ -27,10 +28,10 @@ type (
 		Wallet                Wallet                        `mapstructure:"wallet"`
 		CoordinatorPrivateKey string                        `mapstructure:"coordinator-private-key"`
 		Repositories          map[RepositoryName]Repository `mapstructure:"repositories"`
-		ChainConfigs          map[L2ChainName]ChainConfig   `mapstructure:"chain-configs"`
+		ChainConfigs          map[L2ChainName]Chain         `mapstructure:"chain-configs"`
+		Images                map[ImageName]Image           `mapstructure:"images"`
 		DeploymentTarget      string                        `mapstructure:"deployment-target"`
 		GenesisBalanceWei     string                        `mapstructure:"genesis-balance-wei"`
-		OPDeployerVersion     string                        `mapstructure:"op-deployer-version"`
 		Dispute               DisputeConfig                 `mapstructure:"dispute"`
 	}
 
@@ -46,7 +47,7 @@ type (
 		AdminAddress             string `mapstructure:"admin-address"`
 	}
 
-	ChainConfig struct {
+	Chain struct {
 		ID      int `mapstructure:"id"`
 		RPCPort int `mapstructure:"rpc-port"`
 	}
@@ -54,6 +55,10 @@ type (
 	Repository struct {
 		URL    string `mapstructure:"url"`
 		Branch string `mapstructure:"branch"`
+	}
+
+	Image struct {
+		Tag string `mapstructure:"tag"`
 	}
 
 	Wallet struct {
@@ -67,9 +72,13 @@ type (
 
 const (
 	RepositoryNameOpGeth           RepositoryName = "op-geth"
-	RepositoryNameOptimism         RepositoryName = "optimism"
 	RepositoryNamePublisher        RepositoryName = "publisher"
 	RepositoryNameComposeContracts RepositoryName = "compose-contracts"
+
+	ImageNameOpDeployer ImageName = "op-deployer"
+	ImageNameOpNode     ImageName = "op-node"
+	ImageNameOpProposer ImageName = "op-proposer"
+	ImageNameOpBatcher  ImageName = "op-batcher"
 
 	L2ChainNameRollupA L2ChainName = "rollup-a"
 	L2ChainNameRollupB L2ChainName = "rollup-b"
@@ -97,7 +106,7 @@ func (c *L2) Validate() error {
 		errs = append(errs, errors.New("l2.wallet.address is required"))
 	}
 
-	requiredRepos := []RepositoryName{RepositoryNameOpGeth, RepositoryNameOptimism, RepositoryNamePublisher}
+	requiredRepos := []RepositoryName{RepositoryNameOpGeth, RepositoryNamePublisher}
 	for _, name := range requiredRepos {
 		repo, exists := c.Repositories[name]
 		if !exists {
@@ -109,6 +118,18 @@ func (c *L2) Validate() error {
 		}
 		if repo.Branch == "" {
 			errs = append(errs, fmt.Errorf("l2.repositories.%s.branch is required", name))
+		}
+	}
+
+	requiredImages := []ImageName{ImageNameOpDeployer, ImageNameOpNode, ImageNameOpProposer, ImageNameOpBatcher}
+	for _, name := range requiredImages {
+		img, exists := c.Images[name]
+		if !exists {
+			errs = append(errs, fmt.Errorf("l2.images.%s is required", name))
+			continue
+		}
+		if img.Tag == "" {
+			errs = append(errs, fmt.Errorf("l2.images.%s.tag is required", name))
 		}
 	}
 
@@ -141,10 +162,6 @@ func (c *L2) Validate() error {
 		errs = append(errs, errors.New("l2.deployment-target is required"))
 	} else if c.DeploymentTarget != "live" && c.DeploymentTarget != "calldata" {
 		errs = append(errs, errors.New("l2.deployment-target must be either 'live' or 'calldata'"))
-	}
-
-	if c.OPDeployerVersion == "" {
-		errs = append(errs, errors.New("l2.op-deployer-version is required"))
 	}
 
 	// Validate dispute config

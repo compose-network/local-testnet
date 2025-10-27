@@ -36,7 +36,7 @@ func NewIntentWriter(stateDir string, writer filesystem.Writer) *IntentWriter {
 }
 
 // WriteIntent creates the intent.toml file for op-deployer
-func (i *IntentWriter) WriteIntent(walletAddress, sequencerAddress string, l1ChainID int, l2Chains map[configs.L2ChainName]configs.ChainConfig) error {
+func (i *IntentWriter) WriteIntent(walletAddress, sequencerAddress string, l1ChainID int, l2Chains map[configs.L2ChainName]configs.Chain) error {
 	i.logger.
 		With("file_name", intentFileName).
 		Info("writing deployer intent file")
