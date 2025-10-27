@@ -171,11 +171,7 @@ services:
       - "19545:9545"
 
   op-batcher-a:
-    build:
-      context: ${OPTIMISM_PATH}
-      dockerfile: ../../l2runtime/docker/optimism.Dockerfile
-      target: op-batcher
-    image: local/op-batcher:dev
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-batcher:v1.14.0
     container_name: op-batcher-a
     labels:
       - "stack=localnet-l2"
@@ -365,11 +361,7 @@ services:
       - "29545:9545"
 
   op-batcher-b:
-    build:
-      context: ${OPTIMISM_PATH}
-      dockerfile: ../../l2runtime/docker/optimism.Dockerfile
-      target: op-batcher
-    image: local/op-batcher:dev
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-batcher:v1.14.0
     container_name: op-batcher-b
     labels:
       - "stack=localnet-l2"
