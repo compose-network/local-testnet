@@ -160,7 +160,7 @@ func ComposeUp(ctx context.Context, env map[string]string, services ...string) e
 
 // ComposeRestart restarts docker compose services.
 func ComposeRestart(ctx context.Context, env map[string]string, services ...string) error {
-	args := append([]string{"restart"}, services...)
+	args := append([]string{"up", "-d", "--force-recreate"}, services...)
 	return composeRun(ctx, env, args...)
 }
 
