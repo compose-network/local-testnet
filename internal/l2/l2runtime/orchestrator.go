@@ -58,6 +58,12 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryA
 		return nil, fmt.Errorf("failed to deploy contracts: %w", err)
 	}
 
+	o.logger.Info("restarting op-geth services to apply mailbox configuration")
+	if err := o.restartOpGeth(ctx, env, deployedContracts); err != nil {
+		o.logger.Warn("failed to restart op-geth services", "error", err)
+		o.logger.Warn("you may need to restart op-geth manually for cross-chain transactions to work")
+	}
+
 	o.logger.Info("Phase 3: L2 runtime operations completed successfully")
 
 	return deployedContracts, nil
@@ -93,6 +99,31 @@ func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr com
 	env["OP_PROPOSER_IMAGE_TAG"] = cfg.Images[configs.ImageNameOpProposer].Tag
 
 	return env
+}
+
+func (o *Orchestrator) restartOpGeth(ctx context.Context, env map[string]string, deployedContracts map[configs.L2ChainName]map[contracts.ContractName]common.Address) error {
+	mailboxA := deployedContracts[configs.L2ChainNameRollupA][contracts.ContractNameMailbox]
+	mailboxB := deployedContracts[configs.L2ChainNameRollupB][contracts.ContractNameMailbox]
+
+	if mailboxA == (common.Address{}) || mailboxB == (common.Address{}) {
+		return fmt.Errorf("mailbox addresses not found in deployed contracts")
+	}
+
+	env["MAILBOX_A"] = mailboxA.Hex()
+	env["MAILBOX_B"] = mailboxB.Hex()
+
+	o.logger.Info("restarting op-geth with mailbox addresses",
+		"mailbox_a", mailboxA.Hex(),
+		"mailbox_b", mailboxB.Hex())
+
+	services := []string{"op-geth-a", "op-geth-b"}
+	if err := docker.ComposeRestart(ctx, env, services...); err != nil {
+		return fmt.Errorf("failed to restart op-geth: %w", err)
+	}
+
+	o.logger.Info("op-geth services restarted successfully, waiting for them to be ready")
+
+	return nil
 }
 
 // buildComposeServices builds services using docker-compose
