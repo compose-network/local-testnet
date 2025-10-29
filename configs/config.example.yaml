@@ -22,13 +22,13 @@ l2:
   # curl https://us-docker.pkg.dev/v2/oplabs-tools-artifacts/images/{REPOSITORY_NAME}/tags/list to fetch list of available tags
   images:
     op-deployer:
-      tag: v1.0.0
+      tag: v0.3.3
     op-node: 
-      tag: v1.0.0
+      tag: v1.13.6
     op-proposer: 
-      tag: v1.0.0
+      tag: v1.10.0
     op-batcher: 
-      tag: v1.0.0
+      tag: v1.14.0
   repositories:
     op-geth:
       url: https://github.com/op-geth.git
