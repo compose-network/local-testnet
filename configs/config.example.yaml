@@ -21,6 +21,8 @@ l2:
   genesis-balance-wei: "100000000000000000"  # 0.1 ETH for funded accounts
   # curl https://us-docker.pkg.dev/v2/oplabs-tools-artifacts/images/{REPOSITORY_NAME}/tags/list to fetch list of available tags
   # these versions represent fully compatible builds that work together as expected in the local testnet setup.
+  # stage branch versions can be found here: https://github.com/ssvlabs/gitops-stage/blob/main/environments/ovh/optimism/optimism-stack.yaml
+  # prod branch versions can be found here: https://github.com/ssvlabs/gitops-production/blob/main/environments/aws/hoodi/compose/op-stack-a.yaml
   images:
     op-deployer:
       tag: v0.4.5
