@@ -71,7 +71,12 @@ clean-l2:
 .PHONY: clean-l2-full
 clean-l2-full: clean-l2
 	rm -rf ./internal/l2/services
-	docker images -q | xargs -r docker rmi
+	docker images -q "local/publisher" | xargs -r docker rmi -f
+	docker images -q "local/op-geth" | xargs -r docker rmi -f
+	docker images -q "us-docker.pkg.dev/oplabs-tools-artifacts/images/op-node" | xargs -r docker rmi -f
+	docker images -q "us-docker.pkg.dev/oplabs-tools-artifacts/images/op-batcher" | xargs -r docker rmi -f
+	docker images -q "us-docker.pkg.dev/oplabs-tools-artifacts/images/op-proposer" | xargs -r docker rmi -f
+	docker images -q "us-docker.pkg.dev/oplabs-tools-artifacts/images/op-deployer" | xargs -r docker rmi -f
 
 ## Compile L2 contracts ##
 .PHONY: run-l2-compile
