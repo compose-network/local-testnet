@@ -1,13 +1,14 @@
 configType = "custom"
 l1ChainID = {{.L1ChainID}}
 fundDevAccounts = false
-l1ContractsLocator = "tag://op-contracts/v3.0.0"
-l2ContractsLocator = "tag://op-contracts/v3.0.0"
+l1ContractsLocator = "embedded"
+l2ContractsLocator = "embedded"
 
 [superchainRoles]
-  proxyAdminOwner = "{{.Wallet}}"
-  protocolVersionsOwner = "{{.Wallet}}"
-  guardian = "{{.Wallet}}"
+  SuperchainProxyAdminOwner = "{{.Wallet}}"
+  ProtocolVersionsOwner = "{{.Wallet}}"
+  SuperchainGuardian = "{{.Wallet}}"
+  Challenger = "{{.Wallet}}"
 {{range .Chains}}
 [[chains]]
   id = "{{.ChainID}}"

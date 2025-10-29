@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/compose-network/local-testnet/internal/logger"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 const fileName = "runtime.env"
@@ -23,15 +24,15 @@ func NewGenerator() *Generator {
 	}
 }
 
-func (g *Generator) Generate(gameFactoryProxyAddr string, path string) error {
-	if gameFactoryProxyAddr == "" {
+func (g *Generator) Generate(gameFactoryProxyAddr common.Address, path string) error {
+	if gameFactoryProxyAddr == (common.Address{}) {
 		return fmt.Errorf("could not generate %s, gameFactoryProxyAddr cannot be empty", fileName)
 	}
 	runtimeFilePath := filepath.Join(path, fileName)
 
 	var lines []string
-	lines = append(lines, fmt.Sprintf("DISPUTE_GAME_FACTORY_ADDRESS=%s", gameFactoryProxyAddr))
-	lines = append(lines, fmt.Sprintf("OP_PROPOSER_GAME_FACTORY_ADDRESS=%s", gameFactoryProxyAddr))
+	lines = append(lines, fmt.Sprintf("DISPUTE_GAME_FACTORY_ADDRESS=%s", gameFactoryProxyAddr.Hex()))
+	lines = append(lines, fmt.Sprintf("OP_PROPOSER_GAME_FACTORY_ADDRESS=%s", gameFactoryProxyAddr.Hex()))
 
 	content := strings.Join(lines, "\n") + "\n"
 

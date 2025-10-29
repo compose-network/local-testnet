@@ -113,7 +113,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, deploymentSt
 			return fmt.Errorf("failed to generate contract placeholders for chain %d: %w", chainConfig.ID, err)
 		}
 
-		if err := runtimeGen.Generate(deploymentState.DisputeGameFactoryImplAddressOP.Hex(), configPath); err != nil {
+		if err := runtimeGen.Generate(deploymentState.DisputeGameFactoryImplAddressOP, configPath); err != nil {
 			return fmt.Errorf("failed to generate runtime file, %w", err)
 		}
 	}
