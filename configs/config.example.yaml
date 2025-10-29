@@ -23,6 +23,7 @@ l2:
   # these versions represent fully compatible builds that work together as expected in the local testnet setup.
   # stage branch versions can be found here: https://github.com/ssvlabs/gitops-stage/blob/main/environments/ovh/optimism/optimism-stack.yaml
   # prod branch versions can be found here: https://github.com/ssvlabs/gitops-production/blob/main/environments/aws/hoodi/compose/op-stack-a.yaml
+  # keep in mind - changing the versions may lead to unexpected behavior due to incompatibilities between different components and local testnet data structures.
   images:
     op-deployer:
       tag: v0.4.5
