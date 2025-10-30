@@ -187,9 +187,7 @@ coverage/
 
 
 # L2 deployment artifacts
-internal/l2/services/
-internal/l2/state/
-internal/l2/networks/
+.localnet/
 .cache/
 
 # Configuration file

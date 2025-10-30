@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"log/slog"
+	"os"
+	"path/filepath"
 
 	"github.com/compose-network/local-testnet/configs"
 	"github.com/compose-network/local-testnet/internal/l1"
@@ -23,6 +25,12 @@ var rootCmd = &cobra.Command{
 
 		viper.SetConfigName("config")
 		viper.SetConfigType("yaml")
+
+		if execPath, err := os.Executable(); err == nil {
+			execDir := filepath.Dir(execPath)
+			viper.AddConfigPath(execDir)
+		}
+		viper.AddConfigPath(".")
 		viper.AddConfigPath("./configs")
 
 		if err := viper.ReadInConfig(); err != nil {

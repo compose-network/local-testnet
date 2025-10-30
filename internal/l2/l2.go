@@ -36,8 +36,8 @@ var CMD = &cobra.Command{
 			return fmt.Errorf("failed to get working directory: %w", err)
 		}
 
-		stateDir := filepath.Join(rootDir, "internal", "l2", "state")
-		networksDir := filepath.Join(rootDir, "internal", "l2", "networks")
+		stateDir := filepath.Join(rootDir, ".localnet", "state")
+		networksDir := filepath.Join(rootDir, ".localnet", "networks")
 		compiledContractsDir := filepath.Join(rootDir, "internal", "l2", "l2runtime", "contracts", "compiled")
 
 		l1Orchestrator := l1deployment.NewOrchestrator(rootDir, stateDir)

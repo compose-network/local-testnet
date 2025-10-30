@@ -11,6 +11,12 @@ default: run
 .PHONY: build
 build:
 	go build -o ${BINARY_PATH} ${EXEC_DIRECTORY}
+	@if [ -f configs/config.yaml ]; then \
+		cp configs/config.yaml ${BINARY_DIR}/config.yaml; \
+		echo "Copied config.yaml to ${BINARY_DIR}"; \
+	else \
+		echo "Warning: configs/config.yaml not found, skipping copy"; \
+	fi
 
 .PHONY: run
 run: build
@@ -66,7 +72,7 @@ show-l2:
 clean-l2:
 	docker compose -f internal/l2/l2runtime/docker/docker-compose.yml down -v
 	docker ps -aq --filter "label=${L2_LABEL}" | xargs -r docker rm -f
-	rm -rf ./internal/l2/state ./internal/l2/networks ./.cache
+	rm -rf ./.localnet ./.cache
 
 .PHONY: clean-l2-full
 clean-l2-full: clean-l2

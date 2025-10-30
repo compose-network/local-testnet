@@ -135,7 +135,7 @@ func (c *Service) cloneRepositories(ctx context.Context, cfg configs.L2) error {
 		})
 	}
 
-	l2Dir := filepath.Join(c.rootDir, "internal", "l2", "services")
+	l2Dir := filepath.Join(c.rootDir, ".localnet", "services")
 	if err := c.cloner.CloneAll(ctx, l2Dir, repos); err != nil {
 		return fmt.Errorf("failed to clone repositories: %w", err)
 	}
