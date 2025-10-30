@@ -70,13 +70,13 @@ show-l2:
 
 .PHONY: clean-l2
 clean-l2:
-	docker compose -f internal/l2/l2runtime/docker/docker-compose.yml down -v
+	docker compose -f internal/l2/infra/docker/docker-compose.yml down -v
 	docker ps -aq --filter "label=${L2_LABEL}" | xargs -r docker rm -f
-	rm -rf ./.localnet ./.cache
+	rm -rf ./.localnet/state ./.localnet/networks ./.localnet/compiled-contracts ./.localnet/docker-compose.yml ./.cache
 
 .PHONY: clean-l2-full
 clean-l2-full: clean-l2
-	rm -rf ./internal/l2/services
+	rm -rf ./.localnet/services
 	docker images -q "local/publisher" | xargs -r docker rmi -f
 	docker images -q "local/op-geth" | xargs -r docker rmi -f
 	docker images -q "us-docker.pkg.dev/oplabs-tools-artifacts/images/op-node" | xargs -r docker rmi -f

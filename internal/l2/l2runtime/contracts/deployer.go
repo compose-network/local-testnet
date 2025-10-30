@@ -24,7 +24,6 @@ import (
 type (
 	// Deployer deploys L2 contracts
 	Deployer struct {
-		rootDir                       string
 		networksDir                   string
 		waitForDeploymentConfirmation bool
 		logger                        *slog.Logger
@@ -32,9 +31,8 @@ type (
 )
 
 // NewDeployer creates a new contract deployer
-func NewDeployer(rootDir, networksDir string) *Deployer {
+func NewDeployer(networksDir string) *Deployer {
 	return &Deployer{
-		rootDir:                       rootDir,
 		networksDir:                   networksDir,
 		waitForDeploymentConfirmation: true,
 		logger:                        logger.Named("contracts_deployer"),
@@ -58,13 +56,8 @@ func (d *Deployer) Deploy(ctx context.Context, chainConfigs map[configs.L2ChainN
 
 // deployContracts deploys contracts to rollups using go-ethereum.
 func (d *Deployer) deployContracts(ctx context.Context, chainConfigs map[configs.L2ChainName]configs.Chain, coordinatorPK string) (map[configs.L2ChainName]map[ContractName]common.Address, error) {
-	compiledContractsDir := filepath.Join(d.rootDir, "internal", "l2", "l2runtime", "contracts", "compiled")
-	if _, err := os.Stat(compiledContractsDir); os.IsNotExist(err) {
-		return nil, fmt.Errorf("contracts directory not found. Directory: '%s'", compiledContractsDir)
-	}
-
 	d.logger.Info("loading precompiled contracts")
-	compiledContracts, err := LoadCompiledContracts(compiledContractsDir)
+	compiledContracts, err := LoadCompiledContracts()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load compiled contracts: %w", err)
 	}

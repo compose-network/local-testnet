@@ -28,22 +28,26 @@ type (
 	}
 
 	Generator struct {
-		deployer deployer
-		docker   *docker.Client
-		writer   filesystem.Writer
-		rootDir  string
-		logger   *slog.Logger
+		deployer    deployer
+		docker      *docker.Client
+		writer      filesystem.Writer
+		rootDir     string
+		localnetDir string
+		servicesDir string
+		logger      *slog.Logger
 	}
 )
 
 // NewGenerator creates a new genesis generator
-func NewGenerator(deployer deployer, docker *docker.Client, writer filesystem.Writer, rootDir string) *Generator {
+func NewGenerator(deployer deployer, docker *docker.Client, writer filesystem.Writer, rootDir, localnetDir, servicesDir string) *Generator {
 	return &Generator{
-		deployer: deployer,
-		docker:   docker,
-		writer:   writer,
-		rootDir:  rootDir,
-		logger:   logger.Named("genesis_generator"),
+		deployer:    deployer,
+		docker:      docker,
+		writer:      writer,
+		rootDir:     rootDir,
+		localnetDir: localnetDir,
+		servicesDir: servicesDir,
+		logger:      logger.Named("genesis_generator"),
 	}
 }
 
@@ -221,12 +225,17 @@ func (g *Generator) ensureOpGethImage(ctx context.Context, imageName string) err
 
 	g.logger.Info("op-geth image not found, building it using docker compose")
 
-	env := map[string]string{
-		"ROOT_DIR":     g.rootDir,
-		"OP_GETH_PATH": filepath.Join(g.rootDir, "internal", "l2", "services", "op-geth"),
+	composePath, err := docker.EnsureComposeFile(g.localnetDir)
+	if err != nil {
+		return fmt.Errorf("failed to ensure compose file: %w", err)
 	}
 
-	if err := docker.ComposeBuild(ctx, env, "op-geth-a"); err != nil {
+	env := map[string]string{
+		"ROOT_DIR":     g.rootDir,
+		"OP_GETH_PATH": filepath.Join(g.servicesDir, "op-geth"),
+	}
+
+	if err := docker.ComposeBuild(ctx, composePath, env, "op-geth-a"); err != nil {
 		return fmt.Errorf("failed to build op-geth image: %w", err)
 	}
 

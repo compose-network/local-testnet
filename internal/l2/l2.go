@@ -36,15 +36,16 @@ var CMD = &cobra.Command{
 			return fmt.Errorf("failed to get working directory: %w", err)
 		}
 
-		stateDir := filepath.Join(rootDir, ".localnet", "state")
-		networksDir := filepath.Join(rootDir, ".localnet", "networks")
-		compiledContractsDir := filepath.Join(rootDir, "internal", "l2", "l2runtime", "contracts", "compiled")
+		localnetDir := filepath.Join(rootDir, localnetDirName)
+		stateDir := filepath.Join(localnetDir, stateDirName)
+		networksDir := filepath.Join(localnetDir, networksDirName)
+		servicesDir := filepath.Join(localnetDir, servicesDirName)
 
-		l1Orchestrator := l1deployment.NewOrchestrator(rootDir, stateDir)
-		l2ConfigOrchestrator := l2config.NewOrchestrator(rootDir, stateDir, networksDir)
-		runtimeOrchestrator := l2runtime.NewOrchestrator(rootDir, networksDir)
+		l1Orchestrator := l1deployment.NewOrchestrator(rootDir, stateDir, servicesDir)
+		l2ConfigOrchestrator := l2config.NewOrchestrator(rootDir, localnetDir, stateDir, networksDir, servicesDir)
+		runtimeOrchestrator := l2runtime.NewOrchestrator(rootDir, localnetDir, networksDir, servicesDir)
 
-		service := NewService(rootDir, git.NewCloner(), l1Orchestrator, l2ConfigOrchestrator, runtimeOrchestrator, output.NewGenerator(compiledContractsDir))
+		service := NewService(rootDir, git.NewCloner(), l1Orchestrator, l2ConfigOrchestrator, runtimeOrchestrator, output.NewGenerator())
 		if err := service.Deploy(cmd.Context(), configs.Values.L2); err != nil {
 			return fmt.Errorf("l2 deployment failed: %w", err)
 		}
