@@ -28,11 +28,11 @@ l2:
     op-deployer:
       tag: v0.4.5
     op-node: 
-      tag: v1.14.3
+      tag: v1.13.6
     op-proposer: 
       tag: v1.10.0
     op-batcher: 
-      tag: v1.16.0
+      tag: v1.14.0
   repositories:
     op-geth:
       url: https://github.com/op-geth.git
