@@ -77,7 +77,7 @@ func (c *Service) Deploy(ctx context.Context, cfg configs.L2) error {
 		return fmt.Errorf("phase 1 failed: %w", err)
 	}
 
-	c.logger.Info("running phase 2 - L2 config generation")
+	c.logger.Info("running phase 2 - L2 config generation", "deployment_state", deploymentState)
 	err = c.l2ConfigOrchestrator.Execute(ctx, cfg, deploymentState)
 	if err != nil {
 		return fmt.Errorf("phase 2 failed: %w", err)

@@ -9,7 +9,7 @@ type OPDeploymentState struct {
 
 // ImplementationsDeployment represents shared implementation contracts
 type ImplementationsDeployment struct {
-	DisputeGameFactoryImplAddress string `json:"disputeGameFactoryImplAddress"`
+	DisputeGameFactoryImplAddress string `json:"DisputeGameFactoryImpl"`
 }
 
 // OpChainDeployment represents per-chain L1 contracts

@@ -20,9 +20,13 @@ l2:
   deployment-target: live  # "live" or "calldata"
   genesis-balance-wei: "100000000000000000"  # 0.1 ETH for funded accounts
   # curl https://us-docker.pkg.dev/v2/oplabs-tools-artifacts/images/{REPOSITORY_NAME}/tags/list to fetch list of available tags
+  # these versions represent fully compatible builds that work together as expected in the local testnet setup.
+  # stage branch versions can be found here: https://github.com/ssvlabs/gitops-stage/blob/main/environments/ovh/optimism/optimism-stack.yaml
+  # prod branch versions can be found here: https://github.com/ssvlabs/gitops-production/blob/main/environments/aws/hoodi/compose/op-stack-a.yaml
+  # keep in mind - changing the versions may lead to unexpected behavior due to incompatibilities between different components and local testnet data structures.
   images:
     op-deployer:
-      tag: v0.3.3
+      tag: v0.4.5
     op-node: 
       tag: v1.13.6
     op-proposer: 
