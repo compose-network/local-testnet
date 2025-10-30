@@ -49,13 +49,14 @@ var compileCmd = &cobra.Command{
 
 		slog.Info("cloning repositories")
 		cloner := git.NewCloner()
-		if err := cloner.Clone(ctx, filepath.Join(rootDir, "internal", "l2", "services"), contractsRepo); err != nil {
+		servicesDir := filepath.Join(rootDir, localnetDirName, servicesDirName)
+		if err := cloner.Clone(ctx, servicesDir, contractsRepo); err != nil {
 			return fmt.Errorf("failed to clone repository: '%w'", err)
 		}
 
 		compiler := contracts.NewCompiler(
-			filepath.Join(rootDir, "internal", "l2", "services", "compose-contracts", "L2"),
-			filepath.Join(rootDir, "internal", "l2", "l2runtime", "contracts", "compiled"),
+			filepath.Join(servicesDir, "compose-contracts", "L2"),
+			filepath.Join(rootDir, localnetDirName, compiledContractsDirName),
 		)
 
 		var contractToCompile []string

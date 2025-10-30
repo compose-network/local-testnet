@@ -11,9 +11,9 @@ Local testnet is a CLI tool for managing local L1 and L2 Ethereum test networks.
 - Docker and Docker Compose
 - Go 1.25+
 - Kurtosis (for L1 network)
-- Foundry/Forge (for L2 contract compilation)
-- [just](https://github.com/casey/just) (for L2 contract deployment)
-- jq (for L2 contract deployment)
+- Foundry/Forge (for L2 commands)
+- [just](https://github.com/casey/just) (for L2 commands)
+- jq (for L2 commands)
 
 ## ⚙️  How to Build
 
@@ -51,7 +51,7 @@ Supports multiple L2 chains (rollup-a, rollup-b) with configurable chain IDs and
 
 #### L2 Contract Compilation (`localnet l2 compile`)
 
-Compiles Solidity contracts from the publisher repository. This command generates/updates `contracts.json` in `internal/l2/l2runtime/contracts/compiled/`
+Compiles Solidity contracts from the compose-contracts repository. This command generates/updates `contracts.json` in `.localnet/compiled-contracts/`. To update the embedded contracts in the binary, manually copy the compiled file to `internal/l2/l2runtime/contracts/compiled/` and commit it.
 
 **Note:** Requires Foundry/Forge to be installed locally.
 

@@ -11,15 +11,17 @@ import (
 
 // Manager manages L2 service lifecycle via docker-compose
 type Manager struct {
-	rootDir string
-	logger  *slog.Logger
+	rootDir         string
+	composeFilePath string
+	logger          *slog.Logger
 }
 
 // NewManager creates a new service manager
-func NewManager(rootDir string) *Manager {
+func NewManager(rootDir, composeFilePath string) *Manager {
 	return &Manager{
-		rootDir: rootDir,
-		logger:  logger.Named("service_manager"),
+		rootDir:         rootDir,
+		composeFilePath: composeFilePath,
+		logger:          logger.Named("service_manager"),
 	}
 }
 
@@ -39,7 +41,7 @@ func (m *Manager) StartAll(ctx context.Context, env map[string]string) error {
 
 	m.logger.With("services", services).Info("starting all L2 services")
 
-	if err := docker.ComposeUp(ctx, env, services...); err != nil {
+	if err := docker.ComposeUp(ctx, m.composeFilePath, env, services...); err != nil {
 		return fmt.Errorf("failed to start services: %w", err)
 	}
 

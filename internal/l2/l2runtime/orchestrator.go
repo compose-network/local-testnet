@@ -22,15 +22,19 @@ import (
 //   - Starts final services (op-node, batcher, proposer)
 type Orchestrator struct {
 	rootDir     string
+	localnetDir string
 	networksDir string
+	servicesDir string
 	logger      *slog.Logger
 }
 
 // NewOrchestrator creates a new Phase 3 orchestrator
-func NewOrchestrator(rootDir, networksDir string) *Orchestrator {
+func NewOrchestrator(rootDir, localnetDir, networksDir, servicesDir string) *Orchestrator {
 	return &Orchestrator{
 		rootDir:     rootDir,
+		localnetDir: localnetDir,
 		networksDir: networksDir,
+		servicesDir: servicesDir,
 		logger:      logger.Named("l2_runtime_orchestrator"),
 	}
 }
@@ -39,27 +43,32 @@ func NewOrchestrator(rootDir, networksDir string) *Orchestrator {
 func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryAddr common.Address) (map[configs.L2ChainName]map[contracts.ContractName]common.Address, error) {
 	o.logger.Info("Phase 3: Starting L2 runtime operations")
 
+	composePath, err := docker.EnsureComposeFile(o.localnetDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare docker-compose file: %w", err)
+	}
+
 	env := o.buildDockerComposeEnv(cfg, gameFactoryAddr)
 
 	o.logger.With("env", env).Info("environment variables were constructed. Building compose services")
-	if err := o.buildComposeServices(ctx, env); err != nil {
+	if err := o.buildComposeServices(ctx, composePath, env); err != nil {
 		return nil, fmt.Errorf("failed to build compose services: %w", err)
 	}
 
 	o.logger.Info("docker-compose services built successfully")
-	serviceManager := services.NewManager(o.rootDir)
+	serviceManager := services.NewManager(o.rootDir, composePath)
 	if err := serviceManager.StartAll(ctx, env); err != nil {
 		return nil, fmt.Errorf("failed to start L2 services: %w", err)
 	}
 
-	contractDeployer := contracts.NewDeployer(o.rootDir, o.networksDir)
+	contractDeployer := contracts.NewDeployer(o.networksDir)
 	deployedContracts, err := contractDeployer.Deploy(ctx, cfg.ChainConfigs, cfg.CoordinatorPrivateKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy contracts: %w", err)
 	}
 
 	o.logger.Info("restarting op-geth services to apply mailbox configuration")
-	if err := o.restartOpGeth(ctx, env, deployedContracts); err != nil {
+	if err := o.restartOpGeth(ctx, composePath, env, deployedContracts); err != nil {
 		o.logger.Warn("failed to restart op-geth services", "error", err)
 		o.logger.Warn("you may need to restart op-geth manually for cross-chain transactions to work")
 	}
@@ -83,14 +92,16 @@ func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr com
 	env["SEQUENCER_PRIVATE_KEY"] = cfg.CoordinatorPrivateKey
 	env["SP_L1_SUPERBLOCK_CONTRACT"] = ""
 
-	env["PUBLISHER_PATH"] = filepath.Join(o.rootDir, "internal", "l2", "services", string(configs.RepositoryNamePublisher))
-	env["OP_GETH_PATH"] = filepath.Join(o.rootDir, "internal", "l2", "services", string(configs.RepositoryNameOpGeth))
+	env["PUBLISHER_PATH"] = filepath.Join(o.servicesDir, string(configs.RepositoryNamePublisher))
+	env["OP_GETH_PATH"] = filepath.Join(o.servicesDir, string(configs.RepositoryNameOpGeth))
 
 	env["ROLLUP_A_CHAIN_ID"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupA].ID)
 	env["ROLLUP_A_RPC_PORT"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupA].RPCPort)
+	env["ROLLUP_A_CONFIG_PATH"] = filepath.Join(o.networksDir, string(configs.L2ChainNameRollupA))
 
 	env["ROLLUP_B_CHAIN_ID"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupB].ID)
 	env["ROLLUP_B_RPC_PORT"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupB].RPCPort)
+	env["ROLLUP_B_CONFIG_PATH"] = filepath.Join(o.networksDir, string(configs.L2ChainNameRollupB))
 
 	env["SP_L1_DISPUTE_GAME_FACTORY"] = gameFactoryAddr.Hex()
 
@@ -101,7 +112,7 @@ func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr com
 	return env
 }
 
-func (o *Orchestrator) restartOpGeth(ctx context.Context, env map[string]string, deployedContracts map[configs.L2ChainName]map[contracts.ContractName]common.Address) error {
+func (o *Orchestrator) restartOpGeth(ctx context.Context, composeFilePath string, env map[string]string, deployedContracts map[configs.L2ChainName]map[contracts.ContractName]common.Address) error {
 	mailboxA := deployedContracts[configs.L2ChainNameRollupA][contracts.ContractNameMailbox]
 	mailboxB := deployedContracts[configs.L2ChainNameRollupB][contracts.ContractNameMailbox]
 
@@ -117,7 +128,7 @@ func (o *Orchestrator) restartOpGeth(ctx context.Context, env map[string]string,
 		"mailbox_b", mailboxB.Hex())
 
 	services := []string{"op-geth-a", "op-geth-b"}
-	if err := docker.ComposeRestart(ctx, env, services...); err != nil {
+	if err := docker.ComposeRestart(ctx, composeFilePath, env, services...); err != nil {
 		return fmt.Errorf("failed to restart op-geth: %w", err)
 	}
 
@@ -129,14 +140,14 @@ func (o *Orchestrator) restartOpGeth(ctx context.Context, env map[string]string,
 // buildComposeServices builds services using docker-compose
 // Only builds services that are built from source (publisher, op-geth)
 // op-node, op-batcher, and op-proposer now use public images
-func (o *Orchestrator) buildComposeServices(ctx context.Context, env map[string]string) error {
+func (o *Orchestrator) buildComposeServices(ctx context.Context, composeFilePath string, env map[string]string) error {
 	services := []string{
 		"publisher",
 		"op-geth-a",
 		"op-geth-b",
 	}
 
-	if err := docker.ComposeBuild(ctx, env, services...); err != nil {
+	if err := docker.ComposeBuild(ctx, composeFilePath, env, services...); err != nil {
 		return fmt.Errorf("failed to build compose services: %w", err)
 	}
 

@@ -1,23 +1,30 @@
 package contracts
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func LoadCompiledContracts(contractsDir string) (map[ContractName]CompiledContract, error) {
-	compiledPath := filepath.Join(contractsDir, contractsFileName)
-	data, err := os.ReadFile(compiledPath)
+//go:embed compiled/contracts.json
+var compiledContractsFS embed.FS
+
+// LoadCompiledContracts loads compiled contracts.
+func LoadCompiledContracts() (map[ContractName]CompiledContract, error) {
+	data, err := compiledContractsFS.ReadFile("compiled/contracts.json")
 	if err != nil {
-		return nil, fmt.Errorf("failed to read compiled contracts: %w", err)
+		return nil, fmt.Errorf("failed to read embedded contracts: %w", err)
 	}
 
+	return parseContracts(data)
+}
+
+// parseContracts parses contract JSON data into CompiledContract map
+func parseContracts(data []byte) (map[ContractName]CompiledContract, error) {
 	var result map[string]struct {
 		ABI      json.RawMessage `json:"abi"`
 		Bytecode string          `json:"bytecode"`
