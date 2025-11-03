@@ -13,15 +13,20 @@ import (
 	"github.com/compose-network/local-testnet/internal/l2/l2runtime"
 	"github.com/compose-network/local-testnet/internal/l2/output"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
-
-func init() {
-	CMD.AddCommand(compileCmd)
-}
 
 var CMD = &cobra.Command{
 	Use:   "l2",
 	Short: "Commands for running L2 network",
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		// Re-unmarshal config to pick up flag overrides
+		// Flags have higher precedence than config file values
+		if err := viper.Unmarshal(&configs.Values); err != nil {
+			return fmt.Errorf("failed to unmarshal config with flag overrides: %w", err)
+		}
+		return nil
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		slog.Info("starting l2 command. Validating config", slog.Any("config", configs.Values.L2))
 

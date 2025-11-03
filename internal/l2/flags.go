@@ -1,0 +1,115 @@
+package l2
+
+import (
+	"github.com/spf13/viper"
+)
+
+// flagDef defines a command-line flag with its configuration.
+type (
+	flagType interface {
+		string | int | bool
+	}
+
+	flagDef[T flagType] struct {
+		name         string
+		viperKey     string
+		defaultValue T
+		description  string
+	}
+)
+
+var (
+	stringFlags = []flagDef[string]{
+		// L1 connection
+		{"l1-el-url", "l2.l1-el-url", "", "L1 execution layer RPC URL"},
+		{"l1-cl-url", "l2.l1-cl-url", "", "L1 consensus layer RPC URL"},
+
+		// Wallet
+		{"wallet-private-key", "l2.wallet.private-key", "", "Deployer wallet private key"},
+		{"wallet-address", "l2.wallet.address", "", "Deployer wallet address"},
+		{"coordinator-private-key", "l2.coordinator-private-key", "", "Coordinator private key"},
+
+		// Deployment
+		{"deployment-target", "l2.deployment-target", "live", "Deployment target (live or calldata)"},
+		{"genesis-balance-wei", "l2.genesis-balance-wei", "100000000000000000", "Genesis balance in wei for funded accounts (default: 0.1 ETH)"},
+
+		// Repositories
+		{"op-geth-url", "l2.repositories.op-geth.url", "https://github.com/compose-network/op-geth.git", "op-geth repository URL"},
+		{"op-geth-branch", "l2.repositories.op-geth.branch", "stage", "op-geth repository branch"},
+		{"publisher-url", "l2.repositories.publisher.url", "https://github.com/compose-network/publisher.git", "publisher repository URL"},
+		{"publisher-branch", "l2.repositories.publisher.branch", "stage", "publisher repository branch"},
+		{"compose-contracts-url", "l2.repositories.compose-contracts.url", "https://github.com/compose-network/contracts.git", "compose-contracts repository URL"},
+		{"compose-contracts-branch", "l2.repositories.compose-contracts.branch", "develop", "compose-contracts repository branch"},
+
+		// Images
+		{"op-deployer-tag", "l2.images.op-deployer.tag", "v0.4.5", "op-deployer image tag"},
+		{"op-node-tag", "l2.images.op-node.tag", "v1.13.6", "op-node image tag"},
+		{"op-proposer-tag", "l2.images.op-proposer.tag", "v1.10.0", "op-proposer image tag"},
+		{"op-batcher-tag", "l2.images.op-batcher.tag", "v1.14.0", "op-batcher image tag"},
+
+		// Dispute config
+		{"dispute-network-name", "l2.dispute.network-name", "", "Dispute network name"},
+		{"dispute-explorer-url", "l2.dispute.explorer-url", "", "Dispute explorer URL"},
+		{"dispute-explorer-api-url", "l2.dispute.explorer-api-url", "", "Dispute explorer API URL"},
+		{"dispute-verifier-address", "l2.dispute.verifier-address", "", "Dispute verifier contract address"},
+		{"dispute-owner-address", "l2.dispute.owner-address", "", "Dispute owner address"},
+		{"dispute-proposer-address", "l2.dispute.proposer-address", "", "Dispute proposer address"},
+		{"dispute-aggregation-vkey", "l2.dispute.aggregation-vkey", "", "Dispute aggregation verification key"},
+		{"dispute-admin-address", "l2.dispute.admin-address", "", "Dispute admin address"},
+	}
+
+	intFlags = []flagDef[int]{
+		// L1 connection
+		{"l1-chain-id", "l2.l1-chain-id", 0, "L1 chain ID"},
+
+		// Chain configs
+		{"rollup-a-id", "l2.chain-configs.rollup-a.id", 77777, "Rollup A chain ID"},
+		{"rollup-a-rpc-port", "l2.chain-configs.rollup-a.rpc-port", 18545, "Rollup A RPC port"},
+		{"rollup-b-id", "l2.chain-configs.rollup-b.id", 88888, "Rollup B chain ID"},
+		{"rollup-b-rpc-port", "l2.chain-configs.rollup-b.rpc-port", 28545, "Rollup B RPC port"},
+
+		// Dispute config
+		{"dispute-starting-superblock-number", "l2.dispute.starting-superblock-number", 0, "Dispute starting superblock number"},
+	}
+
+	// Boolean flags for L2 configuration (currently empty, ready for future use)
+	boolFlags = []flagDef[bool]{}
+)
+
+func init() {
+	if err := declareFlags(stringFlags); err != nil {
+		panic(err)
+	}
+	if err := declareFlags(intFlags); err != nil {
+		panic(err)
+	}
+	if err := declareFlags(boolFlags); err != nil {
+		panic(err)
+	}
+	CMD.AddCommand(compileCmd)
+}
+
+// declareFlags declares multiple flags and binds them to viper configuration keys.
+func declareFlags[T flagType](flags []flagDef[T]) error {
+	for _, flag := range flags {
+		if err := declareFlag(flag.name, flag.viperKey, flag.defaultValue, flag.description); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// declareFlag declares a single flag and binds it to a viper configuration key.
+// The type parameter T determines the flag type (string, int, or bool).
+func declareFlag[T flagType](flagName, viperKey string, defaultValue T, description string) error {
+	var zero T
+	switch any(zero).(type) {
+	case string:
+		CMD.Flags().String(flagName, any(defaultValue).(string), description)
+	case int:
+		CMD.Flags().Int(flagName, any(defaultValue).(int), description)
+	case bool:
+		CMD.Flags().Bool(flagName, any(defaultValue).(bool), description)
+	}
+	return viper.BindPFlag(viperKey, CMD.Flags().Lookup(flagName))
+}
