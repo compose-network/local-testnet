@@ -6,9 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"os"
-	"os/exec"
-	"strings"
 
 	"github.com/compose-network/local-testnet/internal/logger"
 	"github.com/containerd/errdefs"
@@ -143,58 +140,5 @@ func (c *Client) BuildImage(ctx context.Context, dockerfilePath, contextPath, ta
 	}
 
 	c.logger.With("tag", tag).Info("docker image built successfully")
-	return nil
-}
-
-// ComposeBuild builds docker compose services.
-func ComposeBuild(ctx context.Context, env map[string]string, services ...string) error {
-	args := append([]string{"build", "--parallel"}, services...)
-	return composeRun(ctx, env, args...)
-}
-
-// ComposeUp starts docker compose services in detached mode.
-func ComposeUp(ctx context.Context, env map[string]string, services ...string) error {
-	args := append([]string{"up", "-d"}, services...)
-	return composeRun(ctx, env, args...)
-}
-
-// ComposeRestart restarts docker compose services.
-func ComposeRestart(ctx context.Context, env map[string]string, services ...string) error {
-	args := append([]string{"up", "-d", "--force-recreate"}, services...)
-	return composeRun(ctx, env, args...)
-}
-
-// ComposeDown stops docker compose services.
-func ComposeDown(ctx context.Context, env map[string]string, removeVolumes bool) error {
-	args := []string{"down"}
-	if removeVolumes {
-		args = append(args, "-v")
-	}
-	return composeRun(ctx, env, args...)
-}
-
-// ComposeRun executes a docker compose command with environment variables.
-func composeRun(ctx context.Context, env map[string]string, args ...string) error {
-	rootDir := env["ROOT_DIR"]
-	if rootDir == "" {
-		return fmt.Errorf("ROOT_DIR not set in environment")
-	}
-
-	fullArgs := append([]string{"compose", "-f", "internal/l2/l2runtime/docker/docker-compose.yml"}, args...)
-	cmd := exec.CommandContext(ctx, "docker", fullArgs...)
-	cmd.Dir = rootDir
-
-	cmd.Env = os.Environ()
-	for k, v := range env {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
-	}
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("docker compose %s failed: %w", strings.Join(args, " "), err)
-	}
-
 	return nil
 }

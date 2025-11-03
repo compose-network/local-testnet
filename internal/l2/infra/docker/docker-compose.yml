@@ -55,8 +55,8 @@ services:
       MAILBOX_B: "${MAILBOX_B:-}"
     volumes:
       - rollup-a-geth:/data
-      - ../../networks/rollup-a:/config:ro
-      - ../../networks/rollup-b:/config_b:ro
+      - ${ROLLUP_A_CONFIG_PATH:-../../networks/rollup-a}:/config:ro
+      - ${ROLLUP_B_CONFIG_PATH:-../../networks/rollup-b}:/config_b:ro
     ports:
       - "${ROLLUP_A_RPC_PORT}:8545"
       - "18546:8546"
@@ -174,7 +174,7 @@ services:
       OP_NODE_LOG_LEVEL: "info"
     volumes:
       - rollup-a-opnode:/data
-      - ../../networks/rollup-a:/config:ro
+      - ${ROLLUP_A_CONFIG_PATH:-../../networks/rollup-a}:/config:ro
     ports:
       - "19545:9545"
 
@@ -212,7 +212,7 @@ services:
     depends_on:
       - op-node-a
     env_file:
-      - ../../networks/rollup-a/runtime.env
+      - ${ROLLUP_A_CONFIG_PATH:-../../networks/rollup-a}/runtime.env
     environment:
       OP_PROPOSER_L1_ETH_RPC: "${L1_EL_URL}"
       OP_PROPOSER_ROLLUP_RPC: "http://op-node-a:9545"
@@ -246,8 +246,8 @@ services:
       MAILBOX_B: "${MAILBOX_B:-}"
     volumes:
       - rollup-b-geth:/data
-      - ../../networks/rollup-b:/config:ro
-      - ../../networks/rollup-a:/config_a:ro
+      - ${ROLLUP_B_CONFIG_PATH:-../../networks/rollup-b}:/config:ro
+      - ${ROLLUP_A_CONFIG_PATH:-../../networks/rollup-a}:/config_a:ro
     ports:
       - "${ROLLUP_B_RPC_PORT}:8545"
       - "28546:8546"
@@ -368,7 +368,7 @@ services:
       OP_NODE_LOG_LEVEL: "info"
     volumes:
       - rollup-b-opnode:/data
-      - ../../networks/rollup-b:/config:ro
+      - ${ROLLUP_B_CONFIG_PATH:-../../networks/rollup-b}:/config:ro
     ports:
       - "29545:9545"
 
@@ -406,7 +406,7 @@ services:
     depends_on:
       - op-node-b
     env_file:
-      - ../../networks/rollup-b/runtime.env
+      - ${ROLLUP_B_CONFIG_PATH:-../../networks/rollup-b}/runtime.env
     environment:
       OP_PROPOSER_L1_ETH_RPC: "${L1_EL_URL}"
       OP_PROPOSER_ROLLUP_RPC: "http://op-node-b:9545"

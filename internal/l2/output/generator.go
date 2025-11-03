@@ -18,17 +18,14 @@ import (
 const fileName = "output.yaml"
 
 type Generator struct {
-	compiledContractsDir string
 }
 
-func NewGenerator(compiledContractsDir string) *Generator {
-	return &Generator{
-		compiledContractsDir: compiledContractsDir,
-	}
+func NewGenerator() *Generator {
+	return &Generator{}
 }
 
 func (g *Generator) Generate(_ context.Context, deployedContracts map[configs.L2ChainName]map[contracts.ContractName]common.Address) error {
-	compiledContracts, err := contracts.LoadCompiledContracts(g.compiledContractsDir)
+	compiledContracts, err := contracts.LoadCompiledContracts()
 	if err != nil {
 		return fmt.Errorf("could not load compiled contracts. Err: '%w'", err)
 	}

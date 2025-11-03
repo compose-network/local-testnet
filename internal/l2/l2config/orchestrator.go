@@ -29,17 +29,21 @@ import (
 //   - Builds runtime environment variables for docker-compose
 type Orchestrator struct {
 	rootDir     string
+	localnetDir string
 	stateDir    string
 	networksDir string
+	servicesDir string
 	logger      *slog.Logger
 }
 
 // NewOrchestrator creates a new Phase 2 orchestrator
-func NewOrchestrator(rootDir, stateDir, networksDir string) *Orchestrator {
+func NewOrchestrator(rootDir, localnetDir, stateDir, networksDir, servicesDir string) *Orchestrator {
 	return &Orchestrator{
 		rootDir:     rootDir,
+		localnetDir: localnetDir,
 		stateDir:    stateDir,
 		networksDir: networksDir,
+		servicesDir: servicesDir,
 		logger:      logger.Named("l2_config_orchestrator"),
 	}
 }
@@ -58,7 +62,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, deploymentSt
 		writer = json.NewWriter()
 
 		opDeployer   = deployer.NewDeployer(o.rootDir, o.stateDir, cfg.Images[configs.ImageNameOpDeployer].Tag, dockerClient)
-		genesisGen   = genesis.NewGenerator(opDeployer, dockerClient, writer, o.rootDir)
+		genesisGen   = genesis.NewGenerator(opDeployer, dockerClient, writer, o.rootDir, o.localnetDir, o.servicesDir)
 		rollupGen    = rollup.NewGenerator(json.NewReader(), opDeployer, writer)
 		secretsGen   = secrets.NewGenerator(writer)
 		contractsGen = contracts.NewGenerator(writer)

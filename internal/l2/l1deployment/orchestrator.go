@@ -35,18 +35,20 @@ type (
 	}
 
 	Orchestrator struct {
-		rootDir  string
-		stateDir string
-		logger   *slog.Logger
+		rootDir     string
+		stateDir    string
+		servicesDir string
+		logger      *slog.Logger
 	}
 )
 
 // NewOrchestrator creates a new Phase 1 orchestrator
-func NewOrchestrator(rootDir, stateDir string) *Orchestrator {
+func NewOrchestrator(rootDir, stateDir, servicesDir string) *Orchestrator {
 	return &Orchestrator{
-		rootDir:  rootDir,
-		stateDir: stateDir,
-		logger:   logger.Named("l1_orchestrator"),
+		rootDir:     rootDir,
+		stateDir:    stateDir,
+		servicesDir: servicesDir,
+		logger:      logger.Named("l1_orchestrator"),
 	}
 }
 
@@ -105,7 +107,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2) (DeploymentS
 	}
 
 	o.logger.Info("deploying dispute contracts")
-	disputeService := dispute.NewService(o.rootDir, cfg)
+	disputeService := dispute.NewService(o.rootDir, o.servicesDir, cfg)
 	gameFactoryAddr, err := disputeService.Deploy(ctx)
 	if err != nil {
 		return deploymentState, fmt.Errorf("failed to deploy dispute contracts: %w", err)

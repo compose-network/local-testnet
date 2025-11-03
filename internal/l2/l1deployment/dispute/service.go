@@ -2,6 +2,7 @@ package dispute
 
 import (
 	"context"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -16,6 +17,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+//go:embed *.tmpl
+var templatesFS embed.FS
+
 // Service handles dispute game factory deployment
 type Service struct {
 	rootDir      string
@@ -26,10 +30,10 @@ type Service struct {
 }
 
 // NewService creates a new dispute deployment service
-func NewService(rootDir string, cfg configs.L2) *Service {
+func NewService(rootDir, servicesDir string, cfg configs.L2) *Service {
 	return &Service{
 		rootDir:      rootDir,
-		contractsDir: filepath.Join(rootDir, "internal", "l2", "services", string(configs.RepositoryNameComposeContracts), "L1-settlement"),
+		contractsDir: filepath.Join(servicesDir, string(configs.RepositoryNameComposeContracts), "L1-settlement"),
 		deployerPK:   cfg.Wallet.PrivateKey,
 		cfg:          cfg,
 		logger:       logger.Named("dispute_deployer"),
@@ -82,9 +86,14 @@ func (s *Service) Deploy(ctx context.Context) (common.Address, error) {
 
 // generateNetworksToml creates networks.toml from template and config
 func (s *Service) generateNetworksToml() error {
-	tmpl, err := template.ParseFiles(filepath.Join(s.rootDir, "internal", "l2", "l1deployment", "dispute", "networks.tmpl"))
+	tmplContent, err := templatesFS.ReadFile("networks.tmpl")
 	if err != nil {
-		return fmt.Errorf("failed to parse template file: %w", err)
+		return fmt.Errorf("failed to read template file: %w", err)
+	}
+
+	tmpl, err := template.New("networks").Parse(string(tmplContent))
+	if err != nil {
+		return fmt.Errorf("failed to parse template: %w", err)
 	}
 
 	type templateData struct {
@@ -131,10 +140,14 @@ func (s *Service) generateNetworksToml() error {
 
 // generateEnvFile creates .env file from template
 func (s *Service) generateEnvFile() error {
-	templatePath := filepath.Join(s.rootDir, "internal", "l2", "l1deployment", "dispute", "env.tmpl")
-	tmpl, err := template.ParseFiles(templatePath)
+	tmplContent, err := templatesFS.ReadFile("env.tmpl")
 	if err != nil {
-		return fmt.Errorf("failed to parse env template file: %w", err)
+		return fmt.Errorf("failed to read env template file: %w", err)
+	}
+
+	tmpl, err := template.New("env").Parse(string(tmplContent))
+	if err != nil {
+		return fmt.Errorf("failed to parse env template: %w", err)
 	}
 
 	data := struct {
