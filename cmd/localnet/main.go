@@ -33,21 +33,27 @@ var rootCmd = &cobra.Command{
 		viper.AddConfigPath(".")
 		viper.AddConfigPath("./configs")
 
+		// Try to read config file, but don't fail if it doesn't exist
+		// Flags can provide all necessary configuration
 		if err := viper.ReadInConfig(); err != nil {
-			const errMsg = "error reading config file"
-			slog.With("err", err.Error()).Error(errMsg)
-			return errors.Join(err, errors.New(errMsg))
+			if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+				slog.Debug("no config file found, will rely on flags and defaults")
+			} else {
+				const errMsg = "error reading config file"
+				slog.With("err", err.Error()).Error(errMsg)
+				return errors.Join(err, errors.New(errMsg))
+			}
+		} else {
+			slog.With("config_file", viper.ConfigFileUsed()).Debug("config file loaded")
 		}
+
 		if err := viper.Unmarshal(&configs.Values); err != nil {
 			const errMsg = "unable to decode application config"
 			slog.With("err", err.Error()).Error(errMsg)
 			return errors.Join(err, errors.New(errMsg))
 		}
 
-		slog.
-			With("config_file", viper.ConfigFileUsed()).
-			With("config", configs.Values).
-			Debug("configurations loaded")
+		slog.With("config", configs.Values).Debug("configuration loaded")
 
 		return nil
 	},
