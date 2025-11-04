@@ -16,7 +16,7 @@ import (
 
 	"github.com/compose-network/local-testnet/internal/l2/infra/docker"
 	"github.com/compose-network/local-testnet/internal/l2/infra/filesystem"
-	"github.com/compose-network/local-testnet/internal/l2/pathutil"
+	"github.com/compose-network/local-testnet/internal/l2/path"
 	"github.com/compose-network/local-testnet/internal/logger"
 )
 
@@ -161,13 +161,12 @@ func (g *Generator) computeGenesisHash(ctx context.Context, chainID int, genesis
 		return "", fmt.Errorf("failed to ensure op-geth image: %w", err)
 	}
 
-	// Convert container paths to host paths for volume mounts
-	hostTmpDir, err := pathutil.GetHostPath(tmpDir)
+	hostTmpDir, err := path.GetHostPath(tmpDir)
 	if err != nil {
 		return "", fmt.Errorf("failed to get host path for tmpDir: %w", err)
 	}
 
-	hostTmpDataDir, err := pathutil.GetHostPath(tmpDataDir)
+	hostTmpDataDir, err := path.GetHostPath(tmpDataDir)
 	if err != nil {
 		return "", fmt.Errorf("failed to get host path for tmpDataDir: %w", err)
 	}

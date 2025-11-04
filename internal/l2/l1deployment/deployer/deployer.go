@@ -11,7 +11,7 @@ import (
 
 	"github.com/compose-network/local-testnet/configs"
 	"github.com/compose-network/local-testnet/internal/l2/infra/docker"
-	"github.com/compose-network/local-testnet/internal/l2/pathutil"
+	"github.com/compose-network/local-testnet/internal/l2/path"
 	"github.com/compose-network/local-testnet/internal/logger"
 )
 
@@ -63,7 +63,7 @@ func (o *Deployer) Init(ctx context.Context, l1ChainID int, l2Chains map[configs
 
 	// When running in Docker, we need to use the host's path for volume mounts
 	// Otherwise Docker daemon won't recognize the path
-	absStateDir, err := pathutil.GetHostPath(o.stateDir)
+	absStateDir, err := path.GetHostPath(o.stateDir)
 	if err != nil {
 		return fmt.Errorf("failed to get absolute path: %w", err)
 	}
@@ -133,7 +133,7 @@ func (o *Deployer) Apply(ctx context.Context, l1RpcURL, deployerPrivateKey, depl
 		With("deployment_target", deploymentTarget).
 		Info("running deployer apply")
 
-	absStateDir, err := pathutil.GetHostPath(o.stateDir)
+	absStateDir, err := path.GetHostPath(o.stateDir)
 	if err != nil {
 		return fmt.Errorf("failed to get absolute path: %w", err)
 	}
@@ -171,7 +171,7 @@ func (o *Deployer) Apply(ctx context.Context, l1RpcURL, deployerPrivateKey, depl
 
 // InspectGenesis exports genesis JSON for a chain
 func (o *Deployer) InspectGenesis(ctx context.Context, chainID int) (string, error) {
-	absStateDir, err := pathutil.GetHostPath(o.stateDir)
+	absStateDir, err := path.GetHostPath(o.stateDir)
 	if err != nil {
 		return "", fmt.Errorf("failed to get absolute path: %w", err)
 	}
@@ -205,13 +205,13 @@ func (o *Deployer) InspectGenesis(ctx context.Context, chainID int) (string, err
 
 // InspectRollup exports rollup config for a chain
 func (o *Deployer) InspectRollup(ctx context.Context, chainID int, outputPath string) error {
-	absStateDir, err := pathutil.GetHostPath(o.stateDir)
+	absStateDir, err := path.GetHostPath(o.stateDir)
 	if err != nil {
 		return fmt.Errorf("failed to get absolute path: %w", err)
 	}
 
 	outputDir := filepath.Dir(outputPath)
-	absOutputDir, err := pathutil.GetHostPath(outputDir)
+	absOutputDir, err := path.GetHostPath(outputDir)
 	if err != nil {
 		return fmt.Errorf("failed to get host path for output dir: %w", err)
 	}

@@ -10,7 +10,7 @@ import (
 	"github.com/compose-network/local-testnet/internal/l2/infra/docker"
 	"github.com/compose-network/local-testnet/internal/l2/l2runtime/contracts"
 	"github.com/compose-network/local-testnet/internal/l2/l2runtime/services"
-	"github.com/compose-network/local-testnet/internal/l2/pathutil"
+	"github.com/compose-network/local-testnet/internal/l2/path"
 	"github.com/compose-network/local-testnet/internal/logger"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -49,7 +49,10 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryA
 		return nil, fmt.Errorf("failed to prepare docker-compose file: %w", err)
 	}
 
-	env := o.buildDockerComposeEnv(cfg, gameFactoryAddr)
+	env, err := o.buildDockerComposeEnv(cfg, gameFactoryAddr)
+	if err != nil {
+		return nil, err
+	}
 
 	o.logger.With("env", env).Info("environment variables were constructed. Building compose services")
 	if err := o.buildComposeServices(ctx, composePath, env); err != nil {
@@ -80,7 +83,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryA
 }
 
 // buildDockerComposeEnv creates environment variables for docker-compose
-func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr common.Address) map[string]string {
+func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr common.Address) (map[string]string, error) {
 	env := make(map[string]string)
 
 	// For build contexts, use container paths (where files are accessible during build)
@@ -91,10 +94,18 @@ func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr com
 	rollupBConfigPath := filepath.Join(o.networksDir, string(configs.L2ChainNameRollupB))
 
 	// Convert volume mount paths to host paths for Docker-in-Docker scenarios
-	rollupAConfigHostPath := o.mustGetHostPath(rollupAConfigPath)
-	rollupBConfigHostPath := o.mustGetHostPath(rollupBConfigPath)
-
-	env["ROOT_DIR"] = o.mustGetHostPath(o.rootDir)
+	rollupAConfigHostPath, err := o.mustGetHostPath(rollupAConfigPath)
+	if err != nil {
+		return nil, err
+	}
+	rollupBConfigHostPath, err := o.mustGetHostPath(rollupBConfigPath)
+	if err != nil {
+		return nil, err
+	}
+	env["ROOT_DIR"], err = o.mustGetHostPath(o.rootDir)
+	if err != nil {
+		return nil, err
+	}
 	env["WALLET_PRIVATE_KEY"] = cfg.Wallet.PrivateKey
 	env["WALLET_ADDRESS"] = cfg.Wallet.Address
 	env["L1_EL_URL"] = cfg.L1ElURL
@@ -104,22 +115,17 @@ func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr com
 	env["SEQUENCER_PRIVATE_KEY"] = cfg.CoordinatorPrivateKey
 	env["SP_L1_SUPERBLOCK_CONTRACT"] = ""
 
-	// Build contexts use container paths
 	env["PUBLISHER_PATH"] = publisherPath
 	env["OP_GETH_PATH"] = opGethPath
 
 	env["ROLLUP_A_CHAIN_ID"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupA].ID)
 	env["ROLLUP_A_RPC_PORT"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupA].RPCPort)
-	// Volume mounts use host paths
 	env["ROLLUP_A_CONFIG_PATH"] = rollupAConfigHostPath
-	// env_file paths use container paths
 	env["ROLLUP_A_CONFIG_PATH_CONTAINER"] = rollupAConfigPath
 
 	env["ROLLUP_B_CHAIN_ID"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupB].ID)
 	env["ROLLUP_B_RPC_PORT"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupB].RPCPort)
-	// Volume mounts use host paths
 	env["ROLLUP_B_CONFIG_PATH"] = rollupBConfigHostPath
-	// env_file paths use container paths
 	env["ROLLUP_B_CONFIG_PATH_CONTAINER"] = rollupBConfigPath
 
 	env["SP_L1_DISPUTE_GAME_FACTORY"] = gameFactoryAddr.Hex()
@@ -128,17 +134,17 @@ func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr com
 	env["OP_NODE_IMAGE_TAG"] = cfg.Images[configs.ImageNameOpNode].Tag
 	env["OP_PROPOSER_IMAGE_TAG"] = cfg.Images[configs.ImageNameOpProposer].Tag
 
-	return env
+	return env, nil
 }
 
 // mustGetHostPath converts a path to host path, panics on error (should not happen in normal flow)
-func (o *Orchestrator) mustGetHostPath(path string) string {
-	hostPath, err := pathutil.GetHostPath(path)
+func (o *Orchestrator) mustGetHostPath(p string) (string, error) {
+	hostPath, err := path.GetHostPath(p)
 	if err != nil {
-		o.logger.With("path", path, "error", err).Error("failed to get host path")
-		panic(fmt.Sprintf("failed to get host path for %s: %v", path, err))
+		o.logger.With("path", p, "error", err).Error("failed to get host path")
+		panic(fmt.Sprintf("failed to get host path for %s: %v", p, err))
 	}
-	return hostPath
+	return hostPath, nil
 }
 
 func (o *Orchestrator) restartOpGeth(ctx context.Context, composeFilePath string, env map[string]string, deployedContracts map[configs.L2ChainName]map[contracts.ContractName]common.Address) error {

@@ -1,4 +1,4 @@
-package pathutil
+package path
 
 import (
 	"os"
@@ -29,8 +29,8 @@ func GetHostPath(containerPath string) (string, error) {
 	}
 
 	// Convert /workspace/... to $HOST_PROJECT_PATH/...
-	if strings.HasPrefix(absPath, "/workspace/") {
-		return filepath.Join(hostProjectPath, strings.TrimPrefix(absPath, "/workspace/")), nil
+	if after, ok := strings.CutPrefix(absPath, "/workspace/"); ok {
+		return filepath.Join(hostProjectPath, after), nil
 	}
 	if absPath == "/workspace" {
 		return hostProjectPath, nil
