@@ -212,7 +212,7 @@ services:
     depends_on:
       - op-node-a
     env_file:
-      - ${ROLLUP_A_CONFIG_PATH:-../../networks/rollup-a}/runtime.env
+      - ${ROLLUP_A_CONFIG_PATH_CONTAINER:-../../networks/rollup-a}/runtime.env
     environment:
       OP_PROPOSER_L1_ETH_RPC: "${L1_EL_URL}"
       OP_PROPOSER_ROLLUP_RPC: "http://op-node-a:9545"
@@ -406,7 +406,7 @@ services:
     depends_on:
       - op-node-b
     env_file:
-      - ${ROLLUP_B_CONFIG_PATH:-../../networks/rollup-b}/runtime.env
+      - ${ROLLUP_B_CONFIG_PATH_CONTAINER:-../../networks/rollup-b}/runtime.env
     environment:
       OP_PROPOSER_L1_ETH_RPC: "${L1_EL_URL}"
       OP_PROPOSER_ROLLUP_RPC: "http://op-node-b:9545"

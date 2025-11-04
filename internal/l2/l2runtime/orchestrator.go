@@ -10,6 +10,7 @@ import (
 	"github.com/compose-network/local-testnet/internal/l2/infra/docker"
 	"github.com/compose-network/local-testnet/internal/l2/l2runtime/contracts"
 	"github.com/compose-network/local-testnet/internal/l2/l2runtime/services"
+	"github.com/compose-network/local-testnet/internal/l2/pathutil"
 	"github.com/compose-network/local-testnet/internal/logger"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -82,7 +83,18 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryA
 func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr common.Address) map[string]string {
 	env := make(map[string]string)
 
-	env["ROOT_DIR"] = o.rootDir
+	// For build contexts, use container paths (where files are accessible during build)
+	// For volume mounts, use host paths (so Docker daemon on host can find them)
+	publisherPath := filepath.Join(o.servicesDir, string(configs.RepositoryNamePublisher))
+	opGethPath := filepath.Join(o.servicesDir, string(configs.RepositoryNameOpGeth))
+	rollupAConfigPath := filepath.Join(o.networksDir, string(configs.L2ChainNameRollupA))
+	rollupBConfigPath := filepath.Join(o.networksDir, string(configs.L2ChainNameRollupB))
+
+	// Convert volume mount paths to host paths for Docker-in-Docker scenarios
+	rollupAConfigHostPath := o.mustGetHostPath(rollupAConfigPath)
+	rollupBConfigHostPath := o.mustGetHostPath(rollupBConfigPath)
+
+	env["ROOT_DIR"] = o.mustGetHostPath(o.rootDir)
 	env["WALLET_PRIVATE_KEY"] = cfg.Wallet.PrivateKey
 	env["WALLET_ADDRESS"] = cfg.Wallet.Address
 	env["L1_EL_URL"] = cfg.L1ElURL
@@ -92,16 +104,23 @@ func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr com
 	env["SEQUENCER_PRIVATE_KEY"] = cfg.CoordinatorPrivateKey
 	env["SP_L1_SUPERBLOCK_CONTRACT"] = ""
 
-	env["PUBLISHER_PATH"] = filepath.Join(o.servicesDir, string(configs.RepositoryNamePublisher))
-	env["OP_GETH_PATH"] = filepath.Join(o.servicesDir, string(configs.RepositoryNameOpGeth))
+	// Build contexts use container paths
+	env["PUBLISHER_PATH"] = publisherPath
+	env["OP_GETH_PATH"] = opGethPath
 
 	env["ROLLUP_A_CHAIN_ID"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupA].ID)
 	env["ROLLUP_A_RPC_PORT"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupA].RPCPort)
-	env["ROLLUP_A_CONFIG_PATH"] = filepath.Join(o.networksDir, string(configs.L2ChainNameRollupA))
+	// Volume mounts use host paths
+	env["ROLLUP_A_CONFIG_PATH"] = rollupAConfigHostPath
+	// env_file paths use container paths
+	env["ROLLUP_A_CONFIG_PATH_CONTAINER"] = rollupAConfigPath
 
 	env["ROLLUP_B_CHAIN_ID"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupB].ID)
 	env["ROLLUP_B_RPC_PORT"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupB].RPCPort)
-	env["ROLLUP_B_CONFIG_PATH"] = filepath.Join(o.networksDir, string(configs.L2ChainNameRollupB))
+	// Volume mounts use host paths
+	env["ROLLUP_B_CONFIG_PATH"] = rollupBConfigHostPath
+	// env_file paths use container paths
+	env["ROLLUP_B_CONFIG_PATH_CONTAINER"] = rollupBConfigPath
 
 	env["SP_L1_DISPUTE_GAME_FACTORY"] = gameFactoryAddr.Hex()
 
@@ -110,6 +129,16 @@ func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr com
 	env["OP_PROPOSER_IMAGE_TAG"] = cfg.Images[configs.ImageNameOpProposer].Tag
 
 	return env
+}
+
+// mustGetHostPath converts a path to host path, panics on error (should not happen in normal flow)
+func (o *Orchestrator) mustGetHostPath(path string) string {
+	hostPath, err := pathutil.GetHostPath(path)
+	if err != nil {
+		o.logger.With("path", path, "error", err).Error("failed to get host path")
+		panic(fmt.Sprintf("failed to get host path for %s: %v", path, err))
+	}
+	return hostPath
 }
 
 func (o *Orchestrator) restartOpGeth(ctx context.Context, composeFilePath string, env map[string]string, deployedContracts map[configs.L2ChainName]map[contracts.ContractName]common.Address) error {

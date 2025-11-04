@@ -73,7 +73,7 @@ clean-l2:
 	docker compose -f internal/l2/infra/docker/docker-compose.yml down -v
 	docker ps -aq --filter "label=${L2_LABEL}" | xargs -r docker rm -f
 	docker volume ls -q | grep -E "(rollup-a|rollup-b)" | xargs -r docker volume rm
-	rm -rf ./.localnet/state ./.localnet/networks ./.localnet/compiled-contracts ./.localnet/docker-compose.yml ./.cache
+	rm -rf ./.localnet/state ./.localnet/networks ./.localnet/compiled-contracts ./.localnet/docker-compose.yml ./.localnet/.tmp ./.cache
 
 .PHONY: clean-l2-full
 clean-l2-full: clean-l2
@@ -106,4 +106,22 @@ show-observability:
 .PHONY: clean-observability
 clean-observability:
 	docker ps -aq --filter "label=${OBSERVABILITY_LABEL}" | xargs -r docker rm -f
+######
+
+### Docker ###
+DOCKER_IMAGE_NAME?=compose-network/local-testnet
+DOCKER_IMAGE_TAG?=latest
+
+.PHONY: docker-build
+docker-build:
+	docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} .
+
+.PHONY: docker-run-l2
+docker-run-l2:
+	docker run --rm \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v $(PWD):/workspace \
+		-w /workspace \
+		-e HOST_PROJECT_PATH=$(PWD) \
+		${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} l2 $(ARGS)
 ######

@@ -66,7 +66,13 @@ func (d *Deployer) deployContracts(ctx context.Context, chainConfigs map[configs
 
 	deployments := make(map[configs.L2ChainName]map[ContractName]common.Address)
 	for chainName, chainConfig := range chainConfigs {
-		url := fmt.Sprintf("http://localhost:%d", chainConfig.RPCPort)
+		// When running in Docker, use host.docker.internal to access host services
+		// Otherwise use localhost for native execution
+		hostname := "localhost"
+		if os.Getenv("HOST_PROJECT_PATH") != "" {
+			hostname = "host.docker.internal"
+		}
+		url := fmt.Sprintf("http://%s:%d", hostname, chainConfig.RPCPort)
 		d.logger.With("chain_name", chainName).With("url", url).Info("waiting for rollup RPC")
 		if err := waitForRPC(ctx, url); err != nil {
 			return nil, err

@@ -23,20 +23,22 @@ type (
 	}
 
 	Generator struct {
-		reader   filesystem.Reader
-		deployer deployer
-		writer   filesystem.Writer
-		logger   *slog.Logger
+		reader      filesystem.Reader
+		deployer    deployer
+		writer      filesystem.Writer
+		localnetDir string
+		logger      *slog.Logger
 	}
 )
 
 // NewGenerator creates a new rollup generator
-func NewGenerator(reader filesystem.Reader, deployer deployer, writer filesystem.Writer) *Generator {
+func NewGenerator(reader filesystem.Reader, deployer deployer, writer filesystem.Writer, localnetDir string) *Generator {
 	return &Generator{
-		reader:   json.NewReader(),
-		deployer: deployer,
-		writer:   writer,
-		logger:   logger.Named("rollup_generator"),
+		reader:      json.NewReader(),
+		deployer:    deployer,
+		writer:      writer,
+		localnetDir: localnetDir,
+		logger:      logger.Named("rollup_generator"),
 	}
 }
 
@@ -45,7 +47,13 @@ func (g *Generator) Generate(ctx context.Context, chainID int, path string, gene
 	logger := g.logger.With("chain_id", chainID)
 	logger.Info("generating rollup config for chain")
 
-	tmpDir, err := os.MkdirTemp("", "rollup-*")
+	// Create temp directories under .localnet/.tmp/ to make them accessible when running in Docker
+	tmpBaseDir := filepath.Join(g.localnetDir, ".tmp")
+	if err := os.MkdirAll(tmpBaseDir, 0755); err != nil {
+		return fmt.Errorf("failed to create temp base dir: %w", err)
+	}
+
+	tmpDir, err := os.MkdirTemp(tmpBaseDir, "rollup-*")
 	if err != nil {
 		return fmt.Errorf("failed to create temp dir: %w", err)
 	}

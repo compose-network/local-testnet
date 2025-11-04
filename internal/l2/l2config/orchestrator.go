@@ -63,7 +63,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, deploymentSt
 
 		opDeployer   = deployer.NewDeployer(o.rootDir, o.stateDir, cfg.Images[configs.ImageNameOpDeployer].Tag, dockerClient)
 		genesisGen   = genesis.NewGenerator(opDeployer, dockerClient, writer, o.rootDir, o.localnetDir, o.servicesDir)
-		rollupGen    = rollup.NewGenerator(json.NewReader(), opDeployer, writer)
+		rollupGen    = rollup.NewGenerator(json.NewReader(), opDeployer, writer, o.localnetDir)
 		secretsGen   = secrets.NewGenerator(writer)
 		contractsGen = contracts.NewGenerator(writer)
 		runtimeGen   = runtime.NewGenerator()

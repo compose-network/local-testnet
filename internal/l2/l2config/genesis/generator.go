@@ -16,6 +16,7 @@ import (
 
 	"github.com/compose-network/local-testnet/internal/l2/infra/docker"
 	"github.com/compose-network/local-testnet/internal/l2/infra/filesystem"
+	"github.com/compose-network/local-testnet/internal/l2/pathutil"
 	"github.com/compose-network/local-testnet/internal/logger"
 )
 
@@ -126,7 +127,13 @@ func (g *Generator) Generate(ctx context.Context, chainID int, path string, wall
 
 // computeGenesisHash computes the genesis block hash
 func (g *Generator) computeGenesisHash(ctx context.Context, chainID int, genesis map[string]any, coordinatorPrivateKey string) (string, error) {
-	tmpDir, err := os.MkdirTemp("", "genesis-*")
+	// Create temp directories under .localnet/.tmp/ to make them accessible when running in Docker
+	tmpBaseDir := filepath.Join(g.localnetDir, ".tmp")
+	if err := os.MkdirAll(tmpBaseDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create temp base dir: %w", err)
+	}
+
+	tmpDir, err := os.MkdirTemp(tmpBaseDir, "genesis-*")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp dir: %w", err)
 	}
@@ -142,7 +149,7 @@ func (g *Generator) computeGenesisHash(ctx context.Context, chainID int, genesis
 		return "", fmt.Errorf("failed to write genesis file: %w", err)
 	}
 
-	tmpDataDir, err := os.MkdirTemp("", "geth-init-*")
+	tmpDataDir, err := os.MkdirTemp(tmpBaseDir, "geth-init-*")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp datadir: %w", err)
 	}
@@ -152,6 +159,17 @@ func (g *Generator) computeGenesisHash(ctx context.Context, chainID int, genesis
 
 	if err := g.ensureOpGethImage(ctx, opGethImage); err != nil {
 		return "", fmt.Errorf("failed to ensure op-geth image: %w", err)
+	}
+
+	// Convert container paths to host paths for volume mounts
+	hostTmpDir, err := pathutil.GetHostPath(tmpDir)
+	if err != nil {
+		return "", fmt.Errorf("failed to get host path for tmpDir: %w", err)
+	}
+
+	hostTmpDataDir, err := pathutil.GetHostPath(tmpDataDir)
+	if err != nil {
+		return "", fmt.Errorf("failed to get host path for tmpDataDir: %w", err)
 	}
 
 	g.logger.With("image", opGethImage).Info("running geth init")
@@ -168,8 +186,8 @@ func (g *Generator) computeGenesisHash(ctx context.Context, chainID int, genesis
 			fmt.Sprintf("GETH_COORDINATOR_KEY=%s", coordinatorPrivateKey),
 		},
 		Volumes: map[string]string{
-			tmpDir:     "/genesis",
-			tmpDataDir: "/datadir",
+			hostTmpDir:     "/genesis",
+			hostTmpDataDir: "/datadir",
 		},
 		User:       fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
 		AutoRemove: true,
