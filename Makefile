@@ -114,7 +114,7 @@ DOCKER_IMAGE_TAG?=latest
 
 .PHONY: docker-build
 docker-build:
-	docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} .
+	docker build -f build/Dockerfile -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} .
 
 .PHONY: docker-run-l2
 docker-run-l2:

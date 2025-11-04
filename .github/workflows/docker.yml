@@ -21,7 +21,7 @@ on:
 
 env:  
   IMAGE_REGISTRY: ghcr.io
-  DOCKERFILE_PATH: Dockerfile
+  DOCKERFILE_PATH: build/Dockerfile
   IMAGE_DESCRIPTION: |
     This Docker image is a CLI tool for building and managing Compose Network local testnets
 
