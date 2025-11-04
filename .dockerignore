@@ -66,7 +66,14 @@ pytest-report.html
 *.test.ts
 
 # -------------------------------------------------------
-# 8. Miscellaneous (customize as needed)
+# 8. Go-specific artifacts
+# -------------------------------------------------------
+cmd/localnet/bin/
+.localnet/
+*_test.go
+
+# -------------------------------------------------------
+# 9. Miscellaneous (customize as needed)
 # -------------------------------------------------------
 *.local
 *.bak

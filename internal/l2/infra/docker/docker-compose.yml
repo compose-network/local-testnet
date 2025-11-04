@@ -25,6 +25,7 @@ services:
       L1_FROM_ADDRESS: "${SP_L1_FROM_ADDRESS:-${WALLET_ADDRESS}}"
       L1_DISPUTE_GAME_FACTORY: "${SP_L1_DISPUTE_GAME_FACTORY}"
       L1_CHAIN_ID: "${L1_CHAIN_ID}"
+      L1_COMPOSE_NETWORK_NAME: hoodi #TODO: temporary fix, config files from Registry repo need to overridden
       REGISTRY_STATIC_CHAIN_IDS: "${ROLLUP_A_CHAIN_ID},${ROLLUP_B_CHAIN_ID}"
     ports:
       - "18080:8080"
@@ -212,7 +213,7 @@ services:
     depends_on:
       - op-node-a
     env_file:
-      - ${ROLLUP_A_CONFIG_PATH:-../../networks/rollup-a}/runtime.env
+      - ${ROLLUP_A_CONFIG_PATH_CONTAINER:-../../networks/rollup-a}/runtime.env
     environment:
       OP_PROPOSER_L1_ETH_RPC: "${L1_EL_URL}"
       OP_PROPOSER_ROLLUP_RPC: "http://op-node-a:9545"
@@ -406,7 +407,7 @@ services:
     depends_on:
       - op-node-b
     env_file:
-      - ${ROLLUP_B_CONFIG_PATH:-../../networks/rollup-b}/runtime.env
+      - ${ROLLUP_B_CONFIG_PATH_CONTAINER:-../../networks/rollup-b}/runtime.env
     environment:
       OP_PROPOSER_L1_ETH_RPC: "${L1_EL_URL}"
       OP_PROPOSER_ROLLUP_RPC: "http://op-node-b:9545"

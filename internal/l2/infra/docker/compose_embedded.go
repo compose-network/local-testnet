@@ -15,15 +15,11 @@ const (
 )
 
 // EnsureComposeFile ensures the docker-compose.yml file exists in the specified directory
-// and returns its path. If the file doesn't exist, it writes the embedded content.
+// and returns its path. It always writes the embedded content to ensure the file is up-to-date.
 // This allows the compose file to be used from anywhere (including when running
 // the binary from a different directory).
 func EnsureComposeFile(localnetDir string) (string, error) {
 	composePath := filepath.Join(localnetDir, composeFileName)
-
-	if _, err := os.Stat(composePath); err == nil {
-		return composePath, nil
-	}
 
 	content, err := getDockerComposeContent()
 	if err != nil {
