@@ -25,6 +25,7 @@ type (
 		L1ChainID             int                           `mapstructure:"l1-chain-id"`
 		L1ElURL               string                        `mapstructure:"l1-el-url"`
 		L1ClURL               string                        `mapstructure:"l1-cl-url"`
+		ComposeNetworkName    string                        `mapstructure:"compose-network-name"`
 		Wallet                Wallet                        `mapstructure:"wallet"`
 		CoordinatorPrivateKey string                        `mapstructure:"coordinator-private-key"`
 		Repositories          map[RepositoryName]Repository `mapstructure:"repositories"`
@@ -182,6 +183,10 @@ func (c *L2) Validate() error {
 	}
 	if c.Dispute.AdminAddress == "" {
 		errs = append(errs, errors.New("l2.dispute.admin-address is required"))
+	}
+
+	if c.ComposeNetworkName == "" {
+		errs = append(errs, errors.New("l2.compose-network-name is required"))
 	}
 
 	if len(errs) > 0 {
