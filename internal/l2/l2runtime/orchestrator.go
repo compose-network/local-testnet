@@ -45,7 +45,6 @@ func NewOrchestrator(rootDir, localnetDir, networksDir, servicesDir string) *Orc
 func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryAddr common.Address) (map[configs.L2ChainName]map[contracts.ContractName]common.Address, error) {
 	o.logger.Info("Phase 3: Starting L2 runtime operations")
 
-	// Setup custom registry for Publisher to prevent loading embedded chain definitions
 	publisherConfig := publisher.NewConfigurator()
 	if err := publisherConfig.SetupRegistry(o.localnetDir, cfg.ComposeNetworkName); err != nil {
 		return nil, fmt.Errorf("failed to setup publisher registry: %w", err)
