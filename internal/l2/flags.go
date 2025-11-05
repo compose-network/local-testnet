@@ -78,16 +78,17 @@ var (
 )
 
 func init() {
-	if err := declareFlags(stringFlags); err != nil {
-		panic(err)
-	}
-	if err := declareFlags(intFlags); err != nil {
-		panic(err)
-	}
-	if err := declareFlags(boolFlags); err != nil {
-		panic(err)
-	}
-	CMD.AddCommand(compileCmd)
+    if err := declareFlags(stringFlags); err != nil {
+        panic(err)
+    }
+    if err := declareFlags(intFlags); err != nil {
+        panic(err)
+    }
+    if err := declareFlags(boolFlags); err != nil {
+        panic(err)
+    }
+    CMD.AddCommand(compileCmd)
+    CMD.AddCommand(deployCmd)
 }
 
 // declareFlags declares multiple flags and binds them to viper configuration keys.

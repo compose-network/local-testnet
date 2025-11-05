@@ -1,10 +1,11 @@
 package l2runtime
 
 import (
-	"context"
-	"fmt"
-	"log/slog"
-	"path/filepath"
+    "context"
+    "fmt"
+    "log/slog"
+    "os"
+    "path/filepath"
 
 	"github.com/compose-network/local-testnet/configs"
 	"github.com/compose-network/local-testnet/internal/l2/infra/docker"
@@ -94,8 +95,24 @@ func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr com
 
 	// For build contexts, use container paths (where files are accessible during build)
 	// For volume mounts, use host paths (so Docker daemon on host can find them)
-	publisherPath := filepath.Join(o.servicesDir, string(configs.RepositoryNamePublisher))
-	opGethPath := filepath.Join(o.servicesDir, string(configs.RepositoryNameOpGeth))
+    // Resolve build contexts: prefer local-path from config, fall back to cloned services directory
+    publisherPath := cfg.Repositories[configs.RepositoryNamePublisher].LocalPath
+    if publisherPath == "" {
+        publisherPath = filepath.Join(o.servicesDir, string(configs.RepositoryNamePublisher))
+    } else {
+        if expanded := expandUserHome(publisherPath); expanded != "" {
+            publisherPath = expanded
+        }
+    }
+
+    opGethPath := cfg.Repositories[configs.RepositoryNameOpGeth].LocalPath
+    if opGethPath == "" {
+        opGethPath = filepath.Join(o.servicesDir, string(configs.RepositoryNameOpGeth))
+    } else {
+        if expanded := expandUserHome(opGethPath); expanded != "" {
+            opGethPath = expanded
+        }
+    }
 	rollupAConfigPath := filepath.Join(o.networksDir, string(configs.L2ChainNameRollupA))
 	rollupBConfigPath := filepath.Join(o.networksDir, string(configs.L2ChainNameRollupB))
 
@@ -122,8 +139,8 @@ func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr com
 	env["SEQUENCER_PRIVATE_KEY"] = cfg.CoordinatorPrivateKey
 	env["SP_L1_SUPERBLOCK_CONTRACT"] = ""
 
-	env["PUBLISHER_PATH"] = publisherPath
-	env["OP_GETH_PATH"] = opGethPath
+    env["PUBLISHER_PATH"] = publisherPath
+    env["OP_GETH_PATH"] = opGethPath
 
 	env["ROLLUP_A_CHAIN_ID"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupA].ID)
 	env["ROLLUP_A_RPC_PORT"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupA].RPCPort)
@@ -141,7 +158,23 @@ func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr com
 	env["OP_NODE_IMAGE_TAG"] = cfg.Images[configs.ImageNameOpNode].Tag
 	env["OP_PROPOSER_IMAGE_TAG"] = cfg.Images[configs.ImageNameOpProposer].Tag
 
-	return env, nil
+    return env, nil
+}
+
+// expandUserHome expands a leading ~ to the current user's home directory.
+// Returns the original value if expansion fails.
+func expandUserHome(p string) string {
+    if p == "" || p[0] != '~' {
+        return p
+    }
+    home, err := os.UserHomeDir()
+    if err != nil {
+        return p
+    }
+    if p == "~" {
+        return home
+    }
+    return filepath.Join(home, p[2:])
 }
 
 // mustGetHostPath converts a path to host path, panics on error (should not happen in normal flow)
