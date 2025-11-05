@@ -108,7 +108,8 @@ func (c *Service) Deploy(ctx context.Context, cfg configs.L2) error {
 
 // restartOpGeth restarts op-geth services to pick up new mailbox configuration
 func (c *Service) restartOpGeth(ctx context.Context) error {
-	composeFile := filepath.Join(c.rootDir, "internal", "l2", "l2runtime", "docker", "docker-compose.yml")
+	localnetDir := filepath.Join(c.rootDir, localnetDirName)
+	composeFile := filepath.Join(localnetDir, "docker-compose.yml")
 
 	cmd := exec.CommandContext(ctx, "docker", "compose", "-f", composeFile, "restart", "op-geth-a", "op-geth-b")
 	if output, err := cmd.CombinedOutput(); err != nil {
