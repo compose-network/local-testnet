@@ -25,8 +25,11 @@ services:
       L1_FROM_ADDRESS: "${SP_L1_FROM_ADDRESS:-${WALLET_ADDRESS}}"
       L1_DISPUTE_GAME_FACTORY: "${SP_L1_DISPUTE_GAME_FACTORY}"
       L1_CHAIN_ID: "${L1_CHAIN_ID}"
-      L1_COMPOSE_NETWORK_NAME: hoodi #TODO: temporary fix, config files from Registry repo need to overridden
+      L1_COMPOSE_NETWORK_NAME: "${COMPOSE_NETWORK_NAME}"
+      REGISTRY_PATH: "/workspace/.localnet/registry"  # Empty registry to prevent loading embedded chain definitions
       REGISTRY_STATIC_CHAIN_IDS: "${ROLLUP_A_CHAIN_ID},${ROLLUP_B_CHAIN_ID}"
+    volumes:
+      - ${ROOT_DIR}/.localnet/registry:/workspace/.localnet/registry:ro
     ports:
       - "18080:8080"
       - "18081:8081"

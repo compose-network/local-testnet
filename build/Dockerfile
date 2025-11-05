@@ -41,11 +41,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install just (command runner)
-RUN wget -qO - 'https://proget.makedeb.org/debian-feeds/prebuilt-mpr.pub' | gpg --dearmor | tee /usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg 1> /dev/null && \
-    echo "deb [arch=all,$(dpkg --print-architecture) signed-by=/usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg] https://proget.makedeb.org prebuilt-mpr $(lsb_release -cs)" | tee /etc/apt/sources.list.d/prebuilt-mpr.list && \
-    apt-get update && \
-    apt-get install -y just && \
-    rm -rf /var/lib/apt/lists/*
+RUN JUST_VERSION=1.36.0 && \
+    wget -q "https://github.com/casey/just/releases/download/${JUST_VERSION}/just-${JUST_VERSION}-x86_64-unknown-linux-musl.tar.gz" -O just.tar.gz && \
+    tar -xzf just.tar.gz -C /usr/local/bin just && \
+    rm just.tar.gz && \
+    chmod +x /usr/local/bin/just
 
 # Install Docker CLI
 RUN install -m 0755 -d /etc/apt/keyrings && \

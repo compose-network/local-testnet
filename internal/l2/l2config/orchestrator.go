@@ -117,6 +117,8 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, deploymentSt
 			return fmt.Errorf("failed to generate contract placeholders for chain %d: %w", chainConfig.ID, err)
 		}
 
+		// TODO: `runtime.env` is passed to the OP Proposer service, so presumably it should take the OP DisputeGameFactoryAddress
+		// rather than our own implementation of it.
 		if err := runtimeGen.Generate(deploymentState.DisputeGameFactoryImplAddressOP, configPath); err != nil {
 			return fmt.Errorf("failed to generate runtime file, %w", err)
 		}

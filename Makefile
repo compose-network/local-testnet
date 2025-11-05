@@ -73,7 +73,7 @@ clean-l2:
 	docker compose -f internal/l2/infra/docker/docker-compose.yml down -v
 	docker ps -aq --filter "label=${L2_LABEL}" | xargs -r docker rm -f
 	docker volume ls -q | grep -E "(rollup-a|rollup-b)" | xargs -r docker volume rm
-	rm -rf ./.localnet/state ./.localnet/networks ./.localnet/compiled-contracts ./.localnet/docker-compose.yml ./.localnet/.tmp ./.cache
+	rm -rf ./.localnet/state ./.localnet/networks ./.localnet/compiled-contracts ./.localnet/docker-compose.yml ./.localnet/.tmp ./.localnet/registry ./.cache
 
 .PHONY: clean-l2-full
 clean-l2-full: clean-l2

@@ -9,6 +9,7 @@ import (
 	"github.com/compose-network/local-testnet/configs"
 	"github.com/compose-network/local-testnet/internal/l2/infra/docker"
 	"github.com/compose-network/local-testnet/internal/l2/l2runtime/contracts"
+	"github.com/compose-network/local-testnet/internal/l2/l2runtime/publisher"
 	"github.com/compose-network/local-testnet/internal/l2/l2runtime/services"
 	"github.com/compose-network/local-testnet/internal/l2/path"
 	"github.com/compose-network/local-testnet/internal/logger"
@@ -43,6 +44,11 @@ func NewOrchestrator(rootDir, localnetDir, networksDir, servicesDir string) *Orc
 // Execute runs Phase 3: Build images, start services, deploy contracts
 func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryAddr common.Address) (map[configs.L2ChainName]map[contracts.ContractName]common.Address, error) {
 	o.logger.Info("Phase 3: Starting L2 runtime operations")
+
+	publisherConfig := publisher.NewConfigurator()
+	if err := publisherConfig.SetupRegistry(o.localnetDir, cfg.ComposeNetworkName); err != nil {
+		return nil, fmt.Errorf("failed to setup publisher registry: %w", err)
+	}
 
 	composePath, err := docker.EnsureComposeFile(o.localnetDir)
 	if err != nil {
@@ -111,6 +117,7 @@ func (o *Orchestrator) buildDockerComposeEnv(cfg configs.L2, gameFactoryAddr com
 	env["L1_EL_URL"] = cfg.L1ElURL
 	env["L1_CL_URL"] = cfg.L1ClURL
 	env["L1_CHAIN_ID"] = fmt.Sprintf("%d", cfg.L1ChainID)
+	env["COMPOSE_NETWORK_NAME"] = cfg.ComposeNetworkName
 	env["COORDINATOR_PRIVATE_KEY"] = cfg.CoordinatorPrivateKey
 	env["SEQUENCER_PRIVATE_KEY"] = cfg.CoordinatorPrivateKey
 	env["SP_L1_SUPERBLOCK_CONTRACT"] = ""
