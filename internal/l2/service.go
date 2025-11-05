@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os/exec"
 	"path/filepath"
-	"time"
 
 	"github.com/compose-network/local-testnet/configs"
 	"github.com/compose-network/local-testnet/internal/l2/infra/git"
@@ -91,8 +90,9 @@ func (c *Service) Deploy(ctx context.Context, cfg configs.L2) error {
 
 	c.logger.Info("restarting op-geth services to apply mailbox configuration")
 	if err := c.restartOpGeth(ctx); err != nil {
-		c.logger.Warn("failed to restart op-geth services", "error", err)
-		c.logger.Warn("you may need to restart op-geth manually for cross-chain transactions to work")
+		const msg = "failed to restart op-geth services"
+		c.logger.Error(msg, "error", err)
+		return fmt.Errorf("%s: %w", msg, err)
 	}
 
 	c.logger.Info("L2 deployment completed successfully. Generating output file")
@@ -117,7 +117,6 @@ func (c *Service) restartOpGeth(ctx context.Context) error {
 	}
 
 	c.logger.Info("op-geth services restarted successfully, waiting for them to be ready")
-	time.Sleep(5 * time.Second)
 
 	return nil
 }
