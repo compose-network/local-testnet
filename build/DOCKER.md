@@ -5,101 +5,47 @@
 ```bash
 # Build with default tag
 make docker-build
-
-# Build with custom tag
-make docker-build DOCKER_IMAGE_TAG=v1.0.0
-
-# Build with custom name and tag
-make docker-build DOCKER_IMAGE_NAME=myorg/localnet DOCKER_IMAGE_TAG=v1.0.0
 ```
 
 ## Running the Container
 
-### Prerequisites
+### Quick Start
 
-The container requires access to the **host Docker daemon** to run docker compose commands for L2 services.
-
-**Important:** Mount the host Docker socket:
-```bash
--v /var/run/docker.sock:/var/run/docker.sock
-```
-
-### Basic Usage
+The easiest way to run the container is using the provided example script:
 
 ```bash
-# Show help
-make docker-run
+# 1. Copy the example script
+cp build/docker-run-hoodi-example.sh docker-run-hoodi.sh
 
-# Run L2 command with flags
-make docker-run-l2 ARGS="--l1-chain-id 1 --l1-el-url http://host.docker.internal:8545"
+# 2. Edit the script and replace required values
 
-# Or use docker directly
-docker run --rm \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $(PWD):/workspace \
-  -w /workspace \
-  compose-network/local-testnet:latest \
-  l2 --help
+# 3. Run the script
+chmod +x docker-run-hoodi.sh
+./docker-run-my-deployment.sh
 ```
 
-### Accessing Host Services from Container
+**Required values to replace:**
+- `--l1-el-url` - Your L1 execution client RPC URL
+- `--l1-cl-url` - Your L1 consensus client REST URL
+- `--wallet-private-key` - Private key for deployment transactions
+- `--wallet-address` - Address corresponding to the private key
+- `--coordinator-private-key` - Private key for coordinator operations
+- `--dispute-verifier-address` - Address of the dispute verifier contract
+- `--dispute-owner-address` - Owner address for dispute contracts (can be same as wallet-address)
+- `--dispute-proposer-address` - Proposer address for dispute game (can be same as wallet-address)
+- `--dispute-aggregation-vkey` - Verification key for aggregation
+- `--dispute-admin-address` - Admin address for dispute contracts (can be same as wallet-address)
+- `--dispute-explorer-url` - Block explorer URL (e.g., Etherscan)
+- `--dispute-explorer-api-url` - Block explorer API URL
 
-When running in Docker and connecting to services on your host machine (e.g., L1 node), use:
+**Note:** For testing/development, `--dispute-owner-address`, `--dispute-proposer-address`, and `--dispute-admin-address` can all be set to the same value as `--wallet-address`.
 
-**macOS/Windows:**
-```bash
---l1-el-url http://host.docker.internal:8545
-```
+**Optional values to customize:**
+- Repository URLs and branches (if using forks)
+- OP Stack component versions (deployer, node, proposer, batcher tags)
+- Chain IDs and RPC ports for rollups
+- Genesis balance
 
-**Linux:**
-```bash
---network host
-# Or add host.docker.internal to extra_hosts
-```
-
-## Complete Example
-
-```bash
-# Build the image
-make docker-build
-
-# Run L2 deployment
-docker run --rm \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $(PWD):/workspace \
-  -w /workspace \
-  compose-network/local-testnet:latest \
-  l2 \
-  --l1-chain-id 1 \
-  --l1-el-url http://host.docker.internal:8545 \
-  --l1-cl-url http://host.docker.internal:5052 \
-  --private-key 0x... \
-  --wallet-address 0x... \
-  --coordinator-private-key 0x... \
-  --dispute-network-name testnet \
-  --dispute-explorer-url http://explorer.test \
-  --dispute-explorer-api-url http://explorer.test/api \
-  --dispute-verifier-address 0x... \
-  --dispute-owner-address 0x... \
-  --dispute-proposer-address 0x... \
-  --dispute-aggregation-vkey 0x... \
-  --dispute-admin-address 0x...
-```
-
-## Publishing to Registry
-
-```bash
-# Build for your registry
-make docker-build DOCKER_IMAGE_NAME=ghcr.io/compose-network/local-testnet DOCKER_IMAGE_TAG=v1.0.0
-
-# Push to registry
-docker push ghcr.io/compose-network/local-testnet:v1.0.0
-```
-
-## Volumes
-
-- **Docker socket:** `/var/run/docker.sock` - Required for docker compose operations
-- **Working directory:** `/workspace` - Mount your project directory here so nested containers can access `.localnet/` subdirectories
 
 ## Installed Tools
 
@@ -110,14 +56,3 @@ The image includes:
 - **Foundry** (forge, cast, anvil) for Solidity compilation
 - **just** - Command runner for contract setup scripts
 - **jq** - JSON processor for contract deployment scripts
-
-## Troubleshooting
-
-**Issue:** `Cannot connect to the Docker daemon`
-- **Solution:** Ensure you mount the Docker socket: `-v /var/run/docker.sock:/var/run/docker.sock`
-
-**Issue:** `Cannot connect to L1 RPC`
-- **Solution:** Use `host.docker.internal` instead of `localhost` (macOS/Windows) or `--network host` (Linux)
-
-**Issue:** Permission denied on Docker socket
-- **Solution:** Ensure your user has Docker permissions or run with appropriate privileges
