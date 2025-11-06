@@ -7,7 +7,7 @@
 make docker-build
 ```
 
-## Running the Container
+## Running the Container (L2 Hoodi)
 
 ### Quick Start
 
@@ -15,13 +15,13 @@ The easiest way to run the container is using the provided example script:
 
 ```bash
 # 1. Copy the example script
-cp build/docker-run-hoodi-example.sh docker-run-hoodi.sh
+cp build/docker-run-l2-hoodi-example.sh docker-run-l2-hoodi.sh
 
 # 2. Edit the script and replace required values
 
 # 3. Run the script
-chmod +x docker-run-hoodi.sh
-./docker-run-my-deployment.sh
+chmod +x docker-run-l2-hoodi.sh
+./docker-run-l2-hoodi.sh
 ```
 
 **Required values to replace:**
