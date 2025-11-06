@@ -1,18 +1,17 @@
 package l2
 
 import (
-	"context"
-	"fmt"
-	"log/slog"
-	"os/exec"
-	"path/filepath"
+    "context"
+    "fmt"
+    "log/slog"
+    "path/filepath"
 
-	"github.com/compose-network/local-testnet/configs"
-	"github.com/compose-network/local-testnet/internal/l2/infra/git"
-	"github.com/compose-network/local-testnet/internal/l2/l1deployment"
-	"github.com/compose-network/local-testnet/internal/l2/l2runtime/contracts"
-	"github.com/compose-network/local-testnet/internal/logger"
-	"github.com/ethereum/go-ethereum/common"
+    "github.com/compose-network/local-testnet/configs"
+    "github.com/compose-network/local-testnet/internal/l2/infra/git"
+    "github.com/compose-network/local-testnet/internal/l2/l1deployment"
+    "github.com/compose-network/local-testnet/internal/l2/l2runtime/contracts"
+    "github.com/compose-network/local-testnet/internal/logger"
+    "github.com/ethereum/go-ethereum/common"
 )
 
 // Service orchestrates the entire L2 deployment process
@@ -88,35 +87,13 @@ func (c *Service) Deploy(ctx context.Context, cfg configs.L2) error {
 		return fmt.Errorf("phase 3 failed: %w", err)
 	}
 
-	c.logger.Info("restarting op-geth services to apply mailbox configuration")
-	if err := c.restartOpGeth(ctx); err != nil {
-		const msg = "failed to restart op-geth services"
-		c.logger.Error(msg, "error", err)
-		return fmt.Errorf("%s: %w", msg, err)
-	}
-
-	c.logger.Info("L2 deployment completed successfully. Generating output file")
+    c.logger.Info("L2 deployment completed successfully. Generating output file")
 
 	if err := c.outputGenerator.Generate(ctx, deployedContracts); err != nil {
 		return fmt.Errorf("failed to generate output file: %w", err)
 	}
 
 	c.logger.Info("output file generated successfully")
-
-	return nil
-}
-
-// restartOpGeth restarts op-geth services to pick up new mailbox configuration
-func (c *Service) restartOpGeth(ctx context.Context) error {
-	localnetDir := filepath.Join(c.rootDir, localnetDirName)
-	composeFile := filepath.Join(localnetDir, "docker-compose.yml")
-
-	cmd := exec.CommandContext(ctx, "docker", "compose", "-f", composeFile, "restart", "op-geth-a", "op-geth-b")
-	if output, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("docker compose restart failed: %w, output: %s", err, string(output))
-	}
-
-	c.logger.Info("op-geth services restarted successfully, waiting for them to be ready")
 
 	return nil
 }
