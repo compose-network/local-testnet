@@ -53,11 +53,11 @@ type (
 		RPCPort int `mapstructure:"rpc-port"`
 	}
 
-    Repository struct {
-        URL       string `mapstructure:"url"`
-        Branch    string `mapstructure:"branch"`
-        LocalPath string `mapstructure:"local-path"`
-    }
+	Repository struct {
+		URL       string `mapstructure:"url"`
+		Branch    string `mapstructure:"branch"`
+		LocalPath string `mapstructure:"local-path"`
+	}
 
 	Image struct {
 		Tag string `mapstructure:"tag"`
@@ -108,20 +108,20 @@ func (c *L2) Validate() error {
 		errs = append(errs, errors.New("l2.wallet.address is required"))
 	}
 
-    requiredRepos := []RepositoryName{RepositoryNameOpGeth, RepositoryNamePublisher}
-    for _, name := range requiredRepos {
-        repo, exists := c.Repositories[name]
-        if !exists {
-            errs = append(errs, fmt.Errorf("l2.repositories.%s is required", name))
-            continue
-        }
-        // Exactly one of (local-path) or (url+branch) must be provided
-        hasLocal := repo.LocalPath != ""
-        hasRemote := repo.URL != "" && repo.Branch != ""
-        if !(hasLocal || hasRemote) {
-            errs = append(errs, fmt.Errorf("l2.repositories.%s must set either local-path or url+branch", name))
-        }
-    }
+	requiredRepos := []RepositoryName{RepositoryNameOpGeth, RepositoryNamePublisher}
+	for _, name := range requiredRepos {
+		repo, exists := c.Repositories[name]
+		if !exists {
+			errs = append(errs, fmt.Errorf("l2.repositories.%s is required", name))
+			continue
+		}
+		// Exactly one of (local-path) or (url+branch) must be provided
+		hasLocal := repo.LocalPath != ""
+		hasRemote := repo.URL != "" && repo.Branch != ""
+		if !hasLocal && !hasRemote {
+			errs = append(errs, fmt.Errorf("l2.repositories.%s must set either local-path or url+branch", name))
+		}
+	}
 
 	requiredImages := []ImageName{ImageNameOpDeployer, ImageNameOpNode, ImageNameOpProposer, ImageNameOpBatcher}
 	for _, name := range requiredImages {
