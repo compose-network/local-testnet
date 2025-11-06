@@ -10,6 +10,7 @@ docker run --rm \
   --l1-chain-id 1 \
   --l1-el-url http://host.docker.internal:8545 \
   --l1-cl-url http://host.docker.internal:5052 \
+  --compose-network-name testnet \
   --wallet-private-key 0x1234567890123456789012345678901234567890123456789012345678901234 \
   --wallet-address 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1 \
   --coordinator-private-key 0x1234567890123456789012345678901234567890123456789012345678901234 \
