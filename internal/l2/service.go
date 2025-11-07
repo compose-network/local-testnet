@@ -123,22 +123,22 @@ func (c *Service) restartOpGeth(ctx context.Context) error {
 
 // cloneRepositories clones all required git repositories
 func (c *Service) cloneRepositories(ctx context.Context, cfg configs.L2) error {
-    c.logger.Info("cloning required repositories")
+	c.logger.Info("cloning required repositories")
 
-    repos := make([]git.Repository, 0, len(cfg.Repositories))
+	repos := make([]git.Repository, 0, len(cfg.Repositories))
 
-    for name, repo := range cfg.Repositories {
-        // If a local path is provided, skip cloning for this repo
-        if repo.LocalPath != "" {
-            c.logger.With("name", name, "path", repo.LocalPath).Info("using local repository path; skipping clone")
-            continue
-        }
-        repos = append(repos, git.Repository{
-            Name: string(name),
-            URL:  repo.URL,
-            Ref:  repo.Branch,
-        })
-    }
+	for name, repo := range cfg.Repositories {
+		// If a local path is provided, skip cloning for this repo
+		if repo.LocalPath != "" {
+			c.logger.With("name", name, "path", repo.LocalPath).Info("using local repository path; skipping clone")
+			continue
+		}
+		repos = append(repos, git.Repository{
+			Name: string(name),
+			URL:  repo.URL,
+			Ref:  repo.Branch,
+		})
+	}
 
 	l2Dir := filepath.Join(c.rootDir, localnetDirName, servicesDirName)
 	if err := c.cloner.CloneAll(ctx, l2Dir, repos); err != nil {
