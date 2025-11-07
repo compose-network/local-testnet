@@ -202,7 +202,7 @@ func (d *Deployer) deployToChain(ctx context.Context, rpcURL, coordinatorPrivate
 }
 
 func (d *Deployer) deployContract(ctx context.Context, client *ethclient.Client, privateKey *ecdsa.PrivateKey, chainID *big.Int, contract CompiledContract, constructorArgs ...any) (common.Address, error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*3)
 	defer cancel()
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
