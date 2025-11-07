@@ -39,7 +39,6 @@ Deploys Compose-specific contracts to L2:
 
 ## Prerequisites
 
-- **L1 Network**: Must have L1 running (`make run-l1`) or specify external L1 URLs
 - **Foundry/Forge**: For Solidity compilation
 - **just**: Command runner for contract scripts
 - **jq**: JSON processor for deployment scripts
@@ -89,47 +88,6 @@ This generates `contracts.json` in `.localnet/compiled-contracts/`. To embed in 
 ### Docker Usage
 
 For running in Docker, see the [Docker documentation](../../build/DOCKER.md) and example scripts:
-- `build/docker-run-example.sh` - Generic template
-- `build/docker-run-hoodi.sh` - Hoodi testnet example
-
-## Multi-Chain Support
-
-The L2 command supports deploying multiple rollup chains simultaneously:
-- **Rollup A**: Default chain ID 77777, RPC port 18545
-- **Rollup B**: Default chain ID 88888, RPC port 28545
-
-Configure each chain independently via flags or config file.
-
-## Implementation Details
-
-### Directory Structure
-- `l2config/` - Phase 2 configuration generation
-- `l2deployer/` - Phase 1 L1 contract deployment
-- `l2runtime/` - Phase 3 runtime orchestration
-  - `contracts/` - L2 contract deployment
-  - `publisher/` - Publisher configuration
-- `infra/docker/` - Docker Compose templates
-- `service.go` - Service management (restart, etc.)
-
-### Generated Files
-All generated files are stored in `.localnet/`:
-- `genesis/chain-{id}/` - Genesis and rollup configs
-- `services/op-geth-{chain}/` - Geth data directories
-- `services/compose-contracts/` - Contract repositories
-- `registry/` - Publisher registry configuration
-
-## Troubleshooting
-
-**Issue:** L1 connection failed
-**Solution:** Ensure L1 is running and URLs are correct. Use `host.docker.internal` when running in Docker (macOS/Windows).
-
-**Issue:** Docker Compose errors
-**Solution:** Ensure Docker daemon is running and socket is accessible.
-
-**Issue:** Contract compilation failed
-**Solution:** Verify Foundry/Forge is installed: `forge --version`
-
-**Issue:** Publisher crashes with "empty compose network name"
-**Solution:** Ensure `--compose-network-name` flag is set or configured in `config.yaml`
+- `docker-run-l2-hoodi-example.sh` - Generic template
 
 For more details, see the [main README](../../README.md) or [Docker documentation](../../build/DOCKER.md).
