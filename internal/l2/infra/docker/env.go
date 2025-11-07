@@ -34,12 +34,12 @@ func NewEnvBuilder(rootDir, networksDir, servicesDir string) *EnvBuilder {
 func (b *EnvBuilder) BuildComposeEnv(cfg configs.L2, gameFactoryAddr common.Address) (map[string]string, error) {
 	env := make(map[string]string)
 
-	publisherPath, err := b.resolveRepoPath(cfg.Repositories[configs.RepositoryNamePublisher], configs.RepositoryNamePublisher)
+	publisherPath, err := b.ResolveRepoPath(cfg.Repositories[configs.RepositoryNamePublisher], configs.RepositoryNamePublisher)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve publisher path: %w", err)
 	}
 
-	opGethPath, err := b.resolveRepoPath(cfg.Repositories[configs.RepositoryNameOpGeth], configs.RepositoryNameOpGeth)
+	opGethPath, err := b.ResolveRepoPath(cfg.Repositories[configs.RepositoryNameOpGeth], configs.RepositoryNameOpGeth)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve op-geth path: %w", err)
 	}
@@ -100,11 +100,16 @@ func (b *EnvBuilder) BuildComposeEnv(cfg configs.L2, gameFactoryAddr common.Addr
 	return env, nil
 }
 
-// resolveRepoPath resolves the repository path, preferring local-path over cloned path.
-func (b *EnvBuilder) resolveRepoPath(repo configs.Repository, name configs.RepositoryName) (string, error) {
+// ResolveRepoPath resolves the repository path, preferring local-path over cloned path.
+// This is exported so other packages can resolve paths consistently.
+func (b *EnvBuilder) ResolveRepoPath(repo configs.Repository, name configs.RepositoryName) (string, error) {
 	if repo.LocalPath != "" {
 		expanded := expandUserHome(repo.LocalPath)
-		return expanded, nil
+		absPath, err := filepath.Abs(expanded)
+		if err != nil {
+			return "", fmt.Errorf("failed to resolve absolute path for %s: %w", expanded, err)
+		}
+		return absPath, nil
 	}
 	return filepath.Join(b.servicesDir, string(name)), nil
 }

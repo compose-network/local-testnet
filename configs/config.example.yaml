@@ -19,7 +19,7 @@ l2:
       id: 88888
       rpc-port: 28545
   deployment-target: live  # "live" or "calldata"
-  genesis-balance-wei: "100000000000000000"  # 0.1 ETH for funded accounts
+  genesis-balance-wei: "10000000000000000000"  # 10 ETH for funded accounts
   # curl https://us-docker.pkg.dev/v2/oplabs-tools-artifacts/images/{REPOSITORY_NAME}/tags/list to fetch list of available tags
   # these versions represent fully compatible builds that work together as expected in the local testnet setup.
   # stage branch versions can be found here: https://github.com/ssvlabs/gitops-stage/blob/main/environments/ovh/optimism/optimism-stack.yaml
@@ -35,15 +35,22 @@ l2:
     op-batcher: 
       tag: v1.14.0
   repositories:
+    # Note: For local development, use local-path instead of url+branch.
+    # Paths are resolved relative to the project root (where you run commands).
+    # Examples:
+    #   local-path: ~/projects/op-geth              # Home directory (recommended)
+    #   local-path: ../op-geth                      # Relative path (one level up)
+    #   local-path: ../../parent-dir/op-geth        # Relative path (two levels up)
+    #   local-path: /absolute/path/to/op-geth       # Absolute path
     op-geth:
       url: https://github.com/op-geth.git
       branch: main
-      # For local development, use local-path instead of url+branch:
+      # For local development:
       # local-path: ~/projects/op-geth
     publisher:
       url: https://github.com/publisher.git
       branch: main
-      # For local development, uncomment and set your local path:
+      # For local development:
       # local-path: ~/projects/publisher
     compose-contracts:
       url: https://github.com/contracts.git

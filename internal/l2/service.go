@@ -128,9 +128,13 @@ func (c *Service) cloneRepositories(ctx context.Context, cfg configs.L2) error {
 	repos := make([]git.Repository, 0, len(cfg.Repositories))
 
 	for name, repo := range cfg.Repositories {
-		// If a local path is provided, skip cloning for this repo
 		if repo.LocalPath != "" {
-			c.logger.With("name", name, "path", repo.LocalPath).Info("using local repository path; skipping clone")
+			absPath, err := filepath.Abs(repo.LocalPath)
+			if err != nil {
+				c.logger.With("repository_name", name, "path", repo.LocalPath, "error", err).Warn("failed to resolve absolute path for local repository")
+				absPath = repo.LocalPath
+			}
+			c.logger.With("name", name, "local_path", repo.LocalPath, "resolved_path", absPath).Info("using local repository path; skipping clone")
 			continue
 		}
 		repos = append(repos, git.Repository{
