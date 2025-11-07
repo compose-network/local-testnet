@@ -30,33 +30,24 @@ make build
 
 The binary will be available at `cmd/localnet/bin/localnet`.
 
-## 🚀 Entry Points
+## 🚀 Commands
 
-The tool provides three main entry points, each managing a different part of the local network:
+The tool provides three main commands, each managing a different part of the local network:
 
 ### L1 Network (`localnet l1`)
-[Architecture](https://github.com/compose-network/local-testnet/blob/main/docs/l1-architecture.png)
+Manages the Layer 1 Ethereum test network using Kurtosis. Deploys execution and consensus clients along with SSV nodes.
 
-Manages the Layer 1 Ethereum test network using Kurtosis. Deploys execution and consensus clients along with SSV nodes via the `github.com/ssvlabs/ssv-mini` package
+**📖 [Read L1 Documentation](internal/l1/README.md)**
 
 ### L2 Network (`localnet l2`)
-[Architecture](https://github.com/compose-network/local-testnet/blob/main/docs/l2-architecture.png)
+Manages Layer 2 rollup networks. Orchestrates a three-phase deployment process for multiple OP Stack rollups.
 
-Manages Layer 2 rollup networks. Orchestrates a three-phase deployment:
-1. **Phase 1**: Deploys L1 contracts using op-deployer
-2. **Phase 2**: Generates L2 configuration files (genesis, rollup config, secrets)
-3. **Phase 3**: Starts L2 runtime services (op-geth, op-node, batcher, proposer) and deploys L2 contracts
-
-Supports multiple L2 chains (rollup-a, rollup-b) with configurable chain IDs and RPC ports.
-
-#### L2 Contract Compilation (`localnet l2 compile`)
-
-Compiles Solidity contracts from the compose-contracts repository. This command generates/updates `contracts.json` in `.localnet/compiled-contracts/`. To update the embedded contracts in the binary, manually copy the compiled file to `internal/l2/l2runtime/contracts/compiled/` and commit it.
-
-**Note:** Requires Foundry/Forge to be installed locally.
+**📖 [Read L2 Documentation](internal/l2/README.md)**
 
 ### Observability (`localnet observability`)
-Manages the observability stack for monitoring and debugging. Deploys a Docker-based infrastructure including Grafana (dashboards), Prometheus (metrics), Loki (logs), Tempo (traces), and Alloy (data collection). Provides real-time visibility into network behavior and performance.
+Manages the observability stack for monitoring and debugging. Deploys Grafana, Prometheus, Loki, Tempo, and Alloy.
+
+**📖 [Read Observability Documentation](internal/observability/README.md)**
 
 ## 🔧 Usage
 
@@ -83,6 +74,12 @@ make clean-observability # Clean observability stack
 ```
 
 Configuration is managed via `configs/config.yaml`.
+
+## 🐳 Docker Usage
+
+The tool can be run in Docker, which is useful for CI/CD or environments where dependencies are difficult to install.
+
+**📖 [Read Docker Documentation](build/DOCKER.md)**
 
 ## License
 
