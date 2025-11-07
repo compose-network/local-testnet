@@ -38,9 +38,13 @@ l2:
     op-geth:
       url: https://github.com/op-geth.git
       branch: main
+      # For local development, use local-path instead of url+branch:
+      # local-path: ~/projects/op-geth
     publisher:
       url: https://github.com/publisher.git
       branch: main
+      # For local development, uncomment and set your local path:
+      # local-path: ~/projects/publisher
     compose-contracts:
       url: https://github.com/contracts.git
       branch: main

@@ -115,7 +115,7 @@ func (c *L2) Validate() error {
 			errs = append(errs, fmt.Errorf("l2.repositories.%s is required", name))
 			continue
 		}
-		// Exactly one of (local-path) or (url+branch) must be provided
+
 		hasLocal := repo.LocalPath != ""
 		hasRemote := repo.URL != "" && repo.Branch != ""
 		if !hasLocal && !hasRemote {

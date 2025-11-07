@@ -1,0 +1,150 @@
+package docker
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/compose-network/local-testnet/configs"
+	l2path "github.com/compose-network/local-testnet/internal/l2/path"
+	"github.com/ethereum/go-ethereum/common"
+)
+
+// EnvBuilder constructs environment variables for docker-compose operations.
+// It handles path resolution for both local development (local-path) and
+// production (cloned repositories) scenarios.
+type EnvBuilder struct {
+	rootDir     string
+	networksDir string
+	servicesDir string
+}
+
+func NewEnvBuilder(rootDir, networksDir, servicesDir string) *EnvBuilder {
+	return &EnvBuilder{
+		rootDir:     rootDir,
+		networksDir: networksDir,
+		servicesDir: servicesDir,
+	}
+}
+
+// BuildComposeEnv builds environment variables for docker-compose.
+// The gameFactoryAddr parameter can be empty (zero address) for dev deployments.
+func (b *EnvBuilder) BuildComposeEnv(cfg configs.L2, gameFactoryAddr common.Address) (map[string]string, error) {
+	env := make(map[string]string)
+
+	publisherPath, err := b.resolveRepoPath(cfg.Repositories[configs.RepositoryNamePublisher], configs.RepositoryNamePublisher)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve publisher path: %w", err)
+	}
+
+	opGethPath, err := b.resolveRepoPath(cfg.Repositories[configs.RepositoryNameOpGeth], configs.RepositoryNameOpGeth)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve op-geth path: %w", err)
+	}
+
+	rollupAConfigPath := filepath.Join(b.networksDir, string(configs.L2ChainNameRollupA))
+	rollupBConfigPath := filepath.Join(b.networksDir, string(configs.L2ChainNameRollupB))
+
+	rollupAHost, err := l2path.GetHostPath(rollupAConfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve host path for rollup-a config: %w", err)
+	}
+	rollupBHost, err := l2path.GetHostPath(rollupBConfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve host path for rollup-b config: %w", err)
+	}
+	rootHost, err := l2path.GetHostPath(b.rootDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve host path for rootDir: %w", err)
+	}
+
+	env["ROOT_DIR"] = rootHost
+	env["WALLET_PRIVATE_KEY"] = cfg.Wallet.PrivateKey
+	env["WALLET_ADDRESS"] = cfg.Wallet.Address
+	env["L1_EL_URL"] = cfg.L1ElURL
+	env["L1_CL_URL"] = cfg.L1ClURL
+	env["L1_CHAIN_ID"] = fmt.Sprintf("%d", cfg.L1ChainID)
+	env["COMPOSE_NETWORK_NAME"] = cfg.ComposeNetworkName
+	env["COORDINATOR_PRIVATE_KEY"] = cfg.CoordinatorPrivateKey
+	env["SEQUENCER_PRIVATE_KEY"] = cfg.CoordinatorPrivateKey
+	env["SP_L1_SUPERBLOCK_CONTRACT"] = ""
+
+	env["PUBLISHER_PATH"] = publisherPath
+	env["OP_GETH_PATH"] = opGethPath
+
+	env["ROLLUP_A_CHAIN_ID"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupA].ID)
+	env["ROLLUP_A_RPC_PORT"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupA].RPCPort)
+	env["ROLLUP_A_CONFIG_PATH"] = rollupAHost
+	env["ROLLUP_A_CONFIG_PATH_CONTAINER"] = rollupAConfigPath
+
+	env["ROLLUP_B_CHAIN_ID"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupB].ID)
+	env["ROLLUP_B_RPC_PORT"] = fmt.Sprintf("%d", cfg.ChainConfigs[configs.L2ChainNameRollupB].RPCPort)
+	env["ROLLUP_B_CONFIG_PATH"] = rollupBHost
+	env["ROLLUP_B_CONFIG_PATH_CONTAINER"] = rollupBConfigPath
+
+	env["SP_L1_DISPUTE_GAME_FACTORY"] = gameFactoryAddr.Hex()
+
+	env["OP_BATCHER_IMAGE_TAG"] = cfg.Images[configs.ImageNameOpBatcher].Tag
+	env["OP_NODE_IMAGE_TAG"] = cfg.Images[configs.ImageNameOpNode].Tag
+	env["OP_PROPOSER_IMAGE_TAG"] = cfg.Images[configs.ImageNameOpProposer].Tag
+
+	if ma := b.readMailboxAddress(configs.L2ChainNameRollupA); ma != "" {
+		env["MAILBOX_A"] = ma
+	}
+	if mb := b.readMailboxAddress(configs.L2ChainNameRollupB); mb != "" {
+		env["MAILBOX_B"] = mb
+	}
+
+	return env, nil
+}
+
+// resolveRepoPath resolves the repository path, preferring local-path over cloned path.
+func (b *EnvBuilder) resolveRepoPath(repo configs.Repository, name configs.RepositoryName) (string, error) {
+	if repo.LocalPath != "" {
+		expanded := expandUserHome(repo.LocalPath)
+		return expanded, nil
+	}
+	return filepath.Join(b.servicesDir, string(name)), nil
+}
+
+// readMailboxAddress reads the mailbox address from contracts.json for a given chain.
+// Returns empty string if file doesn't exist or address not found (best-effort).
+func (b *EnvBuilder) readMailboxAddress(chainName configs.L2ChainName) string {
+	path := filepath.Join(b.networksDir, string(chainName), "contracts.json")
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+
+	var cf struct {
+		Addresses map[string]string `json:"addresses"`
+	}
+	if err := json.Unmarshal(data, &cf); err != nil {
+		return ""
+	}
+
+	if v := cf.Addresses["Mailbox"]; strings.TrimSpace(v) != "" {
+		return v
+	}
+
+	return ""
+}
+
+// expandUserHome expands a leading ~ to the current user's home directory.
+// Returns the original path if expansion fails or is not needed.
+func expandUserHome(p string) string {
+	if p == "" || p[0] != '~' {
+		return p
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return p
+	}
+	if p == "~" {
+		return home
+	}
+	return filepath.Join(home, p[2:])
+}
