@@ -80,8 +80,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryA
 
 	o.logger.Info("restarting op-geth services to apply mailbox configuration")
 	if err := o.restartOpGeth(ctx, composePath, env, deployedContracts); err != nil {
-		o.logger.Warn("failed to restart op-geth services", "error", err)
-		o.logger.Warn("you may need to restart op-geth manually for cross-chain transactions to work")
+		return nil, fmt.Errorf("failed to restart op-geth services after contract deployment. Error: '%w'", err)
 	}
 
 	o.logger.Info("Phase 3: L2 runtime operations completed successfully")
