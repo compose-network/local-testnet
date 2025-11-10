@@ -121,6 +121,9 @@ func (c *L2) Validate() error {
 		if !hasLocal && !hasRemote {
 			errs = append(errs, fmt.Errorf("l2.repositories.%s must set either local-path or url+branch", name))
 		}
+		if hasLocal && hasRemote {
+			errs = append(errs, fmt.Errorf("l2.repositories.%s cannot set both local-path and url+branch (choose one)", name))
+		}
 	}
 
 	requiredImages := []ImageName{ImageNameOpDeployer, ImageNameOpNode, ImageNameOpProposer, ImageNameOpBatcher}
