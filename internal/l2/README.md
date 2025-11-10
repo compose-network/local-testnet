@@ -115,7 +115,14 @@ This generates `contracts.json` in `.localnet/compiled-contracts/`. To embed in 
 
 ### Docker Usage
 
-For running in Docker, see the [Docker documentation](../../build/DOCKER.md) and example scripts:
-- `docker-run-l2-hoodi-example.sh` - Generic template
+For running in Docker, see the [Docker documentation](../../build/DOCKER.md).
 
-For more details, see the [main README](../../README.md) or [Docker documentation](../../build/DOCKER.md).
+**Quick start:**
+```bash
+# Edit configs/config.yaml with your settings
+./build/docker-run-example.sh
+```
+
+The container automatically uses your `configs/config.yaml`. You can also override settings with CLI flags.
+
+For more details, see the [Docker documentation](../../build/DOCKER.md).
