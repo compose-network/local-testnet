@@ -128,8 +128,6 @@ func (c *Service) cloneRepositories(ctx context.Context, cfg configs.L2) error {
 	repos := make([]git.Repository, 0, len(cfg.Repositories))
 
 	for name, repo := range cfg.Repositories {
-		// If URL is provided (via CLI or config), clone the repository
-		// This ensures CLI flags like --op-geth-url override local-path from config
 		if repo.URL != "" {
 			repos = append(repos, git.Repository{
 				Name: string(name),
@@ -139,19 +137,16 @@ func (c *Service) cloneRepositories(ctx context.Context, cfg configs.L2) error {
 			continue
 		}
 
-		// No URL provided, check if local-path is set (development mode)
 		if repo.LocalPath != "" {
 			absPath, err := filepath.Abs(repo.LocalPath)
 			if err != nil {
-				c.logger.With("repository_name", name, "path", repo.LocalPath, "error", err).Warn("failed to resolve absolute path for local repository")
-				absPath = repo.LocalPath
+				return fmt.Errorf("failed to resolve absolute path for local repository %s: %w", name, err)
 			}
 			c.logger.With("name", name, "local_path", repo.LocalPath, "resolved_path", absPath).Info("using local repository path; skipping clone")
 			continue
 		}
 
-		// Neither URL nor local-path provided - this shouldn't happen in normal usage
-		c.logger.With("name", name).Warn("repository has neither URL nor local-path, skipping")
+		return fmt.Errorf("repository %s has neither URL nor local-path set", name)
 	}
 
 	l2Dir := filepath.Join(c.rootDir, localnetDirName, servicesDirName)

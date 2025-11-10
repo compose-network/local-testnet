@@ -58,7 +58,6 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, deploymentSt
 	}
 	defer dockerClient.Close()
 
-	// Resolve op-geth path (local or cloned) using EnvBuilder
 	envBuilder := docker.NewEnvBuilder(o.rootDir, o.networksDir, o.servicesDir)
 	opGethPath, err := envBuilder.ResolveRepoPath(cfg.Repositories[configs.RepositoryNameOpGeth], configs.RepositoryNameOpGeth)
 	if err != nil {
