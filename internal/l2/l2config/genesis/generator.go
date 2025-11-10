@@ -251,12 +251,21 @@ func (g *Generator) ensureOpGethImage(ctx context.Context, imageName string) err
 		return fmt.Errorf("failed to ensure compose file: %w", err)
 	}
 
+	g.logger.With("compose_path", composePath).Info("compose file created")
+
+	// Environment variables need host paths (for docker daemon to access build contexts)
+	// but compose file path stays as container path (docker compose CLI reads it from container)
+	rootHostPath, err := path.GetHostPath(g.rootDir)
+	if err != nil {
+		return fmt.Errorf("failed to resolve host path for root dir: %w", err)
+	}
+
 	env := map[string]string{
-		"ROOT_DIR":     g.rootDir,
+		"ROOT_DIR":     rootHostPath,
 		"OP_GETH_PATH": g.opGethPath,
 	}
 
-	g.logger.With("op_geth_path", g.opGethPath).Info("building op-geth image")
+	g.logger.With("op_geth_path", g.opGethPath, "root_dir", rootHostPath, "compose_file", composePath).Info("building op-geth image")
 
 	if err := docker.ComposeBuild(ctx, composePath, env, "op-geth-a"); err != nil {
 		return fmt.Errorf("failed to build op-geth image: %w", err)

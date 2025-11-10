@@ -73,6 +73,34 @@ make show-l2
 make clean-l2
 ```
 
+### Local Development
+
+For rapid iteration on local changes to `op-geth` or `publisher`, use local repository paths:
+
+```yaml
+# configs/config.yaml
+repositories:
+  op-geth:
+    local-path: ../op-geth  # Relative path
+  publisher:
+    local-path: ~/projects/publisher  # Absolute path with ~
+```
+
+Rebuild and restart specific services after code changes:
+
+```bash
+# Rebuild and restart publisher service only
+make l2-deploy SERVICE=publisher
+
+# Rebuild and restart op-geth services only
+make l2-deploy SERVICE=op-geth
+
+# Rebuild and restart all services
+make l2-deploy SERVICE=all
+```
+
+This skips full redeployment (Phase 1-2) and only rebuilds Docker images + restarts containers.
+
 ### Compiling Contracts
 
 ```bash

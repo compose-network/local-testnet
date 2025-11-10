@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/compose-network/local-testnet/configs"
-	l2path "github.com/compose-network/local-testnet/internal/l2/path"
+	"github.com/compose-network/local-testnet/internal/l2/path"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -47,15 +47,15 @@ func (b *EnvBuilder) BuildComposeEnv(cfg configs.L2, gameFactoryAddr common.Addr
 	rollupAConfigPath := filepath.Join(b.networksDir, string(configs.L2ChainNameRollupA))
 	rollupBConfigPath := filepath.Join(b.networksDir, string(configs.L2ChainNameRollupB))
 
-	rollupAHost, err := l2path.GetHostPath(rollupAConfigPath)
+	rollupAHost, err := path.GetHostPath(rollupAConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve host path for rollup-a config: %w", err)
 	}
-	rollupBHost, err := l2path.GetHostPath(rollupBConfigPath)
+	rollupBHost, err := path.GetHostPath(rollupBConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve host path for rollup-b config: %w", err)
 	}
-	rootHost, err := l2path.GetHostPath(b.rootDir)
+	rootHost, err := path.GetHostPath(b.rootDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve host path for rootDir: %w", err)
 	}
@@ -100,17 +100,40 @@ func (b *EnvBuilder) BuildComposeEnv(cfg configs.L2, gameFactoryAddr common.Addr
 	return env, nil
 }
 
-// ResolveRepoPath resolves the repository path, preferring local-path over cloned path.
+// ResolveRepoPath resolves the repository path, preferring URL (cloned) over local-path.
 // This is exported so other packages can resolve paths consistently.
+// When URL is provided, uses cloned repository path (.localnet/services/<name>).
+// When URL is empty and local-path is set, uses local-path (for development).
+// When running in Docker:
+//   - Cloned paths stay as container paths (accessible via workspace mount)
+//   - Local paths get translated to host paths (outside workspace mount)
 func (b *EnvBuilder) ResolveRepoPath(repo configs.Repository, name configs.RepositoryName) (string, error) {
+	// If URL is provided (via CLI or config), use cloned path
+	// This ensures CLI flags like --op-geth-url override local-path from config
+	// Cloned paths are inside the workspace mount, so they stay as container paths
+	if repo.URL != "" {
+		return filepath.Join(b.servicesDir, string(name)), nil
+	}
+
+	// No URL provided, use local-path (development mode)
 	if repo.LocalPath != "" {
 		expanded := expandUserHome(repo.LocalPath)
-		absPath, err := filepath.Abs(expanded)
-		if err != nil {
-			return "", fmt.Errorf("failed to resolve absolute path for %s: %w", expanded, err)
+
+		var resolvedPath string
+		if filepath.IsAbs(expanded) {
+			resolvedPath = expanded
+		} else {
+			resolvedPath = filepath.Clean(filepath.Join(b.rootDir, expanded))
 		}
-		return absPath, nil
+
+		hostPath, err := path.GetHostPath(resolvedPath)
+		if err != nil {
+			return "", fmt.Errorf("failed to resolve host path for %s: %w", resolvedPath, err)
+		}
+		return hostPath, nil
 	}
+
+	// Neither URL nor local-path provided, default to cloned path
 	return filepath.Join(b.servicesDir, string(name)), nil
 }
 
