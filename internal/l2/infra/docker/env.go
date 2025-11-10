@@ -100,10 +100,11 @@ func (b *EnvBuilder) BuildComposeEnv(cfg configs.L2, gameFactoryAddr common.Addr
 	return env, nil
 }
 
-// ResolveRepoPath resolves the repository path, preferring URL (cloned) over local-path.
+// ResolveRepoPath resolves the repository path for a given repository configuration.
 // This is exported so other packages can resolve paths consistently.
-// When URL is provided, uses cloned repository path (.localnet/services/<name>).
-// When URL is empty and local-path is set, uses local-path (for development).
+// Config validation ensures URL and local-path are mutually exclusive.
+// When URL is set, uses cloned repository path (.localnet/services/<name>).
+// When local-path is set, uses the specified local path (for development).
 // When running in Docker:
 //   - Cloned paths stay as container paths (accessible via workspace mount)
 //   - Local paths get translated to host paths (outside workspace mount)
@@ -115,7 +116,6 @@ func (b *EnvBuilder) ResolveRepoPath(repo configs.Repository, name configs.Repos
 		return filepath.Join(b.servicesDir, string(name)), nil
 	}
 
-	// No URL provided, use local-path (development mode)
 	if repo.LocalPath != "" {
 		expanded := expandUserHome(repo.LocalPath)
 
@@ -133,8 +133,7 @@ func (b *EnvBuilder) ResolveRepoPath(repo configs.Repository, name configs.Repos
 		return hostPath, nil
 	}
 
-	// Neither URL nor local-path provided, default to cloned path
-	return filepath.Join(b.servicesDir, string(name)), nil
+	return "", fmt.Errorf("repository %s has neither URL nor local-path set", name)
 }
 
 // readMailboxAddress reads the mailbox address from contracts.json for a given chain.
