@@ -68,6 +68,10 @@ services:
       - "19898:9898"
     depends_on:
       - publisher
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
     healthcheck:
       test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:8545 || exit 1"]
       interval: 5s
@@ -261,6 +265,10 @@ services:
       - "29898:9898"
     depends_on:
       - publisher
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
     healthcheck:
       test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:8545 || exit 1"]
       interval: 5s
