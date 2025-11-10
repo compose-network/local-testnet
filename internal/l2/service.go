@@ -128,11 +128,25 @@ func (c *Service) cloneRepositories(ctx context.Context, cfg configs.L2) error {
 	repos := make([]git.Repository, 0, len(cfg.Repositories))
 
 	for name, repo := range cfg.Repositories {
-		repos = append(repos, git.Repository{
-			Name: string(name),
-			URL:  repo.URL,
-			Ref:  repo.Branch,
-		})
+		if repo.URL != "" {
+			repos = append(repos, git.Repository{
+				Name: string(name),
+				URL:  repo.URL,
+				Ref:  repo.Branch,
+			})
+			continue
+		}
+
+		if repo.LocalPath != "" {
+			absPath, err := filepath.Abs(repo.LocalPath)
+			if err != nil {
+				return fmt.Errorf("failed to resolve absolute path for local repository %s: %w", name, err)
+			}
+			c.logger.With("name", name, "local_path", repo.LocalPath, "resolved_path", absPath).Info("using local repository path; skipping clone")
+			continue
+		}
+
+		return fmt.Errorf("repository %s has neither URL nor local-path set", name)
 	}
 
 	l2Dir := filepath.Join(c.rootDir, localnetDirName, servicesDirName)

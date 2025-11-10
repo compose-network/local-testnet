@@ -54,8 +54,9 @@ type (
 	}
 
 	Repository struct {
-		URL    string `mapstructure:"url"`
-		Branch string `mapstructure:"branch"`
+		URL       string `mapstructure:"url"`
+		Branch    string `mapstructure:"branch"`
+		LocalPath string `mapstructure:"local-path"`
 	}
 
 	Image struct {
@@ -114,11 +115,14 @@ func (c *L2) Validate() error {
 			errs = append(errs, fmt.Errorf("l2.repositories.%s is required", name))
 			continue
 		}
-		if repo.URL == "" {
-			errs = append(errs, fmt.Errorf("l2.repositories.%s.url is required", name))
+
+		hasLocal := repo.LocalPath != ""
+		hasRemote := repo.URL != "" && repo.Branch != ""
+		if !hasLocal && !hasRemote {
+			errs = append(errs, fmt.Errorf("l2.repositories.%s must set either local-path or url+branch", name))
 		}
-		if repo.Branch == "" {
-			errs = append(errs, fmt.Errorf("l2.repositories.%s.branch is required", name))
+		if hasLocal && hasRemote {
+			errs = append(errs, fmt.Errorf("l2.repositories.%s cannot set both local-path and url+branch (choose one)", name))
 		}
 	}
 

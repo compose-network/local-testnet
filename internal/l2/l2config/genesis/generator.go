@@ -35,12 +35,14 @@ type (
 		rootDir     string
 		localnetDir string
 		servicesDir string
+		networksDir string
+		opGethPath  string
 		logger      *slog.Logger
 	}
 )
 
 // NewGenerator creates a new genesis generator
-func NewGenerator(deployer deployer, docker *docker.Client, writer filesystem.Writer, rootDir, localnetDir, servicesDir string) *Generator {
+func NewGenerator(deployer deployer, docker *docker.Client, writer filesystem.Writer, rootDir, localnetDir, servicesDir, networksDir, opGethPath string) *Generator {
 	return &Generator{
 		deployer:    deployer,
 		docker:      docker,
@@ -48,6 +50,8 @@ func NewGenerator(deployer deployer, docker *docker.Client, writer filesystem.Wr
 		rootDir:     rootDir,
 		localnetDir: localnetDir,
 		servicesDir: servicesDir,
+		networksDir: networksDir,
+		opGethPath:  opGethPath,
 		logger:      logger.Named("genesis_generator"),
 	}
 }
@@ -247,10 +251,21 @@ func (g *Generator) ensureOpGethImage(ctx context.Context, imageName string) err
 		return fmt.Errorf("failed to ensure compose file: %w", err)
 	}
 
-	env := map[string]string{
-		"ROOT_DIR":     g.rootDir,
-		"OP_GETH_PATH": filepath.Join(g.servicesDir, "op-geth"),
+	g.logger.With("compose_path", composePath).Info("compose file created")
+
+	// Environment variables need host paths (for docker daemon to access build contexts)
+	// but compose file path stays as container path (docker compose CLI reads it from container)
+	rootHostPath, err := path.GetHostPath(g.rootDir)
+	if err != nil {
+		return fmt.Errorf("failed to resolve host path for root dir: %w", err)
 	}
+
+	env := map[string]string{
+		"ROOT_DIR":     rootHostPath,
+		"OP_GETH_PATH": g.opGethPath,
+	}
+
+	g.logger.With("op_geth_path", g.opGethPath, "root_dir", rootHostPath, "compose_file", composePath).Info("building op-geth image")
 
 	if err := docker.ComposeBuild(ctx, composePath, env, "op-geth-a"); err != nil {
 		return fmt.Errorf("failed to build op-geth image: %w", err)

@@ -32,15 +32,15 @@ var (
 
 		// Deployment
 		{"deployment-target", "l2.deployment-target", "live", "Deployment target (live or calldata)"},
-		{"genesis-balance-wei", "l2.genesis-balance-wei", "100000000000000000", "Genesis balance in wei for funded accounts (default: 0.1 ETH)"},
+		{"genesis-balance-wei", "l2.genesis-balance-wei", "10000000000000000000", "Genesis balance in wei for funded accounts (default: 0.1 ETH)"},
 
-		// Repositories
-		{"op-geth-url", "l2.repositories.op-geth.url", "https://github.com/compose-network/op-geth.git", "op-geth repository URL"},
-		{"op-geth-branch", "l2.repositories.op-geth.branch", "stage", "op-geth repository branch"},
-		{"publisher-url", "l2.repositories.publisher.url", "https://github.com/compose-network/publisher.git", "publisher repository URL"},
-		{"publisher-branch", "l2.repositories.publisher.branch", "stage", "publisher repository branch"},
-		{"compose-contracts-url", "l2.repositories.compose-contracts.url", "https://github.com/compose-network/contracts.git", "compose-contracts repository URL"},
-		{"compose-contracts-branch", "l2.repositories.compose-contracts.branch", "develop", "compose-contracts repository branch"},
+		// Repositories (no defaults - must be explicitly set in config or via CLI)
+		{"op-geth-url", "l2.repositories.op-geth.url", "", "op-geth repository URL"},
+		{"op-geth-branch", "l2.repositories.op-geth.branch", "", "op-geth repository branch"},
+		{"publisher-url", "l2.repositories.publisher.url", "", "publisher repository URL"},
+		{"publisher-branch", "l2.repositories.publisher.branch", "", "publisher repository branch"},
+		{"compose-contracts-url", "l2.repositories.compose-contracts.url", "", "compose-contracts repository URL"},
+		{"compose-contracts-branch", "l2.repositories.compose-contracts.branch", "", "compose-contracts repository branch"},
 
 		// Images
 		{"op-deployer-tag", "l2.images.op-deployer.tag", "v0.4.5", "op-deployer image tag"},
@@ -88,6 +88,7 @@ func init() {
 		panic(err)
 	}
 	CMD.AddCommand(compileCmd)
+	CMD.AddCommand(deployCmd)
 }
 
 // declareFlags declares multiple flags and binds them to viper configuration keys.
