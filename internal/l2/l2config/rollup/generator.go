@@ -96,6 +96,18 @@ func (g *Generator) Generate(ctx context.Context, chainID int, path string, gene
 	l2["hash"] = genesisHash
 	l2["number"] = 0
 
+	// Override scalar with devnet-appropriate value
+	// Production scalar is ~810,949 which causes impossibly high L1 fees for local testing
+	// Devnet scalar of 1000 for both base fee and blob base fee
+	// Format: 0x01 (version, 1 byte) + 00...00 (padding, 23 bytes) + 000003e8 (baseFeeScalar=1000, 4 bytes) + 000003e8 (blobBaseFeeScalar=1000, 4 bytes)
+	// Total: 32 bytes = 64 hex characters
+	systemConfig, ok := genesis["system_config"].(map[string]any)
+	if !ok {
+		systemConfig = make(map[string]any)
+		genesis["system_config"] = systemConfig
+	}
+	systemConfig["scalar"] = "0x010000000000000000000000000000000000000000000000000003e8000003e8"
+
 	rollup["isthmus_time"] = 0
 
 	rollupPath = filepath.Join(path, rollupConfigFileName)

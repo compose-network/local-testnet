@@ -60,6 +60,7 @@ services:
       - rollup-a-geth:/data
       - ${ROLLUP_A_CONFIG_PATH:-../../networks/rollup-a}:/config:ro
       - ${ROLLUP_B_CONFIG_PATH:-../../networks/rollup-b}:/config_b:ro
+      - ${ROOT_DIR}/.localnet/registry:/registry:ro
     ports:
       - "${ROLLUP_A_RPC_PORT}:8545"
       - "18546:8546"
@@ -142,10 +143,10 @@ services:
           --metrics.port=6060 \
           --sp.addr=publisher:8080 \
           --sp.listen.addr=:9898 \
-          --sequencer.addrs=${ROLLUP_B_CHAIN_ID}:op-geth-b:9898 \
           --sequencer.key=$${SEQUENCER_KEY} \
           --rollup.computependingblock=true \
           --coordinator.key=$${COORDINATOR_KEY} \
+          --registry.path=/registry \
           $${MAILBOX_A_FLAG} \
           $${MAILBOX_B_FLAG} \
           $${EXTRA_FLAGS}
@@ -247,10 +248,12 @@ services:
       COORDINATOR_PRIVATE_KEY: "${COORDINATOR_PRIVATE_KEY}"
       MAILBOX_A: "${MAILBOX_A:-}"
       MAILBOX_B: "${MAILBOX_B:-}"
+      COMPOSE_NETWORK_NAME: "${COMPOSE_NETWORK_NAME}"
     volumes:
       - rollup-b-geth:/data
       - ${ROLLUP_B_CONFIG_PATH:-../../networks/rollup-b}:/config:ro
       - ${ROLLUP_A_CONFIG_PATH:-../../networks/rollup-a}:/config_a:ro
+      - ${ROOT_DIR}/.localnet/registry:/registry:ro
     ports:
       - "${ROLLUP_B_RPC_PORT}:8545"
       - "28546:8546"
@@ -336,10 +339,10 @@ services:
           --metrics.port=6060 \
           --sp.addr=publisher:8080 \
           --sp.listen.addr=:9898 \
-          --sequencer.addrs=${ROLLUP_A_CHAIN_ID}:op-geth-a:9898 \
           --sequencer.key=$${SEQUENCER_KEY} \
           --rollup.computependingblock=true \
           --coordinator.key=$${COORDINATOR_KEY} \
+          --registry.path=/registry \
           $${MAILBOX_A_FLAG} \
           $${MAILBOX_B_FLAG} \
           $${EXTRA_FLAGS}
