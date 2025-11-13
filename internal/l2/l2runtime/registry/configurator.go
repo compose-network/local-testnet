@@ -1,0 +1,148 @@
+package registry
+
+import (
+	"embed"
+	"fmt"
+	"log/slog"
+	"os"
+	"path/filepath"
+	"text/template"
+
+	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/compose-network/local-testnet/configs"
+	"github.com/compose-network/local-testnet/internal/logger"
+)
+
+//go:embed *.tmpl
+var templatesFS embed.FS
+
+// Configurator creates the custom registry structure that prevents
+// Publisher and OP-geth from loading embedded chain definitions
+type Configurator struct {
+	logger *slog.Logger
+}
+
+func NewConfigurator() *Configurator {
+	return &Configurator{
+		logger: logger.Named("registry_configurator"),
+	}
+}
+
+// SetupRegistry creates the complete registry directory structure
+// This includes the network-level compose.toml and individual rollup.toml for each chain
+func (c *Configurator) SetupRegistry(localnetDir string, cfg configs.L2, gameFactoryAddr common.Address) error {
+	registryNetworkDir := filepath.Join(localnetDir, "registry", "networks", cfg.ComposeNetworkName)
+	if err := os.MkdirAll(registryNetworkDir, 0755); err != nil {
+		return fmt.Errorf("failed to create registry network directory: %w", err)
+	}
+
+	c.logger.Info("created registry network directory", "path", registryNetworkDir)
+
+	if err := c.generateComposeToml(registryNetworkDir, cfg, gameFactoryAddr); err != nil {
+		return fmt.Errorf("failed to generate compose.toml: %w", err)
+	}
+
+	for chainName, chainCfg := range cfg.ChainConfigs {
+		if err := c.generateRollupToml(registryNetworkDir, string(chainName), chainCfg); err != nil {
+			return fmt.Errorf("failed to generate rollup.toml for %s: %w", chainName, err)
+		}
+	}
+
+	return nil
+}
+
+func (c *Configurator) generateComposeToml(registryNetworkDir string, cfg configs.L2, gameFactoryAddr common.Address) error {
+	const composeFileName = "compose.toml"
+
+	tmplContent, err := templatesFS.ReadFile("compose.toml.tmpl")
+	if err != nil {
+		return fmt.Errorf("failed to read %s template: %w", composeFileName, err)
+	}
+
+	tmpl, err := template.New(composeFileName).Parse(string(tmplContent))
+	if err != nil {
+		return fmt.Errorf("failed to parse %s template: %w", composeFileName, err)
+	}
+
+	composeTomlPath := filepath.Join(registryNetworkDir, composeFileName)
+	file, err := os.Create(composeTomlPath)
+	if err != nil {
+		return fmt.Errorf("failed to create %s: %w", composeFileName, err)
+	}
+	defer file.Close()
+
+	data := struct {
+		NetworkName        string
+		L1ELURL            string
+		L1ChainID          uint64
+		ExplorerURL        string
+		DisputeGameFactory string
+	}{
+		NetworkName:        cfg.ComposeNetworkName,
+		L1ELURL:            cfg.L1ElURL,
+		L1ChainID:          uint64(cfg.L1ChainID),
+		ExplorerURL:        cfg.Dispute.ExplorerURL,
+		DisputeGameFactory: gameFactoryAddr.Hex(),
+	}
+
+	if err := tmpl.Execute(file, data); err != nil {
+		return fmt.Errorf("failed to execute %s template: %w", composeFileName, err)
+	}
+
+	c.logger.Info("created network registry configuration", "path", composeTomlPath)
+
+	return nil
+}
+
+func (c *Configurator) generateRollupToml(registryNetworkDir, chainName string, chainCfg configs.Chain) error {
+	rollupFileName := chainName + ".toml"
+
+	tmplContent, err := templatesFS.ReadFile("rollup.toml.tmpl")
+	if err != nil {
+		return fmt.Errorf("failed to read rollup.toml template: %w", err)
+	}
+
+	tmpl, err := template.New("rollup.toml").Parse(string(tmplContent))
+	if err != nil {
+		return fmt.Errorf("failed to parse rollup.toml template: %w", err)
+	}
+
+	rollupTomlPath := filepath.Join(registryNetworkDir, rollupFileName)
+	file, err := os.Create(rollupTomlPath)
+	if err != nil {
+		return fmt.Errorf("failed to create %s: %w", rollupFileName, err)
+	}
+	defer file.Close()
+
+	// Extract suffix from chain name (e.g., "rollup-a" -> "a")
+	// The sequencer host is "op-geth-a" not "op-geth-rollup-a"
+	suffix := chainName
+	if len(chainName) > 7 && chainName[:7] == "rollup-" {
+		suffix = chainName[7:]
+	}
+
+	data := struct {
+		ChainName      string
+		ChainID        uint64
+		RPCPort        int
+		SequencerHost  string
+		MailboxAddress string
+		L2GenesisTime  uint64
+	}{
+		ChainName:      chainName,
+		ChainID:        uint64(chainCfg.ID),
+		RPCPort:        chainCfg.RPCPort,
+		SequencerHost:  "op-geth-" + suffix,
+		MailboxAddress: "0x0000000000000000000000000000000000000000", // Placeholder: contracts not deployed yet
+		L2GenesisTime:  0,                                            // Use 0 for testnet genesis time
+	}
+
+	if err := tmpl.Execute(file, data); err != nil {
+		return fmt.Errorf("failed to execute rollup.toml template: %w", err)
+	}
+
+	c.logger.Info("created chain registry configuration", "chain", chainName, "chain_id", chainCfg.ID, "rpc_port", chainCfg.RPCPort, "path", rollupTomlPath)
+
+	return nil
+}
