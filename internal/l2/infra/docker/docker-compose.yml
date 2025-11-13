@@ -26,8 +26,7 @@ services:
       L1_DISPUTE_GAME_FACTORY: "${SP_L1_DISPUTE_GAME_FACTORY}"
       L1_CHAIN_ID: "${L1_CHAIN_ID}"
       L1_COMPOSE_NETWORK_NAME: "${COMPOSE_NETWORK_NAME}"
-      REGISTRY_PATH: "/workspace/.localnet/registry"  # Empty registry to prevent loading embedded chain definitions
-      REGISTRY_STATIC_CHAIN_IDS: "${ROLLUP_A_CHAIN_ID},${ROLLUP_B_CHAIN_ID}"
+      REGISTRY_PATH: "/workspace/.localnet/registry"  # Custom registry with local chain definitions
     volumes:
       - ${ROOT_DIR}/.localnet/registry:/workspace/.localnet/registry:ro
     ports:

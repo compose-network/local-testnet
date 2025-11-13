@@ -44,7 +44,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryA
 	o.logger.Info("Phase 3: Starting L2 runtime operations")
 
 	publisherConfig := publisher.NewConfigurator()
-	if err := publisherConfig.SetupRegistry(o.localnetDir, cfg.ComposeNetworkName); err != nil {
+	if err := publisherConfig.SetupRegistry(o.localnetDir, cfg, gameFactoryAddr); err != nil {
 		return nil, fmt.Errorf("failed to setup publisher registry: %w", err)
 	}
 
