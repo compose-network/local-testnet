@@ -33,7 +33,6 @@ func NewConfigurator() *Configurator {
 // SetupRegistry creates the complete registry directory structure for Publisher
 // This includes the network-level compose.toml and individual rollup.toml for each chain
 func (c *Configurator) SetupRegistry(localnetDir string, cfg configs.L2, gameFactoryAddr common.Address) error {
-	// Create registry directory structure: registry/networks/<network-name>/
 	registryNetworkDir := filepath.Join(localnetDir, "registry", "networks", cfg.ComposeNetworkName)
 	if err := os.MkdirAll(registryNetworkDir, 0755); err != nil {
 		return fmt.Errorf("failed to create registry network directory: %w", err)
@@ -41,12 +40,10 @@ func (c *Configurator) SetupRegistry(localnetDir string, cfg configs.L2, gameFac
 
 	c.logger.Info("created registry network directory", "path", registryNetworkDir)
 
-	// Generate compose.toml with L1 and Publisher configuration
 	if err := c.generateComposeToml(registryNetworkDir, cfg, gameFactoryAddr); err != nil {
 		return fmt.Errorf("failed to generate compose.toml: %w", err)
 	}
 
-	// Generate rollup.toml for each chain
 	for chainName, chainCfg := range cfg.ChainConfigs {
 		if err := c.generateRollupToml(registryNetworkDir, string(chainName), chainCfg); err != nil {
 			return fmt.Errorf("failed to generate rollup.toml for %s: %w", chainName, err)
@@ -100,8 +97,6 @@ func (c *Configurator) generateComposeToml(registryNetworkDir string, cfg config
 }
 
 func (c *Configurator) generateRollupToml(registryNetworkDir, chainName string, chainCfg configs.Chain) error {
-	// Create rollup TOML file directly in the network directory, not in a subdirectory
-	// File name format: rollup-a.toml, rollup-b.toml
 	rollupFileName := chainName + ".toml"
 
 	tmplContent, err := templatesFS.ReadFile("rollup.toml.tmpl")
