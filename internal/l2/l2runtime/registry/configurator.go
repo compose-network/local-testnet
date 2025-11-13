@@ -1,4 +1,4 @@
-package publisher
+package registry
 
 import (
 	"embed"
@@ -17,20 +17,19 @@ import (
 //go:embed *.tmpl
 var templatesFS embed.FS
 
-// Configurator handles Publisher-specific configuration setup
-// This includes creating the custom registry structure that prevents
-// Publisher from loading embedded chain definitions
+// Configurator creates the custom registry structure that prevents
+// Publisher and OP-geth from loading embedded chain definitions
 type Configurator struct {
 	logger *slog.Logger
 }
 
 func NewConfigurator() *Configurator {
 	return &Configurator{
-		logger: logger.Named("publisher_configurator"),
+		logger: logger.Named("registry_configurator"),
 	}
 }
 
-// SetupRegistry creates the complete registry directory structure for Publisher
+// SetupRegistry creates the complete registry directory structure
 // This includes the network-level compose.toml and individual rollup.toml for each chain
 func (c *Configurator) SetupRegistry(localnetDir string, cfg configs.L2, gameFactoryAddr common.Address) error {
 	registryNetworkDir := filepath.Join(localnetDir, "registry", "networks", cfg.ComposeNetworkName)

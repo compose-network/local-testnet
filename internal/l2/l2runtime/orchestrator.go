@@ -8,7 +8,7 @@ import (
 	"github.com/compose-network/local-testnet/configs"
 	"github.com/compose-network/local-testnet/internal/l2/infra/docker"
 	"github.com/compose-network/local-testnet/internal/l2/l2runtime/contracts"
-	"github.com/compose-network/local-testnet/internal/l2/l2runtime/publisher"
+	"github.com/compose-network/local-testnet/internal/l2/l2runtime/registry"
 	"github.com/compose-network/local-testnet/internal/l2/l2runtime/services"
 	"github.com/compose-network/local-testnet/internal/logger"
 	"github.com/ethereum/go-ethereum/common"
@@ -43,7 +43,7 @@ func NewOrchestrator(rootDir, localnetDir, networksDir, servicesDir string) *Orc
 func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryAddr common.Address) (map[configs.L2ChainName]map[contracts.ContractName]common.Address, error) {
 	o.logger.Info("Phase 3: Starting L2 runtime operations")
 
-	publisherConfig := publisher.NewConfigurator()
+	publisherConfig := registry.NewConfigurator()
 	if err := publisherConfig.SetupRegistry(o.localnetDir, cfg, gameFactoryAddr); err != nil {
 		return nil, fmt.Errorf("failed to setup publisher registry: %w", err)
 	}
