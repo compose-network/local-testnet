@@ -19,7 +19,7 @@ l2:
       id: 88888
       rpc-port: 28545
   deployment-target: live  # "live" or "calldata"
-  genesis-balance-wei: "10000000000000000000"  # 10 ETH for funded accounts
+  genesis-balance-wei: "100000000000000000000000"  # 100_000 ETH for funded accounts
   # curl https://us-docker.pkg.dev/v2/oplabs-tools-artifacts/images/{REPOSITORY_NAME}/tags/list to fetch list of available tags
   # these versions represent fully compatible builds that work together as expected in the local testnet setup.
   # stage branch versions can be found here: https://github.com/ssvlabs/gitops-stage/blob/main/environments/ovh/optimism/optimism-stack.yaml

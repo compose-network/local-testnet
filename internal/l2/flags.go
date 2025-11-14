@@ -32,7 +32,7 @@ var (
 
 		// Deployment
 		{"deployment-target", "l2.deployment-target", "live", "Deployment target (live or calldata)"},
-		{"genesis-balance-wei", "l2.genesis-balance-wei", "10000000000000000000", "Genesis balance in wei for funded accounts (default: 0.1 ETH)"},
+		{"genesis-balance-wei", "l2.genesis-balance-wei", "100000000000000000000000", "Genesis balance in wei for funded accounts (default: 100_000 ETH)"},
 
 		// Repositories (no defaults - must be explicitly set in config or via CLI)
 		{"op-geth-url", "l2.repositories.op-geth.url", "", "op-geth repository URL"},
