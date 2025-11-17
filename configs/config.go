@@ -40,11 +40,11 @@ type (
 		NetworkName                     string `mapstructure:"network-name"`
 		ExplorerURL                     string `mapstructure:"explorer-url"`
 		ExplorerAPIURL                  string `mapstructure:"explorer-api-url"`
-		SP1Verifier                     string `mapstructure:"sp1-verifier"`
-		AuthorizedProposer              string `mapstructure:"authorized-proposer"`
+		VerifierAddress                 string `mapstructure:"verifier-address"`
+		OwnerAddress                    string `mapstructure:"owner-address"`
+		ProposerAddress                 string `mapstructure:"proposer-address"`
 		AggregationVkey                 string `mapstructure:"aggregation-vkey"`
 		GuardianAddress                 string `mapstructure:"guardian-address"`
-		ProxyAdminOwner                 string `mapstructure:"proxy-admin-owner"`
 		ProofMaturityDelaySeconds       int    `mapstructure:"proof-maturity-delay-seconds"`
 		DisputeGameFinalityDelaySeconds int    `mapstructure:"dispute-game-finality-delay-seconds"`
 		DisputeGameInitBond             string `mapstructure:"dispute-game-init-bond"`
@@ -175,20 +175,20 @@ func (c *L2) Validate() error {
 	if c.Dispute.NetworkName == "" {
 		errs = append(errs, errors.New("l2.dispute.network-name is required"))
 	}
-	if c.Dispute.SP1Verifier == "" {
-		errs = append(errs, errors.New("l2.dispute.sp1-verifier is required"))
+	if c.Dispute.VerifierAddress == "" {
+		errs = append(errs, errors.New("l2.dispute.verifier-address is required"))
 	}
-	if c.Dispute.AuthorizedProposer == "" {
-		errs = append(errs, errors.New("l2.dispute.authorized-proposer is required"))
+	if c.Dispute.OwnerAddress == "" {
+		errs = append(errs, errors.New("l2.dispute.owner-address is required"))
+	}
+	if c.Dispute.ProposerAddress == "" {
+		errs = append(errs, errors.New("l2.dispute.proposer-address is required"))
 	}
 	if c.Dispute.AggregationVkey == "" {
 		errs = append(errs, errors.New("l2.dispute.aggregation-vkey is required"))
 	}
 	if c.Dispute.GuardianAddress == "" {
 		errs = append(errs, errors.New("l2.dispute.guardian-address is required"))
-	}
-	if c.Dispute.ProxyAdminOwner == "" {
-		errs = append(errs, errors.New("l2.dispute.proxy-admin-owner is required"))
 	}
 	if c.Dispute.ProofMaturityDelaySeconds <= 0 {
 		errs = append(errs, errors.New("l2.dispute.proof-maturity-delay-seconds must be positive"))

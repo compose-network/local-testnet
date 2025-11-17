@@ -59,11 +59,11 @@ l2:
     network-name: network-name # e.g. hoodi
     explorer-url: http://127.0.0.1:8080 # e.g. http://hoodi.etherscan.io
     explorer-api-url: http://127.0.0.1:8080/api # e.g. http://hoodi.etherscan.io/api
-    sp1-verifier: "0x0000000000000000000000000000000000000000000" # SP1 verifier contract address
-    authorized-proposer: "0x0000000000000000000000000000000000000000000" # Authorized proposer address (can be equal to wallet.address)
+    verifier-address: "0x0000000000000000000000000000000000000000000" # SP1 verifier contract address
+    owner-address: "0x0000000000000000000000000000000000000000000" # Owner address (can be equal to wallet.address)
+    proposer-address: "0x0000000000000000000000000000000000000000000" # Proposer address (can be equal to wallet.address)
     aggregation-vkey: "0x0000000000000000000000000000000000000000000000000000000000000000" # Aggregation verification key
     guardian-address: "0x0000000000000000000000000000000000000000000" # Guardian address (can be equal to wallet.address)
-    proxy-admin-owner: "0x0000000000000000000000000000000000000000000" # Proxy admin owner (can be equal to wallet.address)
     proof-maturity-delay-seconds: 604800  # Proof maturity delay (default: 7 days = 604800 seconds)
     dispute-game-finality-delay-seconds: 302400  # Dispute game finality delay (default: 3.5 days = 302400 seconds)
     dispute-game-init-bond: 80000000000000000  # Initial bond for dispute games (default: 0.08 ether = 80000000000000000 wei)

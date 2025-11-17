@@ -5,11 +5,11 @@ chain_id = {{.ChainID}}
 explorer_url = "{{.ExplorerURL}}"
 explorer_api_url = "{{.ExplorerAPIURL}}"
 
-# Required deployment configuration
+# Required deployment configuration (mapped from user-facing config to compose-contracts schema)
 guardian = "{{.GuardianAddress}}"
-proxy_admin_owner = "{{.ProxyAdminOwner}}"
-authorized_proposer = "{{.AuthorizedProposer}}"
-sp1_verifier = "{{.SP1Verifier}}"
+proxy_admin_owner = "{{.OwnerAddress}}"
+authorized_proposer = "{{.ProposerAddress}}"
+sp1_verifier = "{{.VerifierAddress}}"
 aggregation_vkey = "{{.AggregationVkey}}"
 
 # Optional deployment configuration (with defaults)

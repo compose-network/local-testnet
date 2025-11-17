@@ -102,11 +102,11 @@ func (s *Service) generateNetworksToml() error {
 		ChainID                         int
 		ExplorerURL                     string
 		ExplorerAPIURL                  string
-		SP1Verifier                     string
-		AuthorizedProposer              string
+		VerifierAddress                 string
+		OwnerAddress                    string
+		ProposerAddress                 string
 		AggregationVkey                 string
 		GuardianAddress                 string
-		ProxyAdminOwner                 string
 		ProofMaturityDelaySeconds       int
 		DisputeGameFinalityDelaySeconds int
 		DisputeGameInitBond             string
@@ -118,11 +118,11 @@ func (s *Service) generateNetworksToml() error {
 		ChainID:                         s.cfg.L1ChainID,
 		ExplorerURL:                     s.cfg.Dispute.ExplorerURL,
 		ExplorerAPIURL:                  s.cfg.Dispute.ExplorerAPIURL,
-		SP1Verifier:                     s.cfg.Dispute.SP1Verifier,
-		AuthorizedProposer:              s.cfg.Dispute.AuthorizedProposer,
+		VerifierAddress:                 s.cfg.Dispute.VerifierAddress,
+		OwnerAddress:                    s.cfg.Dispute.OwnerAddress,
+		ProposerAddress:                 s.cfg.Dispute.ProposerAddress,
 		AggregationVkey:                 s.cfg.Dispute.AggregationVkey,
 		GuardianAddress:                 s.cfg.Dispute.GuardianAddress,
-		ProxyAdminOwner:                 s.cfg.Dispute.ProxyAdminOwner,
 		ProofMaturityDelaySeconds:       s.cfg.Dispute.ProofMaturityDelaySeconds,
 		DisputeGameFinalityDelaySeconds: s.cfg.Dispute.DisputeGameFinalityDelaySeconds,
 		DisputeGameInitBond:             s.cfg.Dispute.DisputeGameInitBond,
