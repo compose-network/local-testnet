@@ -29,11 +29,11 @@ l2:
     op-deployer:
       tag: v0.4.5
     op-node: 
-      tag: v1.13.6
+      tag: v1.16.2
     op-proposer: 
       tag: v1.10.0
     op-batcher: 
-      tag: v1.14.0
+      tag: v1.16.2
   repositories:
     # Note: For local development, use local-path instead of url+branch.
     # Paths are resolved relative to the project root (where you run commands).
