@@ -52,11 +52,12 @@ var (
 		{"dispute-network-name", "l2.dispute.network-name", "", "Dispute network name"},
 		{"dispute-explorer-url", "l2.dispute.explorer-url", "", "Dispute explorer URL"},
 		{"dispute-explorer-api-url", "l2.dispute.explorer-api-url", "", "Dispute explorer API URL"},
-		{"dispute-verifier-address", "l2.dispute.verifier-address", "", "Dispute verifier contract address"},
-		{"dispute-owner-address", "l2.dispute.owner-address", "", "Dispute owner address"},
-		{"dispute-proposer-address", "l2.dispute.proposer-address", "", "Dispute proposer address"},
-		{"dispute-aggregation-vkey", "l2.dispute.aggregation-vkey", "", "Dispute aggregation verification key"},
-		{"dispute-admin-address", "l2.dispute.admin-address", "", "Dispute admin address"},
+		{"dispute-sp1-verifier", "l2.dispute.sp1-verifier", "", "SP1 verifier contract address"},
+		{"dispute-authorized-proposer", "l2.dispute.authorized-proposer", "", "Authorized proposer address"},
+		{"dispute-aggregation-vkey", "l2.dispute.aggregation-vkey", "", "Aggregation verification key"},
+		{"dispute-guardian-address", "l2.dispute.guardian-address", "", "Guardian address"},
+		{"dispute-proxy-admin-owner", "l2.dispute.proxy-admin-owner", "", "Proxy admin owner address"},
+		{"dispute-game-init-bond", "l2.dispute.dispute-game-init-bond", "80000000000000000", "Initial bond for dispute games in wei"},
 	}
 
 	intFlags = []flagDef[int]{
@@ -70,7 +71,8 @@ var (
 		{"rollup-b-rpc-port", "l2.chain-configs.rollup-b.rpc-port", 28545, "Rollup B RPC port"},
 
 		// Dispute config
-		{"dispute-starting-superblock-number", "l2.dispute.starting-superblock-number", 0, "Dispute starting superblock number"},
+		{"dispute-proof-maturity-delay-seconds", "l2.dispute.proof-maturity-delay-seconds", 604800, "Proof maturity delay in seconds (default: 7 days)"},
+		{"dispute-game-finality-delay-seconds", "l2.dispute.dispute-game-finality-delay-seconds", 302400, "Dispute game finality delay in seconds (default: 3.5 days)"},
 	}
 
 	// Boolean flags for L2 configuration (currently empty, ready for future use)

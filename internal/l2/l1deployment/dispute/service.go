@@ -97,31 +97,35 @@ func (s *Service) generateNetworksToml() error {
 	}
 
 	type templateData struct {
-		NetworkName              string
-		RpcURL                   string
-		ChainID                  int
-		ExplorerURL              string
-		ExplorerAPIURL           string
-		VerifierAddress          string
-		OwnerAddress             string
-		ProposerAddress          string
-		AggregationVkey          string
-		StartingSuperblockNumber int
-		AdminAddress             string
+		NetworkName                     string
+		RpcURL                          string
+		ChainID                         int
+		ExplorerURL                     string
+		ExplorerAPIURL                  string
+		SP1Verifier                     string
+		AuthorizedProposer              string
+		AggregationVkey                 string
+		GuardianAddress                 string
+		ProxyAdminOwner                 string
+		ProofMaturityDelaySeconds       int
+		DisputeGameFinalityDelaySeconds int
+		DisputeGameInitBond             string
 	}
 
 	data := templateData{
-		NetworkName:              s.cfg.Dispute.NetworkName,
-		RpcURL:                   s.cfg.L1ElURL,
-		ChainID:                  s.cfg.L1ChainID,
-		ExplorerURL:              s.cfg.Dispute.ExplorerURL,
-		ExplorerAPIURL:           s.cfg.Dispute.ExplorerAPIURL,
-		VerifierAddress:          s.cfg.Dispute.VerifierAddress,
-		OwnerAddress:             s.cfg.Dispute.OwnerAddress,
-		ProposerAddress:          s.cfg.Dispute.ProposerAddress,
-		AggregationVkey:          s.cfg.Dispute.AggregationVkey,
-		StartingSuperblockNumber: s.cfg.Dispute.StartingSuperblockNumber,
-		AdminAddress:             s.cfg.Dispute.AdminAddress,
+		NetworkName:                     s.cfg.Dispute.NetworkName,
+		RpcURL:                          s.cfg.L1ElURL,
+		ChainID:                         s.cfg.L1ChainID,
+		ExplorerURL:                     s.cfg.Dispute.ExplorerURL,
+		ExplorerAPIURL:                  s.cfg.Dispute.ExplorerAPIURL,
+		SP1Verifier:                     s.cfg.Dispute.SP1Verifier,
+		AuthorizedProposer:              s.cfg.Dispute.AuthorizedProposer,
+		AggregationVkey:                 s.cfg.Dispute.AggregationVkey,
+		GuardianAddress:                 s.cfg.Dispute.GuardianAddress,
+		ProxyAdminOwner:                 s.cfg.Dispute.ProxyAdminOwner,
+		ProofMaturityDelaySeconds:       s.cfg.Dispute.ProofMaturityDelaySeconds,
+		DisputeGameFinalityDelaySeconds: s.cfg.Dispute.DisputeGameFinalityDelaySeconds,
+		DisputeGameInitBond:             s.cfg.Dispute.DisputeGameInitBond,
 	}
 
 	outputPath := filepath.Join(s.contractsDir, "networks.toml")
