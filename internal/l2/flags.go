@@ -44,9 +44,9 @@ var (
 
 		// Images
 		{"op-deployer-tag", "l2.images.op-deployer.tag", "v0.4.5", "op-deployer image tag"},
-		{"op-node-tag", "l2.images.op-node.tag", "v1.13.6", "op-node image tag"},
+		{"op-node-tag", "l2.images.op-node.tag", "v1.16.2", "op-node image tag"},
 		{"op-proposer-tag", "l2.images.op-proposer.tag", "v1.10.0", "op-proposer image tag"},
-		{"op-batcher-tag", "l2.images.op-batcher.tag", "v1.14.0", "op-batcher image tag"},
+		{"op-batcher-tag", "l2.images.op-batcher.tag", "v1.16.2", "op-batcher image tag"},
 
 		// Dispute config
 		{"dispute-network-name", "l2.dispute.network-name", "", "Dispute network name"},
