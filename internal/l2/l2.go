@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/compose-network/local-testnet/configs"
+	"github.com/compose-network/local-testnet/internal/l2/blockscout"
 	"github.com/compose-network/local-testnet/internal/l2/infra/git"
 	"github.com/compose-network/local-testnet/internal/l2/l1deployment"
 	"github.com/compose-network/local-testnet/internal/l2/l2config"
@@ -50,7 +51,8 @@ var CMD = &cobra.Command{
 		l2ConfigOrchestrator := l2config.NewOrchestrator(rootDir, localnetDir, stateDir, networksDir, servicesDir)
 		runtimeOrchestrator := l2runtime.NewOrchestrator(rootDir, localnetDir, networksDir, servicesDir)
 
-		service := NewService(rootDir, git.NewCloner(), l1Orchestrator, l2ConfigOrchestrator, runtimeOrchestrator, output.NewGenerator())
+		service := NewService(rootDir, git.NewCloner(), l1Orchestrator, l2ConfigOrchestrator, runtimeOrchestrator, blockscout.New(), output.NewGenerator())
+
 		if err := service.Deploy(cmd.Context(), configs.Values.L2); err != nil {
 			return fmt.Errorf("l2 deployment failed: %w", err)
 		}
