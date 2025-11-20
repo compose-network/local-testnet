@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"maps"
+	"path/filepath"
 
 	"github.com/compose-network/local-testnet/internal/l2/infra/docker"
 	"github.com/compose-network/local-testnet/internal/logger"
@@ -24,13 +25,15 @@ type (
 	}
 	Service struct {
 		localnetDir string
+		networksDir string
 		logger      *slog.Logger
 	}
 )
 
-func New(localnetDir string) *Service {
+func New(localnetDir, networksDir string) *Service {
 	return &Service{
 		localnetDir: localnetDir,
+		networksDir: networksDir,
 		logger:      logger.Named("blockscout"),
 	}
 }
@@ -40,6 +43,10 @@ func (s *Service) Run(ctx context.Context, chainConfigs []ChainConfig) error {
 
 	if len(chainConfigs) != 2 {
 		return fmt.Errorf("expected exactly 2 chain configs, got %d", len(chainConfigs))
+	}
+
+	if err := GenerateNginxConfigs(s.networksDir); err != nil {
+		return fmt.Errorf("failed to generate nginx configs: %w", err)
 	}
 
 	composePath, err := EnsureComposeFile(s.localnetDir)
@@ -65,6 +72,11 @@ func (s *Service) buildAllEnvVars(chainConfigs []ChainConfig) map[string]string 
 	envVars["BLOCKSCOUT_FRONTEND_VERSION"] = blockscoutFrontendVersion
 	envVars["BLOCKSCOUT_A_PUBLIC_PORT"] = "19000"
 	envVars["BLOCKSCOUT_B_PUBLIC_PORT"] = "29000"
+
+	rollupANginxConf := filepath.Join(s.networksDir, "rollup-a", "blockscout-nginx.conf")
+	rollupBNginxConf := filepath.Join(s.networksDir, "rollup-b", "blockscout-nginx.conf")
+	envVars["ROLLUP_A_NGINX_CONF"] = rollupANginxConf
+	envVars["ROLLUP_B_NGINX_CONF"] = rollupBNginxConf
 
 	prefixes := []string{"ROLLUP_A_", "ROLLUP_B_"}
 

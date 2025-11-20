@@ -118,7 +118,7 @@ services:
     ports:
       - "${BLOCKSCOUT_A_PUBLIC_PORT}:80"
     volumes:
-      - ./networks/rollup-a/blockscout-nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${ROLLUP_A_NGINX_CONF}:/etc/nginx/conf.d/default.conf:ro
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1/api/health"]
       interval: 20s
@@ -247,7 +247,7 @@ services:
     ports:
       - "${BLOCKSCOUT_B_PUBLIC_PORT}:80"
     volumes:
-      - ./networks/rollup-b/blockscout-nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${ROLLUP_B_NGINX_CONF}:/etc/nginx/conf.d/default.conf:ro
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1/api/health"]
       interval: 20s
