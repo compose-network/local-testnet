@@ -3,7 +3,7 @@ module github.com/compose-network/local-testnet
 go 1.25
 
 require (
-	github.com/docker/docker v28.5.1+incompatible
+	github.com/docker/docker v28.5.2+incompatible
 	github.com/docker/go-connections v0.6.0
 	github.com/ethereum/go-ethereum v1.16.7
 	github.com/kurtosis-tech/kurtosis/api/golang v1.13.2
