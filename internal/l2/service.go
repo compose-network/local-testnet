@@ -119,7 +119,7 @@ func (s *Service) Deploy(ctx context.Context, cfg configs.L2) error {
 		chainConfigs = append(chainConfigs, blockscout.ChainConfig{
 			ID:         config.ID,
 			ELHostName: hostName,
-			RPCPort:    config.RPCPort,
+			RPCPort:    8545,
 			WSPort:     8546,
 		})
 	}
