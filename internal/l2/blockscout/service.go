@@ -35,6 +35,7 @@ func (s *Service) Run(ctx context.Context, chainConfigs []ChainConfig) error {
 	s.logger.Info("starting Blockscout service. Building environment variables")
 
 	for _, config := range chainConfigs {
+
 		envVars := s.buildEnvVars(config.Host, config.ID, config.RPCPort, config.WSPort)
 		s.logger.Info("environment variables built", slog.Any("envVars", envVars))
 	}
@@ -50,5 +51,11 @@ func (s *Service) buildEnvVars(host string, chainID, rpcPort, wsPort int) map[st
 		"ETHEREUM_JSONRPC_HTTP_URL":  httpURL,
 		"ETHEREUM_JSONRPC_TRACE_URL": httpURL,
 		"ETHEREUM_JSONRPC_WS_URL":    fmt.Sprintf("ws://%s:%d", host, wsPort),
+	}
+}
+
+func (s *Service) buildFrontendEnvVars(chainID int) map[string]string {
+	return map[string]string{
+		"NEXT_PUBLIC_NETWORK_ID": fmt.Sprintf("%d", chainID),
 	}
 }
