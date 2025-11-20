@@ -102,29 +102,32 @@ func (s *Service) Deploy(ctx context.Context, cfg configs.L2) error {
 		return fmt.Errorf("%s: %w", msg, err)
 	}
 
-	s.logger.Info("L2 deployment completed successfully. Generating output file")
+	if cfg.Blockscout.Enabled {
+		s.logger.Info("Blockscout is enabled. Starting Blockscout services")
+		var chainConfigs []blockscout.ChainConfig
+		for chainName, config := range cfg.ChainConfigs {
+			var hostName string
+			switch chainName {
+			case configs.L2ChainNameRollupA:
+				hostName = "op-geth-a"
+			case configs.L2ChainNameRollupB:
+				hostName = "op-geth-b"
+			default:
+				return fmt.Errorf("unknown chain name: %s", chainName)
+			}
 
-	var chainConfigs []blockscout.ChainConfig
-	for chainName, config := range cfg.ChainConfigs {
-		var hostName string
-		switch chainName {
-		case configs.L2ChainNameRollupA:
-			hostName = "op-geth-a"
-		case configs.L2ChainNameRollupB:
-			hostName = "op-geth-b"
-		default:
-			return fmt.Errorf("unknown chain name: %s", chainName)
+			chainConfigs = append(chainConfigs, blockscout.ChainConfig{
+				ID:         config.ID,
+				ELHostName: hostName,
+				RPCPort:    8545,
+				WSPort:     8546,
+			})
 		}
-
-		chainConfigs = append(chainConfigs, blockscout.ChainConfig{
-			ID:         config.ID,
-			ELHostName: hostName,
-			RPCPort:    8545,
-			WSPort:     8546,
-		})
-	}
-	if err := s.blockscoutService.Run(ctx, chainConfigs); err != nil {
-		return fmt.Errorf("failed to start Blockscout service: %w", err)
+		if err := s.blockscoutService.Run(ctx, chainConfigs); err != nil {
+			return fmt.Errorf("failed to start Blockscout service: %w", err)
+		}
+	} else {
+		s.logger.Info("Blockscout is disabled. Skipping Blockscout services")
 	}
 
 	s.logger.Info("L2 deployment completed successfully. Generating output file")

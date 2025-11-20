@@ -34,6 +34,11 @@ type (
 		DeploymentTarget      string                        `mapstructure:"deployment-target"`
 		GenesisBalanceWei     string                        `mapstructure:"genesis-balance-wei"`
 		Dispute               DisputeConfig                 `mapstructure:"dispute"`
+		Blockscout            BlockscoutConfig              `mapstructure:"blockscout"`
+	}
+
+	BlockscoutConfig struct {
+		Enabled bool `mapstructure:"enabled"`
 	}
 
 	DisputeConfig struct {
