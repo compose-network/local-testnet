@@ -51,7 +51,7 @@ var CMD = &cobra.Command{
 		l2ConfigOrchestrator := l2config.NewOrchestrator(rootDir, localnetDir, stateDir, networksDir, servicesDir)
 		runtimeOrchestrator := l2runtime.NewOrchestrator(rootDir, localnetDir, networksDir, servicesDir)
 
-		service := NewService(rootDir, git.NewCloner(), l1Orchestrator, l2ConfigOrchestrator, runtimeOrchestrator, blockscout.New(), output.NewGenerator())
+		service := NewService(rootDir, git.NewCloner(), l1Orchestrator, l2ConfigOrchestrator, runtimeOrchestrator, blockscout.New(localnetDir), output.NewGenerator())
 
 		if err := service.Deploy(cmd.Context(), configs.Values.L2); err != nil {
 			return fmt.Errorf("l2 deployment failed: %w", err)

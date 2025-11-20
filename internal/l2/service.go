@@ -104,7 +104,26 @@ func (s *Service) Deploy(ctx context.Context, cfg configs.L2) error {
 
 	s.logger.Info("L2 deployment completed successfully. Generating output file")
 
-	if err := s.blockscoutService.Run(ctx, []blockscout.ChainConfig{}); err != nil {
+	var chainConfigs []blockscout.ChainConfig
+	for chainName, config := range cfg.ChainConfigs {
+		var hostName string
+		switch chainName {
+		case configs.L2ChainNameRollupA:
+			hostName = "op-geth-a"
+		case configs.L2ChainNameRollupB:
+			hostName = "op-geth-b"
+		default:
+			return fmt.Errorf("unknown chain name: %s", chainName)
+		}
+
+		chainConfigs = append(chainConfigs, blockscout.ChainConfig{
+			ID:         config.ID,
+			ELHostName: hostName,
+			RPCPort:    config.RPCPort,
+			WSPort:     8546,
+		})
+	}
+	if err := s.blockscoutService.Run(ctx, chainConfigs); err != nil {
 		return fmt.Errorf("failed to start Blockscout service: %w", err)
 	}
 

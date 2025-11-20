@@ -31,7 +31,7 @@ services:
     command: ["redis-server", "--save", "", "--appendonly", "no"]
 
   a-service:
-    image: ghcr.io/blockscout/blockscout-optimism:9.0.2
+    image: ghcr.io/blockscout/blockscout-optimism:${BLOCKSCOUT_VERSION}
     container_name: blockscout-a
     restart: unless-stopped
     labels:
@@ -44,10 +44,10 @@ services:
       a-redis:
         condition: service_started
     environment:
-      CHAIN_ID: "${CHAIN_ID}"
-      ETHEREUM_JSONRPC_HTTP_URL: "${ETHEREUM_JSONRPC_HTTP_URL}"
-      ETHEREUM_JSONRPC_TRACE_URL: "${ETHEREUM_JSONRPC_TRACE_URL}"
-      ETHEREUM_JSONRPC_WS_URL: "${ETHEREUM_JSONRPC_WS_URL}"
+      CHAIN_ID: "${ROLLUP_A_CHAIN_ID}"
+      ETHEREUM_JSONRPC_HTTP_URL: "${ROLLUP_A_ETHEREUM_JSONRPC_HTTP_URL}"
+      ETHEREUM_JSONRPC_TRACE_URL: "${ROLLUP_A_ETHEREUM_JSONRPC_TRACE_URL}"
+      ETHEREUM_JSONRPC_WS_URL: "${ROLLUP_A_ETHEREUM_JSONRPC_WS_URL}"
 
       RELEASE_LINK: "Compose Rollup A"
       CHAIN_NAME: "Compose Rollup A"
@@ -77,7 +77,7 @@ services:
       start_period: 30s
 
   a-frontend:
-    image: ghcr.io/blockscout/frontend:v2.3.5
+    image: ghcr.io/blockscout/frontend:${BLOCKSCOUT_FRONTEND_VERSION}
     container_name: blockscout-a-frontend
     restart: unless-stopped
     labels:
@@ -92,7 +92,7 @@ services:
       NEXT_PUBLIC_APP_HOST: "localhost:${BLOCKSCOUT_A_PUBLIC_PORT}"
       NEXT_PUBLIC_NETWORK_NAME: "Rollup A Compose"
       NEXT_PUBLIC_NETWORK_SHORT_NAME: "Rollup A"
-      NEXT_PUBLIC_NETWORK_ID: "${NEXT_PUBLIC_NETWORK_ID}"
+      NEXT_PUBLIC_NETWORK_ID: "${ROLLUP_A_NETWORK_ID}"
       NEXT_PUBLIC_API_PROTOCOL: "http"
       NEXT_PUBLIC_API_BASE_PATH: ""
       NEXT_PUBLIC_API_WEBSOCKET_PROTOCOL: "ws"
@@ -160,7 +160,7 @@ services:
     command: ["redis-server", "--save", "", "--appendonly", "no"]
 
   b-service:
-    image: ghcr.io/blockscout/blockscout-optimism:9.0.2
+    image: ghcr.io/blockscout/blockscout-optimism:${BLOCKSCOUT_VERSION}
     container_name: blockscout-b
     restart: unless-stopped
     labels:
@@ -173,10 +173,10 @@ services:
       b-redis:
         condition: service_started
     environment:
-      CHAIN_ID: "${CHAIN_ID}"
-      ETHEREUM_JSONRPC_HTTP_URL: "${ETHEREUM_JSONRPC_HTTP_URL}"
-      ETHEREUM_JSONRPC_TRACE_URL: "${ETHEREUM_JSONRPC_TRACE_URL}"
-      ETHEREUM_JSONRPC_WS_URL: "${ETHEREUM_JSONRPC_WS_URL}"
+      CHAIN_ID: "${ROLLUP_B_CHAIN_ID}"
+      ETHEREUM_JSONRPC_HTTP_URL: "${ROLLUP_B_ETHEREUM_JSONRPC_HTTP_URL}"
+      ETHEREUM_JSONRPC_TRACE_URL: "${ROLLUP_B_ETHEREUM_JSONRPC_TRACE_URL}"
+      ETHEREUM_JSONRPC_WS_URL: "${ROLLUP_B_ETHEREUM_JSONRPC_WS_URL}"
 
       RELEASE_LINK: "Compose Rollup B"
       CHAIN_NAME: "Compose Rollup B"
@@ -206,7 +206,7 @@ services:
       start_period: 30s
 
   b-frontend:
-    image: ghcr.io/blockscout/frontend:v2.3.5
+    image: ghcr.io/blockscout/frontend:${BLOCKSCOUT_FRONTEND_VERSION}
     container_name: blockscout-b-frontend
     restart: unless-stopped
     labels:
@@ -221,7 +221,7 @@ services:
       NEXT_PUBLIC_APP_HOST: "localhost:${BLOCKSCOUT_B_PUBLIC_PORT}"
       NEXT_PUBLIC_NETWORK_NAME: "Rollup B Compose"
       NEXT_PUBLIC_NETWORK_SHORT_NAME: "Rollup B"
-      NEXT_PUBLIC_NETWORK_ID: "${NEXT_PUBLIC_NETWORK_ID}"
+      NEXT_PUBLIC_NETWORK_ID: "${ROLLUP_B_NETWORK_ID}"
       NEXT_PUBLIC_API_PROTOCOL: "http"
       NEXT_PUBLIC_API_BASE_PATH: ""
       NEXT_PUBLIC_API_WEBSOCKET_PROTOCOL: "ws"

@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"maps"
 
+	"github.com/compose-network/local-testnet/internal/l2/infra/docker"
 	"github.com/compose-network/local-testnet/internal/logger"
 )
 
@@ -15,32 +17,81 @@ const (
 
 type (
 	ChainConfig struct {
-		ID      int
-		Host    string
-		RPCPort int
-		WSPort  int
+		ID         int
+		ELHostName string
+		RPCPort    int
+		WSPort     int
 	}
 	Service struct {
-		logger *slog.Logger
+		localnetDir string
+		logger      *slog.Logger
 	}
 )
 
-func New() *Service {
+func New(localnetDir string) *Service {
 	return &Service{
-		logger: logger.Named("blockscout"),
+		localnetDir: localnetDir,
+		logger:      logger.Named("blockscout"),
 	}
 }
 
 func (s *Service) Run(ctx context.Context, chainConfigs []ChainConfig) error {
-	s.logger.Info("starting Blockscout service. Building environment variables")
+	s.logger.Info("starting Blockscout service")
 
-	for _, config := range chainConfigs {
-
-		envVars := s.buildEnvVars(config.Host, config.ID, config.RPCPort, config.WSPort)
-		s.logger.Info("environment variables built", slog.Any("envVars", envVars))
+	if len(chainConfigs) != 2 {
+		return fmt.Errorf("expected exactly 2 chain configs, got %d", len(chainConfigs))
 	}
 
+	composePath, err := EnsureComposeFile(s.localnetDir)
+	if err != nil {
+		return fmt.Errorf("failed to prepare blockscout compose file: %w", err)
+	}
+
+	envVars := s.buildAllEnvVars(chainConfigs)
+	s.logger.With("env", envVars).Info("environment variables built. Starting services")
+
+	if err := docker.ComposeUp(ctx, composePath, envVars); err != nil {
+		return fmt.Errorf("failed to start blockscout services: %w", err)
+	}
+
+	s.logger.Info("blockscout services started successfully")
 	return nil
+}
+
+func (s *Service) buildAllEnvVars(chainConfigs []ChainConfig) map[string]string {
+	envVars := make(map[string]string)
+
+	envVars["BLOCKSCOUT_VERSION"] = blockscoutVersion
+	envVars["BLOCKSCOUT_FRONTEND_VERSION"] = blockscoutFrontendVersion
+	envVars["BLOCKSCOUT_A_PUBLIC_PORT"] = "19000"
+	envVars["BLOCKSCOUT_B_PUBLIC_PORT"] = "29000"
+
+	prefixes := []string{"ROLLUP_A_", "ROLLUP_B_"}
+
+	for i, config := range chainConfigs {
+		rollupVars := s.buildRollupEnvVars(config)
+		mergeWithPrefix(envVars, rollupVars, prefixes[i])
+	}
+
+	return envVars
+}
+
+func (s *Service) buildRollupEnvVars(config ChainConfig) map[string]string {
+	envVars := make(map[string]string)
+
+	backend := s.buildEnvVars(config.ELHostName, config.ID, config.RPCPort, config.WSPort)
+	maps.Copy(envVars, backend)
+
+	frontend := s.buildFrontendEnvVars(config.ID)
+	maps.Copy(envVars, frontend)
+
+	return envVars
+}
+
+func mergeWithPrefix(dst, src map[string]string, prefix string) {
+	for k, v := range src {
+		dst[prefix+k] = v
+	}
 }
 
 func (s *Service) buildEnvVars(host string, chainID, rpcPort, wsPort int) map[string]string {
@@ -56,6 +107,6 @@ func (s *Service) buildEnvVars(host string, chainID, rpcPort, wsPort int) map[st
 
 func (s *Service) buildFrontendEnvVars(chainID int) map[string]string {
 	return map[string]string{
-		"NEXT_PUBLIC_NETWORK_ID": fmt.Sprintf("%d", chainID),
+		"NETWORK_ID": fmt.Sprintf("%d", chainID),
 	}
 }
