@@ -15,6 +15,7 @@ import (
 const (
 	blockscoutVersion         = "9.0.2"
 	blockscoutFrontendVersion = "v2.3.5"
+	nginxVersion              = "1.29.3-alpine"
 
 	backendServiceName  = "blockscout"
 	frontendServiceName = "blockscout-frontend"
@@ -78,6 +79,7 @@ func (s *Service) buildAllEnvVars(chainConfigs []RollupConfig) map[string]string
 
 	envVars["BLOCKSCOUT_VERSION"] = blockscoutVersion
 	envVars["BLOCKSCOUT_FRONTEND_VERSION"] = blockscoutFrontendVersion
+	envVars["NGINX_VERSION"] = nginxVersion
 	envVars["BLOCKSCOUT_BACKEND_PORT"] = fmt.Sprintf("%d", backendPort)
 	envVars["BLOCKSCOUT_FRONTEND_PORT"] = fmt.Sprintf("%d", frontendPort)
 	envVars["BLOCKSCOUT_A_PUBLIC_PORT"] = "19000"

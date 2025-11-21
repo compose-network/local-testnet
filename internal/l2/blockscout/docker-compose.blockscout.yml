@@ -103,7 +103,7 @@ services:
       NEXT_PUBLIC_IS_TESTNET: "true"
 
   a-proxy:
-    image: nginx:1.27-alpine
+    image: nginx:${NGINX_VERSION}
     container_name: blockscout-a-proxy
     restart: unless-stopped
     labels:
@@ -232,7 +232,7 @@ services:
       NEXT_PUBLIC_IS_TESTNET: "true"
 
   b-proxy:
-    image: nginx:1.27-alpine
+    image: nginx:${NGINX_VERSION}
     container_name: blockscout-b-proxy
     restart: unless-stopped
     labels:
