@@ -75,8 +75,9 @@ var (
 		{"dispute-game-finality-delay-seconds", "l2.dispute.dispute-game-finality-delay-seconds", 302400, "Dispute game finality delay in seconds (default: 3.5 days)"},
 	}
 
-	// Boolean flags for L2 configuration (currently empty, ready for future use)
-	boolFlags = []flagDef[bool]{}
+	boolFlags = []flagDef[bool]{
+		{"blockscout-enabled", "l2.blockscout.enabled", false, "Enable Blockscout block explorer"},
+	}
 )
 
 func init() {

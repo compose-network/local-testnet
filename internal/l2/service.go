@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/compose-network/local-testnet/configs"
+	"github.com/compose-network/local-testnet/internal/l2/blockscout"
 	"github.com/compose-network/local-testnet/internal/l2/infra/git"
 	"github.com/compose-network/local-testnet/internal/l2/l1deployment"
 	"github.com/compose-network/local-testnet/internal/l2/l2runtime/contracts"
@@ -29,6 +30,9 @@ type (
 	l2RuntimeOrchestrator interface {
 		Execute(ctx context.Context, cfg configs.L2, disputeGameFactory common.Address) (map[configs.L2ChainName]map[contracts.ContractName]common.Address, error)
 	}
+	blockscoutService interface {
+		Run(context.Context, []blockscout.RollupConfig) error
+	}
 	outputGenerator interface {
 		Generate(context.Context, map[configs.L2ChainName]map[contracts.ContractName]common.Address) error
 	}
@@ -39,6 +43,7 @@ type (
 		l1Orchestrator        l1Orchestrator
 		l2ConfigOrchestrator  l2ConfigOrchestrator
 		l2RuntimeOrchestrator l2RuntimeOrchestrator
+		blockscoutService     blockscoutService
 		outputGenerator       outputGenerator
 		logger                *slog.Logger
 	}
@@ -51,6 +56,7 @@ func NewService(
 	l1Orchestrator l1Orchestrator,
 	l2ConfigOrchestrator l2ConfigOrchestrator,
 	l2RuntimeOrchestrator l2RuntimeOrchestrator,
+	blockscoutService blockscoutService,
 	outputGenerator outputGenerator) *Service {
 	return &Service{
 		rootDir:               rootDir,
@@ -58,57 +64,97 @@ func NewService(
 		l1Orchestrator:        l1Orchestrator,
 		l2ConfigOrchestrator:  l2ConfigOrchestrator,
 		l2RuntimeOrchestrator: l2RuntimeOrchestrator,
+		blockscoutService:     blockscoutService,
 		outputGenerator:       outputGenerator,
 		logger:                logger.Named("l2_service"),
 	}
 }
 
-func (c *Service) Deploy(ctx context.Context, cfg configs.L2) error {
-	c.logger.Info("starting L2 deployment process")
+func (s *Service) Deploy(ctx context.Context, cfg configs.L2) error {
+	s.logger.Info("starting L2 deployment process")
 
-	if err := c.cloneRepositories(ctx, cfg); err != nil {
+	if err := s.cloneRepositories(ctx, cfg); err != nil {
 		return fmt.Errorf("failed to clone repositories: %w", err)
 	}
 
-	c.logger.Info("running phase 1 - L1 deployments")
-	deploymentState, err := c.l1Orchestrator.Execute(ctx, cfg)
+	s.logger.Info("running phase 1 - L1 deployments")
+	deploymentState, err := s.l1Orchestrator.Execute(ctx, cfg)
 	if err != nil {
 		return fmt.Errorf("phase 1 failed: %w", err)
 	}
 
-	c.logger.Info("running phase 2 - L2 config generation", "deployment_state", deploymentState)
-	err = c.l2ConfigOrchestrator.Execute(ctx, cfg, deploymentState)
+	s.logger.Info("running phase 2 - L2 config generation", "deployment_state", deploymentState)
+	err = s.l2ConfigOrchestrator.Execute(ctx, cfg, deploymentState)
 	if err != nil {
 		return fmt.Errorf("phase 2 failed: %w", err)
 	}
 
-	c.logger.Info("running phase 3 - L2 launch")
-	deployedContracts, err := c.l2RuntimeOrchestrator.Execute(ctx, cfg, deploymentState.DisputeGameFactoryAddress)
+	s.logger.Info("running phase 3 - L2 launch")
+	deployedContracts, err := s.l2RuntimeOrchestrator.Execute(ctx, cfg, deploymentState.DisputeGameFactoryAddress)
 	if err != nil {
 		return fmt.Errorf("phase 3 failed: %w", err)
 	}
 
-	c.logger.Info("restarting op-geth services to apply mailbox configuration")
-	if err := c.restartOpGeth(ctx); err != nil {
+	s.logger.Info("restarting op-geth services to apply mailbox configuration")
+	if err := s.restartOpGeth(ctx); err != nil {
 		const msg = "failed to restart op-geth services"
-		c.logger.Error(msg, "error", err)
+		s.logger.Error(msg, "error", err)
 		return fmt.Errorf("%s: %w", msg, err)
 	}
 
-	c.logger.Info("L2 deployment completed successfully. Generating output file")
+	if cfg.Blockscout.Enabled {
+		s.logger.Info("blockscout is enabled. Starting Blockscout services")
+		chainConfigs, err := generateBlockscoutConfig(cfg)
+		if err != nil {
+			return fmt.Errorf("failed to generate Blockscout chain configs: %w", err)
+		}
 
-	if err := c.outputGenerator.Generate(ctx, deployedContracts); err != nil {
+		if err := s.blockscoutService.Run(ctx, chainConfigs); err != nil {
+			return fmt.Errorf("failed to start Blockscout service: %w", err)
+		}
+	} else {
+		s.logger.Info("Blockscout is disabled. Skipping Blockscout services")
+	}
+
+	s.logger.Info("L2 deployment completed successfully. Generating output file")
+
+	if err := s.outputGenerator.Generate(ctx, deployedContracts); err != nil {
 		return fmt.Errorf("failed to generate output file: %w", err)
 	}
 
-	c.logger.Info("output file generated successfully")
+	s.logger.Info("output file generated successfully")
 
 	return nil
 }
 
+func generateBlockscoutConfig(cfg configs.L2) ([]blockscout.RollupConfig, error) {
+	var chainConfigs []blockscout.RollupConfig
+	for chainName, config := range cfg.ChainConfigs {
+		var hostName string
+		switch chainName {
+		case configs.L2ChainNameRollupA:
+			hostName = "op-geth-a"
+		case configs.L2ChainNameRollupB:
+			hostName = "op-geth-b"
+		default:
+			return nil, fmt.Errorf("unknown chain name: %s", chainName)
+		}
+
+		chainConfigs = append(chainConfigs, blockscout.RollupConfig{
+			ID:         config.ID,
+			Name:       chainName,
+			ELHostName: hostName,
+			RPCPort:    8545,
+			WSPort:     8546,
+		})
+	}
+
+	return chainConfigs, nil
+}
+
 // restartOpGeth restarts op-geth services to pick up new mailbox configuration
-func (c *Service) restartOpGeth(ctx context.Context) error {
-	localnetDir := filepath.Join(c.rootDir, localnetDirName)
+func (s *Service) restartOpGeth(ctx context.Context) error {
+	localnetDir := filepath.Join(s.rootDir, localnetDirName)
 	composeFile := filepath.Join(localnetDir, "docker-compose.yml")
 
 	cmd := exec.CommandContext(ctx, "docker", "compose", "-f", composeFile, "restart", "op-geth-a", "op-geth-b")
@@ -116,14 +162,14 @@ func (c *Service) restartOpGeth(ctx context.Context) error {
 		return fmt.Errorf("docker compose restart failed: %w, output: %s", err, string(output))
 	}
 
-	c.logger.Info("op-geth services restarted successfully, waiting for them to be ready")
+	s.logger.Info("op-geth services restarted successfully, waiting for them to be ready")
 
 	return nil
 }
 
 // cloneRepositories clones all required git repositories
-func (c *Service) cloneRepositories(ctx context.Context, cfg configs.L2) error {
-	c.logger.Info("cloning required repositories")
+func (s *Service) cloneRepositories(ctx context.Context, cfg configs.L2) error {
+	s.logger.Info("cloning required repositories")
 
 	repos := make([]git.Repository, 0, len(cfg.Repositories))
 
@@ -142,19 +188,19 @@ func (c *Service) cloneRepositories(ctx context.Context, cfg configs.L2) error {
 			if err != nil {
 				return fmt.Errorf("failed to resolve absolute path for local repository %s: %w", name, err)
 			}
-			c.logger.With("name", name, "local_path", repo.LocalPath, "resolved_path", absPath).Info("using local repository path; skipping clone")
+			s.logger.With("name", name, "local_path", repo.LocalPath, "resolved_path", absPath).Info("using local repository path; skipping clone")
 			continue
 		}
 
 		return fmt.Errorf("repository %s has neither URL nor local-path set", name)
 	}
 
-	l2Dir := filepath.Join(c.rootDir, localnetDirName, servicesDirName)
-	if err := c.cloner.CloneAll(ctx, l2Dir, repos); err != nil {
+	l2Dir := filepath.Join(s.rootDir, localnetDirName, servicesDirName)
+	if err := s.cloner.CloneAll(ctx, l2Dir, repos); err != nil {
 		return fmt.Errorf("failed to clone repositories: %w", err)
 	}
 
-	c.logger.Info("repositories cloned successfully")
+	s.logger.Info("repositories cloned successfully")
 
 	return nil
 }
