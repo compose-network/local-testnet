@@ -91,7 +91,7 @@ run-l2-compile: build
 	${BINARY_PATH} l2 compile
 
 ## Deploy L2 services for local development ##
-# Usage: make l2-deploy SERVICE=op-geth
+# Usage: make run-l2-deploy SERVICE=op-geth
 SERVICE?=all
 .PHONY: run-l2-deploy
 run-l2-deploy: build
