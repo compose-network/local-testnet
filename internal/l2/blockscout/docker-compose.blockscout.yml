@@ -32,7 +32,7 @@ services:
 
   a-service:
     image: ghcr.io/blockscout/blockscout-optimism:${BLOCKSCOUT_VERSION}
-    container_name: blockscout-a
+    container_name: ${BLOCKSCOUT_A_BACKEND_CONTAINER}
     restart: unless-stopped
     labels:
       - "stack=localnet-l2"
@@ -61,16 +61,16 @@ services:
       ECTO_USE_SSL: "false"
       REDIS_URL: "redis://blockscout-a-redis:6379/0"
       SECRET_KEY_BASE: "development"
-      PORT: "4000"
+      PORT: "${BLOCKSCOUT_BACKEND_PORT}"
       POOL_SIZE: "40"
       API_RATE_LIMIT_DISABLED: "true"
     command: >
       sh -c "bin/blockscout eval \"Elixir.Explorer.ReleaseTasks.create_and_migrate()\" && bin/blockscout start"
     expose:
-      - "4000"
+      - "${BLOCKSCOUT_BACKEND_PORT}"
     healthcheck:
       test:
-        ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:4000/api/health"]
+        ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:${BLOCKSCOUT_BACKEND_PORT}/api/health"]
       interval: 20s
       timeout: 5s
       retries: 10
@@ -78,7 +78,7 @@ services:
 
   a-frontend:
     image: ghcr.io/blockscout/frontend:${BLOCKSCOUT_FRONTEND_VERSION}
-    container_name: blockscout-a-frontend
+    container_name: ${BLOCKSCOUT_A_FRONTEND_CONTAINER}
     restart: unless-stopped
     labels:
       - "stack=localnet-l2"
@@ -161,7 +161,7 @@ services:
 
   b-service:
     image: ghcr.io/blockscout/blockscout-optimism:${BLOCKSCOUT_VERSION}
-    container_name: blockscout-b
+    container_name: ${BLOCKSCOUT_B_BACKEND_CONTAINER}
     restart: unless-stopped
     labels:
       - "stack=localnet-l2"
@@ -190,16 +190,16 @@ services:
       ECTO_USE_SSL: "false"
       REDIS_URL: "redis://blockscout-b-redis:6379/0"
       SECRET_KEY_BASE: "development"
-      PORT: "4000"
+      PORT: "${BLOCKSCOUT_BACKEND_PORT}"
       POOL_SIZE: "40"
       API_RATE_LIMIT_DISABLED: "true"
     command: >
       sh -c "bin/blockscout eval \"Elixir.Explorer.ReleaseTasks.create_and_migrate()\" && bin/blockscout start"
     expose:
-      - "4000"
+      - "${BLOCKSCOUT_BACKEND_PORT}"
     healthcheck:
       test:
-        ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:4000/api/health"]
+        ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:${BLOCKSCOUT_BACKEND_PORT}/api/health"]
       interval: 20s
       timeout: 5s
       retries: 10
@@ -207,7 +207,7 @@ services:
 
   b-frontend:
     image: ghcr.io/blockscout/frontend:${BLOCKSCOUT_FRONTEND_VERSION}
-    container_name: blockscout-b-frontend
+    container_name: ${BLOCKSCOUT_B_FRONTEND_CONTAINER}
     restart: unless-stopped
     labels:
       - "stack=localnet-l2"

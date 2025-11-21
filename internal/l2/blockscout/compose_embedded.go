@@ -12,7 +12,7 @@ var embeddedComposeFS embed.FS
 
 const composeFileName = "docker-compose.blockscout.yml"
 
-func EnsureComposeFile(localnetDir string) (string, error) {
+func ensureComposeFile(localnetDir string) (string, error) {
 	composePath := filepath.Join(localnetDir, composeFileName)
 
 	content, err := embeddedComposeFS.ReadFile(composeFileName)

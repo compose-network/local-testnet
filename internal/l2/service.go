@@ -31,7 +31,7 @@ type (
 		Execute(ctx context.Context, cfg configs.L2, disputeGameFactory common.Address) (map[configs.L2ChainName]map[contracts.ContractName]common.Address, error)
 	}
 	blockscoutService interface {
-		Run(context.Context, []blockscout.ChainConfig) error
+		Run(context.Context, []blockscout.RollupConfig) error
 	}
 	outputGenerator interface {
 		Generate(context.Context, map[configs.L2ChainName]map[contracts.ContractName]common.Address) error
@@ -103,26 +103,12 @@ func (s *Service) Deploy(ctx context.Context, cfg configs.L2) error {
 	}
 
 	if cfg.Blockscout.Enabled {
-		s.logger.Info("Blockscout is enabled. Starting Blockscout services")
-		var chainConfigs []blockscout.ChainConfig
-		for chainName, config := range cfg.ChainConfigs {
-			var hostName string
-			switch chainName {
-			case configs.L2ChainNameRollupA:
-				hostName = "op-geth-a"
-			case configs.L2ChainNameRollupB:
-				hostName = "op-geth-b"
-			default:
-				return fmt.Errorf("unknown chain name: %s", chainName)
-			}
-
-			chainConfigs = append(chainConfigs, blockscout.ChainConfig{
-				ID:         config.ID,
-				ELHostName: hostName,
-				RPCPort:    8545,
-				WSPort:     8546,
-			})
+		s.logger.Info("blockscout is enabled. Starting Blockscout services")
+		chainConfigs, err := generateBlockscoutConfig(cfg)
+		if err != nil {
+			return fmt.Errorf("failed to generate Blockscout chain configs: %w", err)
 		}
+
 		if err := s.blockscoutService.Run(ctx, chainConfigs); err != nil {
 			return fmt.Errorf("failed to start Blockscout service: %w", err)
 		}
@@ -139,6 +125,31 @@ func (s *Service) Deploy(ctx context.Context, cfg configs.L2) error {
 	s.logger.Info("output file generated successfully")
 
 	return nil
+}
+
+func generateBlockscoutConfig(cfg configs.L2) ([]blockscout.RollupConfig, error) {
+	var chainConfigs []blockscout.RollupConfig
+	for chainName, config := range cfg.ChainConfigs {
+		var hostName string
+		switch chainName {
+		case configs.L2ChainNameRollupA:
+			hostName = "op-geth-a"
+		case configs.L2ChainNameRollupB:
+			hostName = "op-geth-b"
+		default:
+			return nil, fmt.Errorf("unknown chain name: %s", chainName)
+		}
+
+		chainConfigs = append(chainConfigs, blockscout.RollupConfig{
+			ID:         config.ID,
+			Name:       chainName,
+			ELHostName: hostName,
+			RPCPort:    8545,
+			WSPort:     8546,
+		})
+	}
+
+	return chainConfigs, nil
 }
 
 // restartOpGeth restarts op-geth services to pick up new mailbox configuration
