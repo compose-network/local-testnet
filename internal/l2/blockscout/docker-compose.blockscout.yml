@@ -64,6 +64,9 @@ services:
       PORT: "${BLOCKSCOUT_BACKEND_PORT}"
       POOL_SIZE: "40"
       API_RATE_LIMIT_DISABLED: "true"
+      INDEXER_OPTIMISM_L1_RPC: "${INDEXER_OPTIMISM_L1_RPC}"
+      INDEXER_OPTIMISM_L1_SYSTEM_CONFIG_CONTRACT: "${ROLLUP_A_INDEXER_OPTIMISM_L1_SYSTEM_CONFIG_CONTRACT}"
+      INDEXER_BEACON_RPC_URL: "${INDEXER_BEACON_RPC_URL}"
     command: >
       sh -c "bin/blockscout eval \"Elixir.Explorer.ReleaseTasks.create_and_migrate()\" && bin/blockscout start"
     expose:
@@ -193,6 +196,9 @@ services:
       PORT: "${BLOCKSCOUT_BACKEND_PORT}"
       POOL_SIZE: "40"
       API_RATE_LIMIT_DISABLED: "true"
+      INDEXER_OPTIMISM_L1_RPC: "${INDEXER_OPTIMISM_L1_RPC}"
+      INDEXER_OPTIMISM_L1_SYSTEM_CONFIG_CONTRACT: "${ROLLUP_B_INDEXER_OPTIMISM_L1_SYSTEM_CONFIG_CONTRACT}"
+      INDEXER_BEACON_RPC_URL: "${INDEXER_BEACON_RPC_URL}"
     command: >
       sh -c "bin/blockscout eval \"Elixir.Explorer.ReleaseTasks.create_and_migrate()\" && bin/blockscout start"
     expose:

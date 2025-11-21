@@ -10,6 +10,7 @@ import (
 	"github.com/compose-network/local-testnet/configs"
 	"github.com/compose-network/local-testnet/internal/l2/infra/docker"
 	"github.com/compose-network/local-testnet/internal/logger"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -25,11 +26,12 @@ const (
 
 type (
 	RollupConfig struct {
-		ID         int
-		Name       configs.L2ChainName
-		ELHostName string
-		RPCPort    int
-		WSPort     int
+		ID                    int
+		Name                  configs.L2ChainName
+		ELHostName            string
+		RPCPort               int
+		WSPort                int
+		SystemConfigProxyAddr common.Address
 	}
 	Service struct {
 		localnetDir string
@@ -46,7 +48,7 @@ func New(localnetDir, networksDir string) *Service {
 	}
 }
 
-func (s *Service) Run(ctx context.Context, rollupConfigs []RollupConfig) error {
+func (s *Service) Run(ctx context.Context, rollupConfigs []RollupConfig, l1RPCURL, l1BeaconURL string) error {
 	s.logger.Info("starting Blockscout service")
 
 	if len(rollupConfigs) != 2 {
@@ -62,7 +64,7 @@ func (s *Service) Run(ctx context.Context, rollupConfigs []RollupConfig) error {
 		return fmt.Errorf("failed to prepare blockscout compose file: %w", err)
 	}
 
-	envVars := s.buildAllEnvVars(rollupConfigs)
+	envVars := s.buildAllEnvVars(rollupConfigs, l1RPCURL, l1BeaconURL)
 	s.logger.With("env", envVars).Info("environment variables built. Starting services")
 
 	if err := docker.ComposeUp(ctx, composePath, envVars); err != nil {
@@ -74,7 +76,7 @@ func (s *Service) Run(ctx context.Context, rollupConfigs []RollupConfig) error {
 	return nil
 }
 
-func (s *Service) buildAllEnvVars(chainConfigs []RollupConfig) map[string]string {
+func (s *Service) buildAllEnvVars(chainConfigs []RollupConfig, l1RPCURL, l1BeaconURL string) map[string]string {
 	envVars := make(map[string]string)
 
 	envVars["BLOCKSCOUT_VERSION"] = blockscoutVersion
@@ -95,6 +97,9 @@ func (s *Service) buildAllEnvVars(chainConfigs []RollupConfig) map[string]string
 	envVars["ROLLUP_A_NGINX_CONF"] = rollupANginxConf
 	envVars["ROLLUP_B_NGINX_CONF"] = rollupBNginxConf
 
+	envVars["INDEXER_OPTIMISM_L1_RPC"] = l1RPCURL
+	envVars["INDEXER_BEACON_RPC_URL"] = l1BeaconURL
+
 	prefixes := []string{"ROLLUP_A_", "ROLLUP_B_"}
 
 	for i, config := range chainConfigs {
@@ -113,6 +118,8 @@ func (s *Service) buildRollupEnvVars(config RollupConfig) map[string]string {
 
 	frontend := s.buildFrontendEnvVars(config.ID)
 	maps.Copy(envVars, frontend)
+
+	envVars["INDEXER_OPTIMISM_L1_SYSTEM_CONFIG_CONTRACT"] = config.SystemConfigProxyAddr.Hex()
 
 	return envVars
 }
