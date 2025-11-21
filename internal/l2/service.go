@@ -31,7 +31,7 @@ type (
 		Execute(ctx context.Context, cfg configs.L2, disputeGameFactory common.Address) (map[configs.L2ChainName]map[contracts.ContractName]common.Address, error)
 	}
 	blockscoutService interface {
-		Run(context.Context, []blockscout.RollupConfig) error
+		Run(ctx context.Context, rollupConfigs []blockscout.RollupConfig, l1RPCURL string, l1BeaconURL string) error
 	}
 	outputGenerator interface {
 		Generate(context.Context, map[configs.L2ChainName]map[contracts.ContractName]common.Address) error
@@ -104,12 +104,12 @@ func (s *Service) Deploy(ctx context.Context, cfg configs.L2) error {
 
 	if cfg.Blockscout.Enabled {
 		s.logger.Info("blockscout is enabled. Starting Blockscout services")
-		chainConfigs, err := generateBlockscoutConfig(cfg)
+		chainConfigs, err := generateBlockscoutConfig(cfg, deploymentState)
 		if err != nil {
 			return fmt.Errorf("failed to generate Blockscout chain configs: %w", err)
 		}
 
-		if err := s.blockscoutService.Run(ctx, chainConfigs); err != nil {
+		if err := s.blockscoutService.Run(ctx, chainConfigs, cfg.L1ElURL, cfg.L1ClURL); err != nil {
 			return fmt.Errorf("failed to start Blockscout service: %w", err)
 		}
 	} else {
@@ -127,7 +127,7 @@ func (s *Service) Deploy(ctx context.Context, cfg configs.L2) error {
 	return nil
 }
 
-func generateBlockscoutConfig(cfg configs.L2) ([]blockscout.RollupConfig, error) {
+func generateBlockscoutConfig(cfg configs.L2, deploymentState l1deployment.DeploymentState) ([]blockscout.RollupConfig, error) {
 	var chainConfigs []blockscout.RollupConfig
 	for chainName, config := range cfg.ChainConfigs {
 		var hostName string
@@ -140,12 +140,18 @@ func generateBlockscoutConfig(cfg configs.L2) ([]blockscout.RollupConfig, error)
 			return nil, fmt.Errorf("unknown chain name: %s", chainName)
 		}
 
+		systemConfigAddr, ok := deploymentState.SystemConfigProxyAddresses[chainName]
+		if !ok {
+			return nil, fmt.Errorf("SystemConfigProxy address not found for chain %s", chainName)
+		}
+
 		chainConfigs = append(chainConfigs, blockscout.RollupConfig{
-			ID:         config.ID,
-			Name:       chainName,
-			ELHostName: hostName,
-			RPCPort:    8545,
-			WSPort:     8546,
+			ID:                    config.ID,
+			Name:                  chainName,
+			ELHostName:            hostName,
+			RPCPort:               8545,
+			WSPort:                8546,
+			SystemConfigProxyAddr: systemConfigAddr,
 		})
 	}
 

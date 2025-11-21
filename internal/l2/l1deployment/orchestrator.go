@@ -25,8 +25,9 @@ Orchestrator coordinates Phase 1: L1 deployment
 type (
 	DeploymentState struct {
 		DisputeGameFactoryAddress       common.Address
-		DisputeGameFactoryImplAddressOP common.Address //TODO: Determine the necessity of this variable’s usage.
+		DisputeGameFactoryImplAddressOP common.Address //TODO: Determine the necessity of this variable's usage.
 		StartBlocks                     map[configs.L2ChainName]StartBlock
+		SystemConfigProxyAddresses      map[configs.L2ChainName]common.Address
 	}
 
 	StartBlock struct {
@@ -116,6 +117,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2) (DeploymentS
 	o.logger.With("game_factory_address", gameFactoryAddr).Info("Phase 1: L1 deployment completed successfully")
 
 	startBlocks := make(map[configs.L2ChainName]StartBlock)
+	systemConfigProxyAddresses := make(map[configs.L2ChainName]common.Address)
 	for _, opChain := range opState.OpChainDeployments {
 		chainIDInt, err := strconv.ParseInt(opChain.ID, 0, 64)
 		if err != nil {
@@ -128,6 +130,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2) (DeploymentS
 					Hash:   opChain.StartBlock.Hash,
 					Number: opChain.StartBlock.Number,
 				}
+				systemConfigProxyAddresses[chainName] = common.HexToAddress(opChain.SystemConfigProxy)
 				break
 			}
 		}
@@ -137,6 +140,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2) (DeploymentS
 		DisputeGameFactoryAddress:       gameFactoryAddr,
 		DisputeGameFactoryImplAddressOP: common.HexToAddress(opState.ImplementationsDeployment.DisputeGameFactoryImplAddress),
 		StartBlocks:                     startBlocks,
+		SystemConfigProxyAddresses:      systemConfigProxyAddresses,
 	}
 
 	return deploymentState, nil
