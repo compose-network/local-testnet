@@ -3,7 +3,8 @@ livedebugging {
 }
 
 discovery.docker "containers" {
-  host = "unix:///var/run/docker.sock"
+  host             = "unix:///var/run/docker.sock"
+  refresh_interval = "5s"
 }
 
 // ###############################
@@ -40,10 +41,11 @@ prometheus.remote_write "local" {
 // ###############################
 
 loki.source.docker "containers" {
-  host       = "unix:///var/run/docker.sock"
-  targets    = discovery.docker.containers.targets
-  relabel_rules = discovery.relabel.logs_integrations_docker.rules
-  forward_to = [loki.write.local.receiver]
+  host             = "unix:///var/run/docker.sock"
+  targets          = discovery.docker.containers.targets
+  relabel_rules    = discovery.relabel.logs_integrations_docker.rules
+  forward_to       = [loki.write.local.receiver]
+  refresh_interval = "5s"
 }
 
 // Define a relabeling rule to create a service name from the container name.
