@@ -31,12 +31,21 @@ jobs:
           body: ${{ steps.tag_version.outputs.changelog }}
 
   docker-build-push:
-    uses: ./.github/workflows/docker.yml
+    name: Docker Build and Push
+    runs-on: ubuntu-latest
+    needs: publish-release
     permissions:
       id-token: write
       packages: write
       contents: read
-    needs: publish-release
-    with:
-      with-push: true
-      image-tag: ${{ needs.publish-release.outputs.new_tag }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Docker Build
+        uses: compose-network/github-actions/actions/docker@v0.6.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          image-description: This Docker image is a CLI tool for building and managing Compose Network local testnets
+          dockerfile-path: build/Dockerfile
+          with-push: true
+          image-tag: ${{ needs.publish-release.outputs.new_tag }}
