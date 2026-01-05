@@ -142,6 +142,7 @@ services:
           --authrpc.jwtsecret=/config/jwt.txt \
           --syncmode=full --gcmode=archive --nodiscover --maxpeers=0 \
           --networkid=$${ROLLUP_CHAIN_ID} \
+          --miner.gasprice=0 \
           --metrics \
           --metrics.addr=0.0.0.0 \
           --metrics.port=6060 \
@@ -342,6 +343,7 @@ services:
           --nodiscover \
           --maxpeers=0 \
           --networkid=$${ROLLUP_CHAIN_ID} \
+          --miner.gasprice=0 \
           --metrics \
           --metrics.addr=0.0.0.0 \
           --metrics.port=6060 \
