@@ -126,3 +126,32 @@ For running in Docker, see the [Docker documentation](../../build/DOCKER.md).
 The container automatically uses your `configs/config.yaml`. You can also override settings with CLI flags.
 
 For more details, see the [Docker documentation](../../build/DOCKER.md).
+
+## Viewing Logs
+
+L2 services run as Docker containers. View logs using standard Docker commands:
+
+```bash
+# View logs for specific services (use -f to follow in real-time)
+docker logs publisher -f
+docker logs op-geth-a -f
+docker logs op-geth-b -f
+docker logs op-node-a -f
+docker logs op-node-b -f
+docker logs op-batcher-a -f
+docker logs op-batcher-b -f
+docker logs op-proposer-a -f
+docker logs op-proposer-b -f
+
+# View last N lines
+docker logs op-geth-a --tail 100
+
+# View logs with timestamps
+docker logs op-geth-a -t
+
+# View all L2 logs aggregated via docker-compose
+docker compose -f .localnet/docker-compose.yml logs -f
+
+# View specific services via docker-compose
+docker compose -f .localnet/docker-compose.yml logs -f publisher op-geth-a op-geth-b
+```
