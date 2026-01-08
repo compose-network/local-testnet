@@ -66,7 +66,13 @@ make show-l1             # Show Kurtosis enclave
 make show-l2             # Show L2 docker containers
 make show-observability  # Show observability containers
 
-# Clean up:
+# Stop services (preserves configs):
+make stop                # Stop all components
+make stop-l1             # Stop L1 (Kurtosis)
+make stop-l2             # Stop L2 (Docker containers)
+make stop-observability  # Stop observability stack
+
+# Clean up (removes configs):
 make clean               # Clean all components
 make clean-l1            # Clean L1 (Kurtosis)
 make clean-l2            # Clean L2 (docker containers + generated files)
@@ -82,6 +88,20 @@ Each component has its own logging approach:
 - **L1**: Uses Kurtosis — see [L1 Documentation](internal/l1/README.md#viewing-logs)
 - **L2**: Uses Docker containers — see [L2 Documentation](internal/l2/README.md#viewing-logs)
 - **Observability**: Access Grafana at http://localhost:3000 for dashboards and Loki log aggregation
+
+## ⏹️ Stopping Services
+
+```bash
+# Stop all services (preserves configs and state)
+make stop
+
+# Or stop specific components:
+make stop-l1              # Stop L1 (Kurtosis enclave)
+make stop-l2              # Stop L2 (Docker containers)
+make stop-observability   # Stop observability stack
+```
+
+Use `make clean-*` commands for full cleanup (removes configs and volumes).
 
 ## 🐳 Docker Usage
 

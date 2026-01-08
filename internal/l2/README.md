@@ -127,6 +127,16 @@ The container automatically uses your `configs/config.yaml`. You can also overri
 
 For more details, see the [Docker documentation](../../build/DOCKER.md).
 
+## Stopping Services
+
+```bash
+# Stop containers without removing configs (preserves .localnet/ files)
+make stop-l2
+
+# Stop and remove everything (containers + volumes + generated configs)
+make clean-l2
+```
+
 ## Viewing Logs
 
 L2 services run as Docker containers. View logs using standard Docker commands:

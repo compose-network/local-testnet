@@ -65,6 +65,16 @@ The L1 network is orchestrated through Kurtosis:
 
 When observability is enabled, the L1 command also starts a Docker-based monitoring stack. See the [observability README](../observability/README.md) for details.
 
+## Stopping Services
+
+```bash
+# Stop the enclave (preserves state for restart)
+make stop-l1
+
+# Remove everything (full cleanup)
+make clean-l1
+```
+
 ## Viewing Logs
 
 L1 services run via Kurtosis. Use Kurtosis commands to view logs:

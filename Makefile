@@ -24,6 +24,9 @@ run: build
 
 .PHONY: clean
 clean: clean-observability clean-l2 clean-l1
+
+.PHONY: stop
+stop: stop-observability stop-l2 stop-l1
 	
 .PHONY: test
 test:
@@ -42,6 +45,10 @@ run-l1: build
 .PHONY: show-l1
 show-l1:
 	kurtosis enclave inspect ${ENCLAVE_NAME}
+
+.PHONY: stop-l1
+stop-l1:
+	kurtosis enclave stop ${ENCLAVE_NAME} || true
 
 .PHONY: clean-l1
 clean-l1:
@@ -67,6 +74,10 @@ run-l2: build
 .PHONY: show-l2
 show-l2:
 	docker ps -a --filter "label=${L2_LABEL}"
+
+.PHONY: stop-l2
+stop-l2:
+	docker compose -f .localnet/docker-compose.yml down || true
 
 .PHONY: clean-l2
 clean-l2:
@@ -109,6 +120,10 @@ run-observability: build
 .PHONY: show-observability
 show-observability:
 	docker ps -a --filter "label=${OBSERVABILITY_LABEL}"
+
+.PHONY: stop-observability
+stop-observability:
+	docker ps -aq --filter "label=${OBSERVABILITY_LABEL}" | xargs -r docker stop
 
 .PHONY: clean-observability
 clean-observability:
