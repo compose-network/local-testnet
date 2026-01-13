@@ -36,6 +36,42 @@ func ComposeDown(ctx context.Context, composeFilePath string, env map[string]str
 	return composeRun(ctx, composeFilePath, env, args...)
 }
 
+// ComposeUpMultiFile starts docker compose services using multiple compose files.
+func ComposeUpMultiFile(ctx context.Context, composeFilePaths []string, env map[string]string, services ...string) error {
+	args := append([]string{"up", "-d"}, services...)
+	return composeRunMultiFile(ctx, composeFilePaths, env, args...)
+}
+
+// composeRunMultiFile executes a docker compose command with multiple compose files.
+func composeRunMultiFile(ctx context.Context, composeFilePaths []string, env map[string]string, args ...string) error {
+	if len(composeFilePaths) == 0 {
+		return fmt.Errorf("no compose files provided")
+	}
+
+	fullArgs := []string{"compose"}
+	for _, path := range composeFilePaths {
+		fullArgs = append(fullArgs, "-f", path)
+	}
+	fullArgs = append(fullArgs, args...)
+
+	cmd := exec.CommandContext(ctx, "docker", fullArgs...)
+	cmd.Dir = filepath.Dir(composeFilePaths[0])
+
+	cmd.Env = os.Environ()
+	for k, v := range env {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("docker compose %s failed: %w", strings.Join(args, " "), err)
+	}
+
+	return nil
+}
+
 // ComposeRun executes a docker compose command with environment variables.
 func composeRun(ctx context.Context, composeFilePath string, env map[string]string, args ...string) error {
 	fullArgs := append([]string{"compose", "-f", composeFilePath}, args...)

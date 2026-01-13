@@ -78,6 +78,11 @@ func (d *Deployer) deployContracts(ctx context.Context, chainConfigs map[configs
 			return nil, err
 		}
 
+		d.logger.With("chain_name", chainName).Info("waiting for block production")
+		if err := waitForBlockProduction(ctx, url, d.logger); err != nil {
+			return nil, fmt.Errorf("block production not started for %s: %w", chainName, err)
+		}
+
 		d.logger.Info("deploying contracts to L2")
 		addressStrings, err := d.deployToChain(ctx, url, coordinatorPK, compiledContracts)
 		if err != nil {
@@ -114,16 +119,11 @@ func (d *Deployer) deployContracts(ctx context.Context, chainConfigs map[configs
 }
 
 func waitForRPC(ctx context.Context, url string) error {
-	client, err := ethclient.DialContext(ctx, url)
-	if err == nil {
-		defer client.Close()
-	}
-
 	for range 120 {
 		client, err := ethclient.DialContext(ctx, url)
 		if err == nil {
-			defer client.Close()
 			_, err := client.BlockNumber(ctx)
+			client.Close()
 			if err == nil {
 				return nil
 			}
@@ -132,6 +132,48 @@ func waitForRPC(ctx context.Context, url string) error {
 	}
 
 	return fmt.Errorf("timed out waiting for RPC at %s", url)
+}
+
+// waitForBlockProduction waits until block number increases, ensuring L2 is producing blocks.
+func waitForBlockProduction(ctx context.Context, url string, logger *slog.Logger) error {
+	client, err := ethclient.DialContext(ctx, url)
+	if err != nil {
+		return fmt.Errorf("failed to connect to RPC: %w", err)
+	}
+	defer client.Close()
+
+	initialBlock, err := client.BlockNumber(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get initial block number: %w", err)
+	}
+
+	logger.With("initial_block", initialBlock, "url", url).Info("waiting for block production to start")
+
+	// Wait up to 5 minutes for block production to start
+	const maxWaitTime = 5 * time.Minute
+	const pollInterval = 2 * time.Second
+
+	deadline := time.Now().Add(maxWaitTime)
+	for time.Now().Before(deadline) {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(pollInterval):
+			currentBlock, err := client.BlockNumber(ctx)
+			if err != nil {
+				logger.With("err", err.Error()).Warn("failed to get block number, retrying")
+				continue
+			}
+
+			if currentBlock > initialBlock {
+				logger.With("initial_block", initialBlock, "current_block", currentBlock).
+					Info("block production confirmed")
+				return nil
+			}
+		}
+	}
+
+	return fmt.Errorf("timed out waiting for block production at %s (stuck at block %d)", url, initialBlock)
 }
 
 func (d *Deployer) deployToChain(ctx context.Context, rpcURL, coordinatorPrivateKey string, contracts map[ContractName]CompiledContract) (map[ContractName]string, error) {

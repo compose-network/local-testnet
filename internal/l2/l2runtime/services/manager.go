@@ -11,9 +11,11 @@ import (
 
 // Manager manages L2 service lifecycle via docker-compose
 type Manager struct {
-	rootDir         string
-	composeFilePath string
-	logger          *slog.Logger
+	rootDir                   string
+	composeFilePath           string
+	flashblocksComposeFilePath string
+	flashblocksEnabled        bool
+	logger                    *slog.Logger
 }
 
 // NewManager creates a new service manager
@@ -23,6 +25,13 @@ func NewManager(rootDir, composeFilePath string) *Manager {
 		composeFilePath: composeFilePath,
 		logger:          logger.Named("service_manager"),
 	}
+}
+
+// WithFlashblocks enables flashblocks support with the specified compose file
+func (m *Manager) WithFlashblocks(flashblocksComposeFilePath string) *Manager {
+	m.flashblocksComposeFilePath = flashblocksComposeFilePath
+	m.flashblocksEnabled = true
+	return m
 }
 
 // StartAll starts all L2 services
@@ -39,12 +48,51 @@ func (m *Manager) StartAll(ctx context.Context, env map[string]string) error {
 		"op-proposer-b",
 	}
 
-	m.logger.With("services", services).Info("starting all L2 services")
+	if m.flashblocksEnabled && m.flashblocksComposeFilePath != "" {
+		services = append(services,
+			"op-rbuilder-a",
+			"op-rbuilder-b",
+			"rollup-boost-a",
+			"rollup-boost-b",
+		)
 
-	if err := docker.ComposeUp(ctx, m.composeFilePath, env, services...); err != nil {
-		return fmt.Errorf("failed to start services: %w", err)
+		m.logger.With("services", services).Info("starting all L2 services with flashblocks")
+
+		composeFiles := []string{m.composeFilePath, m.flashblocksComposeFilePath}
+		if err := docker.ComposeUpMultiFile(ctx, composeFiles, env, services...); err != nil {
+			return fmt.Errorf("failed to start services with flashblocks: %w", err)
+		}
+	} else {
+		m.logger.With("services", services).Info("starting all L2 services")
+
+		if err := docker.ComposeUp(ctx, m.composeFilePath, env, services...); err != nil {
+			return fmt.Errorf("failed to start services: %w", err)
+		}
 	}
 
 	m.logger.Info("all L2 services started successfully")
+	return nil
+}
+
+// StartFlashblocks starts flashblocks services (op-rbuilder and rollup-boost)
+func (m *Manager) StartFlashblocks(ctx context.Context, env map[string]string) error {
+	if !m.flashblocksEnabled || m.flashblocksComposeFilePath == "" {
+		return fmt.Errorf("flashblocks not enabled or compose file not set")
+	}
+
+	services := []string{
+		"op-rbuilder-a",
+		"op-rbuilder-b",
+		"rollup-boost-a",
+		"rollup-boost-b",
+	}
+
+	m.logger.With("services", services).Info("starting flashblocks services")
+
+	if err := docker.ComposeUpMultiFile(ctx, []string{m.composeFilePath, m.flashblocksComposeFilePath}, env, services...); err != nil {
+		return fmt.Errorf("failed to start flashblocks services: %w", err)
+	}
+
+	m.logger.Info("flashblocks services started successfully")
 	return nil
 }

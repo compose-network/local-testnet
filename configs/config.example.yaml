@@ -13,6 +13,10 @@ l2:
     address: 0x0000000000000000000000000000000000000000000
   blockscout:
     enabled: false
+  flashblocks:
+    enabled: false
+    op-rbuilder-image-tag: "latest"
+    rollup-boost-image-tag: "latest"
   chain-configs:
     rollup-a: 
       id: 77777

@@ -35,10 +35,19 @@ type (
 		GenesisBalanceWei     string                        `mapstructure:"genesis-balance-wei"`
 		Dispute               DisputeConfig                 `mapstructure:"dispute"`
 		Blockscout            BlockscoutConfig              `mapstructure:"blockscout"`
+		Flashblocks           FlashblocksConfig             `mapstructure:"flashblocks"`
 	}
 
 	BlockscoutConfig struct {
 		Enabled bool `mapstructure:"enabled"`
+	}
+
+	FlashblocksConfig struct {
+		Enabled             bool   `mapstructure:"enabled"`
+		OpRbuilderImageTag  string `mapstructure:"op-rbuilder-image-tag"`
+		RollupBoostImageTag string `mapstructure:"rollup-boost-image-tag"`
+		RollupARPCPort      int    `mapstructure:"rollup-a-rpc-port"`
+		RollupBRPCPort      int    `mapstructure:"rollup-b-rpc-port"`
 	}
 
 	DisputeConfig struct {
