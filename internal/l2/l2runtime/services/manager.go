@@ -11,11 +11,11 @@ import (
 
 // Manager manages L2 service lifecycle via docker-compose
 type Manager struct {
-	rootDir                   string
-	composeFilePath           string
+	rootDir                    string
+	composeFilePath            string
 	flashblocksComposeFilePath string
-	flashblocksEnabled        bool
-	logger                    *slog.Logger
+	flashblocksEnabled         bool
+	logger                     *slog.Logger
 }
 
 // NewManager creates a new service manager
