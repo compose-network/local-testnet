@@ -11,7 +11,9 @@ The `localnet l2` command manages Layer 2 rollup networks built on the OP Stack.
 The L2 command orchestrates a complete rollup deployment in three phases:
 
 ### Phase 1: L1 Contract Deployment
+
 Deploys OP Stack contracts to L1 using `op-deployer`:
+
 - System Config
 - L1 Standard Bridge
 - L1 Cross Domain Messenger
@@ -20,20 +22,31 @@ Deploys OP Stack contracts to L1 using `op-deployer`:
 - And other core contracts
 
 ### Phase 2: Configuration Generation
+
 Generates configuration files for each L2 chain:
+
 - `genesis.json` - Initial blockchain state
 - `rollup.json` - Rollup configuration
 - `jwt-secret.txt` - Authentication between services
 
 ### Phase 3: Runtime Deployment
+
 Starts L2 services using Docker Compose:
+
 - **op-geth**: Execution client for each rollup
 - **op-node**: Consensus/derivation client
 - **op-batcher**: Batches transactions to L1
 - **op-proposer**: Proposes output roots to L1
 - **Publisher**: Publishes superblocks to L1
 
+**Optional services** (enabled via CLI flags):
+
+- **op-rbuilder**: External block builder for flashblocks (`--flashblocks-enabled`)
+- **rollup-boost**: Engine API multiplexer for flashblocks (`--flashblocks-enabled`)
+- **blockscout**: Block explorer UI (`--blockscout-enabled`)
+
 Deploys Compose-specific contracts to L2:
+
 - Dispute settlement contracts
 - Verification contracts
 
@@ -46,9 +59,11 @@ Deploys Compose-specific contracts to L2:
 
 ## Configuration
 
-All L2 settings are configured in `configs/config.yaml`. See [example config](../../configs/config.yaml) for all available options.
+All L2 settings are configured in `configs/config.yaml`. See [example config](../../configs/config.yaml) for all
+available options.
 
 **Required settings:**
+
 - L1 connection (chain ID, EL URL, CL URL)
 - Wallet credentials (private key, address)
 - Coordinator credentials
@@ -63,8 +78,14 @@ All L2 settings are configured in `configs/config.yaml`. See [example config](..
 # Start L2 deployment (all phases)
 make run-l2
 
+# With optional features
+make run-l2 L2_ARGS="--flashblocks-enabled"              # Enable flashblocks
+make run-l2 L2_ARGS="--blockscout-enabled"               # Enable block explorer
+make run-l2 L2_ARGS="--flashblocks-enabled --blockscout-enabled"  # Both
+
 # Or run directly
 ./cmd/localnet/bin/localnet l2
+./cmd/localnet/bin/localnet l2 --flashblocks-enabled --blockscout-enabled
 
 # Show running services
 make show-l2
@@ -72,6 +93,8 @@ make show-l2
 # Clean up
 make clean-l2
 ```
+
+For flashblocks documentation, see [docs/flashblocks.md](../../docs/flashblocks.md).
 
 ### Local Development
 
@@ -111,13 +134,15 @@ make run-l2-compile
 ./cmd/localnet/bin/localnet l2 compile
 ```
 
-This generates `contracts.json` in `.localnet/compiled-contracts/`. To embed in binary, copy to `internal/l2/l2runtime/contracts/compiled/` and commit.
+This generates `contracts.json` in `.localnet/compiled-contracts/`. To embed in binary, copy to
+`internal/l2/l2runtime/contracts/compiled/` and commit.
 
 ### Docker Usage
 
 For running in Docker, see the [Docker documentation](../../build/DOCKER.md).
 
 **Quick start:**
+
 ```bash
 # Edit configs/config.yaml with your settings
 ./build/docker-run-example.sh
@@ -142,7 +167,7 @@ make clean-l2
 L2 services run as Docker containers. View logs using standard Docker commands:
 
 ```bash
-# View logs for specific services (use -f to follow in real-time)
+# Core services
 docker logs publisher -f
 docker logs op-geth-a -f
 docker logs op-geth-b -f
@@ -152,6 +177,16 @@ docker logs op-batcher-a -f
 docker logs op-batcher-b -f
 docker logs op-proposer-a -f
 docker logs op-proposer-b -f
+
+# Flashblocks services (when --flashblocks-enabled)
+docker logs op-rbuilder-a -f
+docker logs op-rbuilder-b -f
+docker logs rollup-boost-a -f
+docker logs rollup-boost-b -f
+
+# Blockscout services (when --blockscout-enabled)
+docker logs blockscout-a -f
+docker logs blockscout-b -f
 
 # View last N lines
 docker logs op-geth-a --tail 100
@@ -165,3 +200,11 @@ docker compose -f .localnet/docker-compose.yml logs -f
 # View specific services via docker-compose
 docker compose -f .localnet/docker-compose.yml logs -f publisher op-geth-a op-geth-b
 ```
+
+## Service Ports
+
+| Service         | Chain A | Chain B | Description       |
+|-----------------|---------|---------|-------------------|
+| op-geth RPC     | 18545   | 28545   | Execution RPC     |
+| op-rbuilder RPC | 17545   | 27545   | Flashblocks RPC   |
+| Blockscout      | 19000   | 29000   | Block explorer UI |
