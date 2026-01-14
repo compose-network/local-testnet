@@ -78,10 +78,11 @@ restart-ssv-nodes: ## Restart SSV node services (default: 4, override with SSV_N
 
 ### L2 ###
 L2_LABEL=stack=localnet-l2
+L2_ARGS?=
 
 .PHONY: run-l2
-run-l2: build ## Run the L2 localnet
-	${BINARY_PATH} l2
+run-l2: build ## Run the L2 localnet (usage: make run-l2 L2_ARGS="--flashblocks-enabled")
+	${BINARY_PATH} l2 $(L2_ARGS)
 
 .PHONY: show-l2
 show-l2: ## Show L2 Docker containers

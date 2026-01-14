@@ -30,7 +30,7 @@ services:
       - ${ROLLUP_A_CONFIG_PATH}:/config:ro
     ports:
       - "17552:8551"  # Engine API
-      - "17545:8545"  # HTTP RPC
+      - "${FLASHBLOCKS_ROLLUP_A_RPC_PORT}:8545"  # HTTP RPC
       - "17111:1111"  # Flashblocks WS
       - "19001:9001"  # Metrics
     command:
@@ -63,7 +63,7 @@ services:
       - ${ROLLUP_B_CONFIG_PATH}:/config:ro
     ports:
       - "27552:8551"  # Engine API
-      - "27545:8545"  # HTTP RPC
+      - "${FLASHBLOCKS_ROLLUP_B_RPC_PORT}:8545"  # HTTP RPC
       - "27111:1111"  # Flashblocks WS
       - "29001:9001"  # Metrics
     command:
