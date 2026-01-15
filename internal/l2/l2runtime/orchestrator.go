@@ -66,12 +66,38 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryA
 
 	o.logger.Info("docker-compose services built successfully")
 	serviceManager := services.NewManager(o.rootDir, composePath)
+
+	if cfg.Flashblocks.Enabled {
+		o.logger.Info("flashblocks enabled, configuring services to use rollup-boost")
+		flashblocksComposePath, err := docker.EnsureFlashblocksComposeFile(o.localnetDir)
+		if err != nil {
+			return nil, fmt.Errorf("failed to prepare flashblocks compose file: %w", err)
+		}
+		serviceManager.WithFlashblocks(flashblocksComposePath)
+
+		if cfg.Flashblocks.OpRbuilderImageTag != "" {
+			envVars["OP_RBUILDER_IMAGE_TAG"] = cfg.Flashblocks.OpRbuilderImageTag
+		}
+		if cfg.Flashblocks.RollupBoostImageTag != "" {
+			envVars["ROLLUP_BOOST_IMAGE_TAG"] = cfg.Flashblocks.RollupBoostImageTag
+		}
+	}
+
 	if err := serviceManager.StartAll(ctx, envVars); err != nil {
 		return nil, fmt.Errorf("failed to start L2 services: %w", err)
 	}
 
+	// When flashblocks is enabled, use op-rbuilder RPC ports for contract deployment
+	effectiveChainConfigs := cfg.ChainConfigs
+	if cfg.Flashblocks.Enabled {
+		effectiveChainConfigs = o.getFlashblocksChainConfigs(cfg)
+		o.logger.Info("using flashblocks RPC ports for contract deployment",
+			"rollup_a_port", effectiveChainConfigs[configs.L2ChainNameRollupA].RPCPort,
+			"rollup_b_port", effectiveChainConfigs[configs.L2ChainNameRollupB].RPCPort)
+	}
+
 	contractDeployer := contracts.NewDeployer(o.networksDir)
-	deployedContracts, err := contractDeployer.Deploy(ctx, cfg.ChainConfigs, cfg.CoordinatorPrivateKey)
+	deployedContracts, err := contractDeployer.Deploy(ctx, effectiveChainConfigs, cfg.CoordinatorPrivateKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy contracts: %w", err)
 	}
@@ -126,4 +152,26 @@ func (o *Orchestrator) buildComposeServices(ctx context.Context, composeFilePath
 	}
 
 	return nil
+}
+
+// getFlashblocksChainConfigs returns chain configs with op-rbuilder RPC ports.
+func (o *Orchestrator) getFlashblocksChainConfigs(cfg configs.L2) map[configs.L2ChainName]configs.Chain {
+	result := make(map[configs.L2ChainName]configs.Chain)
+
+	for chainName, chainCfg := range cfg.ChainConfigs {
+		modifiedCfg := chainCfg
+		switch chainName {
+		case configs.L2ChainNameRollupA:
+			if cfg.Flashblocks.RollupARPCPort > 0 {
+				modifiedCfg.RPCPort = cfg.Flashblocks.RollupARPCPort
+			}
+		case configs.L2ChainNameRollupB:
+			if cfg.Flashblocks.RollupBRPCPort > 0 {
+				modifiedCfg.RPCPort = cfg.Flashblocks.RollupBRPCPort
+			}
+		}
+		result[chainName] = modifiedCfg
+	}
+
+	return result
 }

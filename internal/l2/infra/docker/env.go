@@ -84,6 +84,9 @@ func (b *EnvBuilder) BuildComposeEnv(cfg configs.L2, gameFactoryAddr common.Addr
 	env["ROLLUP_B_CONFIG_PATH"] = rollupBHost
 	env["ROLLUP_B_CONFIG_PATH_CONTAINER"] = rollupBConfigPath
 
+	env["FLASHBLOCKS_ROLLUP_A_RPC_PORT"] = fmt.Sprintf("%d", cfg.Flashblocks.RollupARPCPort)
+	env["FLASHBLOCKS_ROLLUP_B_RPC_PORT"] = fmt.Sprintf("%d", cfg.Flashblocks.RollupBRPCPort)
+
 	env["SP_L1_DISPUTE_GAME_FACTORY"] = gameFactoryAddr.Hex()
 
 	env["OP_BATCHER_IMAGE_TAG"] = cfg.Images[configs.ImageNameOpBatcher].Tag

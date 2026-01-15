@@ -5,11 +5,19 @@ BINARY_DIR=${EXEC_DIRECTORY}/bin
 ENCLAVE_NAME=localnet
 
 .PHONY: default
-default: run
+default: help
+
+.PHONY: help
+help:
+	@echo 'Usage:'
+	@echo '  make [target]'
+	@echo ''
+	@echo 'Targets:'
+	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z0-9_\-]+:.*## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 ### Go ###
 .PHONY: build
-build:
+build: ## Build the localnet binary
 	go build -o ${BINARY_PATH} ${EXEC_DIRECTORY}
 	@if [ -f configs/config.yaml ]; then \
 		cp configs/config.yaml ${BINARY_DIR}/config.yaml; \
@@ -19,44 +27,48 @@ build:
 	fi
 
 .PHONY: run
-run: build
+run: build ## Build and run the localnet binary
 	${BINARY_PATH}
 
 .PHONY: clean
-clean: clean-observability clean-l2 clean-l1
+clean: clean-observability clean-l2 clean-l1 ## Clean all resources (L1, L2, observability)
 
 .PHONY: stop
-stop: stop-observability stop-l2 stop-l1
-	
+stop: stop-observability stop-l2 stop-l1 ## Stop all services (L1, L2, observability)
+
 .PHONY: test
-test:
+test: ## Run all Go tests
 	go test ./...
 
 .PHONY: lint
-lint:
+lint: ## Run golangci-lint
 	golangci-lint run -v ./...
+
+.PHONY: lint-fix
+lint-fix: ## Run golangci-lint with auto-fix
+	golangci-lint run --fix ./...
 ######
 
 ### L1 ###
 .PHONY: run-l1
-run-l1: build
+run-l1: build ## Run the L1 localnet (Kurtosis enclave)
 	${BINARY_PATH} l1
 
 .PHONY: show-l1
-show-l1:
+show-l1: ## Inspect the L1 Kurtosis enclave
 	kurtosis enclave inspect ${ENCLAVE_NAME}
 
 .PHONY: stop-l1
-stop-l1:
+stop-l1: ## Stop the L1 Kurtosis enclave
 	kurtosis enclave stop ${ENCLAVE_NAME} || true
 
 .PHONY: clean-l1
-clean-l1:
+clean-l1: ## Clean up all Kurtosis enclaves
 	kurtosis clean -a
 
 SSV_NODE_COUNT?=4
 .PHONY: restart-ssv-nodes
-restart-ssv-nodes:
+restart-ssv-nodes: ## Restart SSV node services (default: 4, override with SSV_NODE_COUNT=N)
 	@echo "Updating SSV Node services. Count: $(SSV_NODE_COUNT) ..."
 	@for i in $(shell seq 0 $(shell expr $(SSV_NODE_COUNT) - 1)); do \
 		echo "Updating service: ssv-node-$$i"; \
@@ -66,28 +78,29 @@ restart-ssv-nodes:
 
 ### L2 ###
 L2_LABEL=stack=localnet-l2
+L2_ARGS?=
 
 .PHONY: run-l2
-run-l2: build
-	${BINARY_PATH} l2
+run-l2: build ## Run the L2 localnet (usage: make run-l2 L2_ARGS="--flashblocks-enabled")
+	${BINARY_PATH} l2 $(L2_ARGS)
 
 .PHONY: show-l2
-show-l2:
+show-l2: ## Show L2 Docker containers
 	docker ps -a --filter "label=${L2_LABEL}"
 
 .PHONY: stop-l2
-stop-l2:
+stop-l2: ## Stop L2 Docker containers
 	docker compose -f .localnet/docker-compose.yml down || true
 
 .PHONY: clean-l2
-clean-l2:
+clean-l2: ## Clean L2 Docker containers and volumes
 	docker compose -f internal/l2/infra/docker/docker-compose.yml down -v
 	docker ps -aq --filter "label=${L2_LABEL}" | xargs -r docker rm -f
-	docker volume ls -q | grep -E "(rollup-a|rollup-b|blockscout)" | xargs -r docker volume rm
+	docker volume ls -q | grep -E "(rollup-a|rollup-b|blockscout|op-rbuilder)" | xargs -r docker volume rm
 	rm -rf ./.localnet/state ./.localnet/networks ./.localnet/compiled-contracts ./.localnet/docker-compose.yml ./.localnet/docker-compose.blockscout.yml ./.localnet/.tmp ./.localnet/registry ./.cache
 
 .PHONY: clean-l2-full
-clean-l2-full: clean-l2
+clean-l2-full: clean-l2 ## Full L2 cleanup including Docker images
 	rm -rf ./.localnet/services
 	docker images -q "local/publisher" | xargs -r docker rmi -f
 	docker images -q "local/op-geth" | xargs -r docker rmi -f
@@ -96,16 +109,13 @@ clean-l2-full: clean-l2
 	docker images -q "us-docker.pkg.dev/oplabs-tools-artifacts/images/op-proposer" | xargs -r docker rmi -f
 	docker images -q "us-docker.pkg.dev/oplabs-tools-artifacts/images/op-deployer" | xargs -r docker rmi -f
 
-## Compile L2 contracts ##
 .PHONY: run-l2-compile
-run-l2-compile: build
+run-l2-compile: build ## Compile L2 contracts
 	${BINARY_PATH} l2 compile
 
-## Deploy L2 services for local development ##
-# Usage: make run-l2-deploy SERVICE=op-geth
 SERVICE?=all
 .PHONY: run-l2-deploy
-run-l2-deploy: build
+run-l2-deploy: build ## Deploy L2 services (usage: make run-l2-deploy SERVICE=op-geth)
 	${BINARY_PATH} l2 deploy $(SERVICE)
 
 ######
@@ -114,19 +124,19 @@ run-l2-deploy: build
 OBSERVABILITY_LABEL=stack=localnet-observability
 
 .PHONY: run-observability
-run-observability: build
+run-observability: build ## Run the observability stack (Grafana, Prometheus, Loki, Tempo, Alloy)
 	${BINARY_PATH} observability
 
 .PHONY: show-observability
-show-observability:
+show-observability: ## Show observability Docker containers
 	docker ps -a --filter "label=${OBSERVABILITY_LABEL}"
 
 .PHONY: stop-observability
-stop-observability:
+stop-observability: ## Stop observability Docker containers
 	docker ps -aq --filter "label=${OBSERVABILITY_LABEL}" | xargs -r docker stop
 
 .PHONY: clean-observability
-clean-observability:
+clean-observability: ## Clean observability Docker containers
 	docker ps -aq --filter "label=${OBSERVABILITY_LABEL}" | xargs -r docker rm -f
 ######
 
@@ -135,11 +145,11 @@ DOCKER_IMAGE_NAME?=compose-network/local-testnet
 DOCKER_IMAGE_TAG?=latest
 
 .PHONY: docker-build
-docker-build:
+docker-build: ## Build Docker image for localnet
 	docker build -f build/Dockerfile -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} .
 
 .PHONY: docker-run-l2
-docker-run-l2:
+docker-run-l2: ## Run L2 in Docker (usage: make docker-run-l2 ARGS="...")
 	docker run --rm \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v $(PWD):/workspace \
