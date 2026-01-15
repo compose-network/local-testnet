@@ -17,6 +17,8 @@ l2:
     enabled: false
     op-rbuilder-image-tag: "latest"
     rollup-boost-image-tag: "latest"
+    rollup-a-rpc-port: 17545  # op-rbuilder RPC port for Chain A (distinct from op-geth's rpc-port)
+    rollup-b-rpc-port: 27545  # op-rbuilder RPC port for Chain B (distinct from op-geth's rpc-port)
   chain-configs:
     rollup-a: 
       id: 77777

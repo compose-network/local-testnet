@@ -100,6 +100,8 @@ l2:
     enabled: true
     op-rbuilder-image-tag: "latest"
     rollup-boost-image-tag: "latest"
+    rollup-a-rpc-port: 17545  # op-rbuilder RPC port for Chain A
+    rollup-b-rpc-port: 27545  # op-rbuilder RPC port for Chain B
 ```
 
 Or via CLI flags:
