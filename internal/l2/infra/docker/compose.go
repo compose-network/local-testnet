@@ -15,6 +15,12 @@ func ComposeBuild(ctx context.Context, composeFilePath string, env map[string]st
 	return composeRun(ctx, composeFilePath, env, args...)
 }
 
+// ComposeBuildMultiFile builds docker compose services using multiple compose files.
+func ComposeBuildMultiFile(ctx context.Context, composeFilePaths []string, env map[string]string, services ...string) error {
+	args := append([]string{"build", "--parallel"}, services...)
+	return composeRunMultiFile(ctx, composeFilePaths, env, args...)
+}
+
 // ComposeUp starts docker compose services in detached mode.
 func ComposeUp(ctx context.Context, composeFilePath string, env map[string]string, services ...string) error {
 	args := append([]string{"up", "-d"}, services...)
@@ -25,6 +31,12 @@ func ComposeUp(ctx context.Context, composeFilePath string, env map[string]strin
 func ComposeRestart(ctx context.Context, composeFilePath string, env map[string]string, services ...string) error {
 	args := append([]string{"up", "-d", "--force-recreate"}, services...)
 	return composeRun(ctx, composeFilePath, env, args...)
+}
+
+// ComposeRestartMultiFile restarts docker compose services using multiple compose files.
+func ComposeRestartMultiFile(ctx context.Context, composeFilePaths []string, env map[string]string, services ...string) error {
+	args := append([]string{"up", "-d", "--force-recreate"}, services...)
+	return composeRunMultiFile(ctx, composeFilePaths, env, args...)
 }
 
 // ComposeDown stops docker compose services.

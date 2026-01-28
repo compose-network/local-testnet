@@ -91,13 +91,18 @@ show-l2: ## Show L2 Docker containers
 .PHONY: stop-l2
 stop-l2: ## Stop L2 Docker containers
 	docker compose -f .localnet/docker-compose.yml down || true
+	-if [ -f .localnet/docker-compose.flashblocks.yml ]; then docker compose -f .localnet/docker-compose.flashblocks.yml down || true; fi
+	-if [ -f .localnet/docker-compose.sidecar.yml ]; then docker compose -f .localnet/docker-compose.sidecar.yml down || true; fi
 
 .PHONY: clean-l2
 clean-l2: ## Clean L2 Docker containers and volumes
-	docker compose -f internal/l2/infra/docker/docker-compose.yml down -v
-	docker ps -aq --filter "label=${L2_LABEL}" | xargs -r docker rm -f
+	-docker compose -f internal/l2/infra/docker/docker-compose.yml down -v 2>/dev/null || true
+	-if [ -f .localnet/docker-compose.flashblocks.yml ]; then docker compose -f .localnet/docker-compose.flashblocks.yml down -v 2>/dev/null || true; fi
+	-if [ -f .localnet/docker-compose.sidecar.yml ]; then docker compose -f .localnet/docker-compose.sidecar.yml down -v 2>/dev/null || true; fi
+	-docker ps -aq --filter "label=${L2_LABEL}" | xargs -r docker rm -f
+	-docker rm -f publisher op-geth-a op-geth-b op-node-a op-node-b op-batcher-a op-batcher-b op-proposer-a op-proposer-b op-rbuilder-a op-rbuilder-b rollup-boost-a rollup-boost-b compose-sidecar-a compose-sidecar-b 2>/dev/null || true
 	docker volume ls -q | grep -E "(rollup-a|rollup-b|blockscout|op-rbuilder)" | xargs -r docker volume rm
-	rm -rf ./.localnet/state ./.localnet/networks ./.localnet/compiled-contracts ./.localnet/docker-compose.yml ./.localnet/docker-compose.blockscout.yml ./.localnet/.tmp ./.localnet/registry ./.cache
+	rm -rf ./.localnet/state ./.localnet/networks ./.localnet/compiled-contracts ./.localnet/docker-compose.yml ./.localnet/docker-compose.blockscout.yml ./.localnet/docker-compose.flashblocks.yml ./.localnet/docker-compose.sidecar.yml ./.localnet/.tmp ./.localnet/registry ./.cache
 
 .PHONY: clean-l2-full
 clean-l2-full: clean-l2 ## Full L2 cleanup including Docker images

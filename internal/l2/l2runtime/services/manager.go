@@ -14,7 +14,9 @@ type Manager struct {
 	rootDir                    string
 	composeFilePath            string
 	flashblocksComposeFilePath string
+	sidecarComposeFilePath     string
 	flashblocksEnabled         bool
+	sidecarEnabled             bool
 	logger                     *slog.Logger
 }
 
@@ -34,6 +36,13 @@ func (m *Manager) WithFlashblocks(flashblocksComposeFilePath string) *Manager {
 	return m
 }
 
+// WithSidecar enables compose-sidecar support with the specified compose file
+func (m *Manager) WithSidecar(sidecarComposeFilePath string) *Manager {
+	m.sidecarComposeFilePath = sidecarComposeFilePath
+	m.sidecarEnabled = true
+	return m
+}
+
 // StartAll starts all L2 services
 func (m *Manager) StartAll(ctx context.Context, env map[string]string) error {
 	services := []string{
@@ -48,29 +57,41 @@ func (m *Manager) StartAll(ctx context.Context, env map[string]string) error {
 		"op-proposer-b",
 	}
 
+	composeFiles := []string{m.composeFilePath}
+
 	if m.flashblocksEnabled && m.flashblocksComposeFilePath != "" {
+		composeFiles = append(composeFiles, m.flashblocksComposeFilePath)
 		services = append(services,
 			"op-rbuilder-a",
 			"op-rbuilder-b",
 			"rollup-boost-a",
 			"rollup-boost-b",
 		)
+	}
 
-		m.logger.With("services", services).Info("starting all L2 services with flashblocks")
+	if m.sidecarEnabled && m.sidecarComposeFilePath != "" {
+		composeFiles = append(composeFiles, m.sidecarComposeFilePath)
+		services = append(services,
+			"compose-sidecar-a",
+			"compose-sidecar-b",
+		)
+	}
 
-		composeFiles := []string{m.composeFilePath, m.flashblocksComposeFilePath}
+	if len(composeFiles) > 1 {
+		m.logger.With("services", services, "flashblocks", m.flashblocksEnabled, "sidecar", m.sidecarEnabled).Info("starting L2 services")
+
 		if err := docker.ComposeUpMultiFile(ctx, composeFiles, env, services...); err != nil {
-			return fmt.Errorf("failed to start services with flashblocks: %w", err)
+			return fmt.Errorf("failed to start services: %w", err)
 		}
 	} else {
-		m.logger.With("services", services).Info("starting all L2 services")
+		m.logger.With("services", services).Info("starting L2 services")
 
 		if err := docker.ComposeUp(ctx, m.composeFilePath, env, services...); err != nil {
 			return fmt.Errorf("failed to start services: %w", err)
 		}
 	}
 
-	m.logger.Info("all L2 services started successfully")
+	m.logger.Info("L2 services started successfully")
 	return nil
 }
 
