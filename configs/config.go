@@ -36,6 +36,7 @@ type (
 		Dispute               DisputeConfig                 `mapstructure:"dispute"`
 		Blockscout            BlockscoutConfig              `mapstructure:"blockscout"`
 		Flashblocks           FlashblocksConfig             `mapstructure:"flashblocks"`
+		Sidecar               SidecarConfig                 `mapstructure:"sidecar"`
 	}
 
 	BlockscoutConfig struct {
@@ -48,6 +49,12 @@ type (
 		RollupBoostImageTag string `mapstructure:"rollup-boost-image-tag"`
 		RollupARPCPort      int    `mapstructure:"rollup-a-rpc-port"`
 		RollupBRPCPort      int    `mapstructure:"rollup-b-rpc-port"`
+	}
+
+	SidecarConfig struct {
+		Enabled        bool `mapstructure:"enabled"`
+		RollupAAPIPort int  `mapstructure:"rollup-a-api-port"`
+		RollupBAPIPort int  `mapstructure:"rollup-b-api-port"`
 	}
 
 	DisputeConfig struct {
@@ -92,6 +99,7 @@ const (
 	RepositoryNameOpGeth           RepositoryName = "op-geth"
 	RepositoryNamePublisher        RepositoryName = "publisher"
 	RepositoryNameComposeContracts RepositoryName = "compose-contracts"
+	RepositoryNameComposeSidecar   RepositoryName = "compose-sidecar"
 
 	ImageNameOpDeployer ImageName = "op-deployer"
 	ImageNameOpNode     ImageName = "op-node"
@@ -125,6 +133,9 @@ func (c *L2) Validate() error {
 	}
 
 	requiredRepos := []RepositoryName{RepositoryNameOpGeth, RepositoryNamePublisher}
+	if c.Sidecar.Enabled {
+		requiredRepos = append(requiredRepos, RepositoryNameComposeSidecar)
+	}
 	for _, name := range requiredRepos {
 		repo, exists := c.Repositories[name]
 		if !exists {

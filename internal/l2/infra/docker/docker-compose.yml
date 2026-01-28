@@ -105,24 +105,8 @@ services:
           fi
         fi
 
-        SEQUENCER_KEY=$${SEQUENCER_PRIVATE_KEY:-$${WALLET_PRIVATE_KEY:-}}
-        if [ -z "$$SEQUENCER_KEY" ]; then
-          echo "[error] SEQUENCER_PRIVATE_KEY is required" >&2
-          exit 1
-        fi
-
-        MAILBOX_A_FLAG=""
-        MAILBOX_B_FLAG=""
-        if [ -n "$${MAILBOX_A:-}" ]; then
-          MAILBOX_A_FLAG="--mailbox.addr-a=$${MAILBOX_A}"
-        fi
-        if [ -n "$${MAILBOX_B:-}" ]; then
-          MAILBOX_B_FLAG="--mailbox.addr-b=$${MAILBOX_B}"
-        fi
-
         echo "[*] Starting geth"
 
-        EXTRA_FLAGS=${EXTRA_OP_GETH_FLAGS:-}
         exec geth \
           --verbosity=4 \
           --datadir /data \
@@ -131,7 +115,7 @@ services:
           --http.port=8545 \
           --http.corsdomain='*' \
           --http.vhosts='*' \
-          --http.api=web3,debug,eth,txpool,net,engine,compose,miner \
+          --http.api=web3,debug,eth,txpool,net,engine,miner \
           --ws \
           --ws.addr=0.0.0.0 \
           --ws.port=8546 \
@@ -146,15 +130,7 @@ services:
           --metrics \
           --metrics.addr=0.0.0.0 \
           --metrics.port=6060 \
-          --sp.addr=publisher:8080 \
-          --sp.listen.addr=:9898 \
-          --sequencer.key=$${SEQUENCER_KEY} \
-          --rollup.computependingblock=true \
-          --coordinator.key=$${COORDINATOR_KEY} \
-          --registry.path=/registry \
-          $${MAILBOX_A_FLAG} \
-          $${MAILBOX_B_FLAG} \
-          $${EXTRA_FLAGS}
+          --rollup.computependingblock=true
 
   op-node-a:
     image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-node:${OP_NODE_IMAGE_TAG}
@@ -303,24 +279,8 @@ services:
           fi
         fi
 
-        SEQUENCER_KEY=$${SEQUENCER_PRIVATE_KEY:-$${WALLET_PRIVATE_KEY:-}}
-        if [ -z "$$SEQUENCER_KEY" ]; then
-          echo "[error] SEQUENCER_PRIVATE_KEY is required" >&2
-          exit 1
-        fi
-
-        MAILBOX_A_FLAG=""
-        MAILBOX_B_FLAG=""
-        if [ -n "$${MAILBOX_A:-}" ]; then
-          MAILBOX_A_FLAG="--mailbox.addr-a=$${MAILBOX_A}"
-        fi
-        if [ -n "$${MAILBOX_B:-}" ]; then
-          MAILBOX_B_FLAG="--mailbox.addr-b=$${MAILBOX_B}"
-        fi
-
         echo "[*] Starting geth"
 
-        EXTRA_FLAGS=${EXTRA_OP_GETH_FLAGS:-}
         exec geth \
           --verbosity=4 \
           --datadir /data \
@@ -329,7 +289,7 @@ services:
           --http.port=8545 \
           --http.corsdomain='*' \
           --http.vhosts='*' \
-          --http.api=web3,debug,eth,txpool,net,engine,compose,miner \
+          --http.api=web3,debug,eth,txpool,net,engine,miner \
           --ws \
           --ws.addr=0.0.0.0 \
           --ws.port=8546 \
@@ -347,15 +307,7 @@ services:
           --metrics \
           --metrics.addr=0.0.0.0 \
           --metrics.port=6060 \
-          --sp.addr=publisher:8080 \
-          --sp.listen.addr=:9898 \
-          --sequencer.key=$${SEQUENCER_KEY} \
-          --rollup.computependingblock=true \
-          --coordinator.key=$${COORDINATOR_KEY} \
-          --registry.path=/registry \
-          $${MAILBOX_A_FLAG} \
-          $${MAILBOX_B_FLAG} \
-          $${EXTRA_FLAGS}
+          --rollup.computependingblock=true
 
   op-node-b:
     image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-node:${OP_NODE_IMAGE_TAG}

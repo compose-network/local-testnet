@@ -17,8 +17,12 @@ l2:
     enabled: false
     op-rbuilder-image-tag: "latest"
     rollup-boost-image-tag: "latest"
-    rollup-a-rpc-port: 17545  # op-rbuilder RPC port for Chain A (distinct from op-geth's rpc-port)
-    rollup-b-rpc-port: 27545  # op-rbuilder RPC port for Chain B (distinct from op-geth's rpc-port)
+    rollup-a-rpc-port: 17545
+    rollup-b-rpc-port: 27545
+  sidecar:
+    enabled: false  # requires flashblocks
+    rollup-a-api-port: 17090
+    rollup-b-api-port: 27090
   chain-configs:
     rollup-a: 
       id: 77777
@@ -62,6 +66,11 @@ l2:
       # local-path: ~/projects/publisher
     compose-contracts:
       url: https://github.com/contracts.git
+      branch: main
+    compose-sidecar:
+      # Required when sidecar.enabled: true
+      # local-path: ~/projects/compose-sidecar
+      url: https://github.com/compose-sidecar.git
       branch: main
   dispute:
     network-name: network-name # e.g. hoodi

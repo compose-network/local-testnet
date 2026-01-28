@@ -207,4 +207,30 @@ docker compose -f .localnet/docker-compose.yml logs -f publisher op-geth-a op-ge
 |-----------------|---------|---------|-------------------|
 | op-geth RPC     | 18545   | 28545   | Execution RPC     |
 | op-rbuilder RPC | 17545   | 27545   | Flashblocks RPC   |
+| compose-sidecar | 17090   | 27090   | Sidecar API       |
 | Blockscout      | 19000   | 29000   | Block explorer UI |
+
+## Compose Sidecar Mode 
+
+The compose-sidecar handles cross-chain transaction coordination as a standalone service.
+
+### Running with Sidecar Mode
+
+```bash
+# Requires flashblocks
+make run-l2 L2_ARGS="--flashblocks-enabled --sidecar-enabled"
+
+# View logs
+docker logs compose-sidecar-a -f
+docker logs compose-sidecar-b -f
+```
+
+### Configuration
+
+Set `compose-sidecar` repository in `configs/config.yaml`:
+
+```yaml
+repositories:
+  compose-sidecar:
+    local-path: ../compose-sidecar  # or url + branch
+```

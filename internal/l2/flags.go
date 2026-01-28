@@ -41,6 +41,8 @@ var (
 		{"publisher-branch", "l2.repositories.publisher.branch", "", "publisher repository branch"},
 		{"compose-contracts-url", "l2.repositories.compose-contracts.url", "", "compose-contracts repository URL"},
 		{"compose-contracts-branch", "l2.repositories.compose-contracts.branch", "", "compose-contracts repository branch"},
+		{"compose-sidecar-url", "l2.repositories.compose-sidecar.url", "", "compose-sidecar repository URL"},
+		{"compose-sidecar-branch", "l2.repositories.compose-sidecar.branch", "", "compose-sidecar repository branch"},
 
 		// Images
 		{"op-deployer-tag", "l2.images.op-deployer.tag", "v0.4.5", "op-deployer image tag"},
@@ -74,6 +76,10 @@ var (
 		{"flashblocks-rollup-a-rpc-port", "l2.flashblocks.rollup-a-rpc-port", 17545, "Rollup A op-rbuilder RPC port"},
 		{"flashblocks-rollup-b-rpc-port", "l2.flashblocks.rollup-b-rpc-port", 27545, "Rollup B op-rbuilder RPC port"},
 
+		// Sidecar
+		{"sidecar-rollup-a-api-port", "l2.sidecar.rollup-a-api-port", 17090, "Rollup A sidecar API port"},
+		{"sidecar-rollup-b-api-port", "l2.sidecar.rollup-b-api-port", 27090, "Rollup B sidecar API port"},
+
 		// Dispute config
 		{"dispute-proof-maturity-delay-seconds", "l2.dispute.proof-maturity-delay-seconds", 604800, "Proof maturity delay in seconds (default: 7 days)"},
 		{"dispute-game-finality-delay-seconds", "l2.dispute.dispute-game-finality-delay-seconds", 302400, "Dispute game finality delay in seconds (default: 3.5 days)"},
@@ -82,6 +88,7 @@ var (
 	boolFlags = []flagDef[bool]{
 		{"blockscout-enabled", "l2.blockscout.enabled", false, "Enable Blockscout block explorer"},
 		{"flashblocks-enabled", "l2.flashblocks.enabled", false, "Enable flashblocks support (op-rbuilder and rollup-boost)"},
+		{"sidecar-enabled", "l2.sidecar.enabled", false, "Enable compose-sidecar for cross-chain coordination (requires flashblocks)"},
 	}
 )
 

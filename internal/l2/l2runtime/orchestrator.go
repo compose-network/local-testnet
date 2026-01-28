@@ -60,16 +60,19 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryA
 	}
 
 	o.logger.With("env", envVars).Info("environment variables were constructed. Building compose services")
-	if err := o.buildComposeServices(ctx, composePath, envVars); err != nil {
+	if err := o.buildComposeServices(ctx, composePath, envVars, cfg); err != nil {
 		return nil, fmt.Errorf("failed to build compose services: %w", err)
 	}
 
 	o.logger.Info("docker-compose services built successfully")
 	serviceManager := services.NewManager(o.rootDir, composePath)
 
+	var flashblocksComposePath string
+	var sidecarComposePath string
+
 	if cfg.Flashblocks.Enabled {
 		o.logger.Info("flashblocks enabled, configuring services to use rollup-boost")
-		flashblocksComposePath, err := docker.EnsureFlashblocksComposeFile(o.localnetDir)
+		flashblocksComposePath, err = docker.EnsureFlashblocksComposeFile(o.localnetDir)
 		if err != nil {
 			return nil, fmt.Errorf("failed to prepare flashblocks compose file: %w", err)
 		}
@@ -81,6 +84,18 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryA
 		if cfg.Flashblocks.RollupBoostImageTag != "" {
 			envVars["ROLLUP_BOOST_IMAGE_TAG"] = cfg.Flashblocks.RollupBoostImageTag
 		}
+	}
+
+	if cfg.Sidecar.Enabled {
+		if !cfg.Flashblocks.Enabled {
+			return nil, fmt.Errorf("sidecar requires flashblocks to be enabled")
+		}
+		o.logger.Info("sidecar enabled, configuring compose-sidecar services")
+		sidecarComposePath, err = docker.EnsureSidecarComposeFile(o.localnetDir)
+		if err != nil {
+			return nil, fmt.Errorf("failed to prepare sidecar compose file: %w", err)
+		}
+		serviceManager.WithSidecar(sidecarComposePath)
 	}
 
 	if err := serviceManager.StartAll(ctx, envVars); err != nil {
@@ -105,6 +120,13 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryA
 	o.logger.Info("restarting op-geth services to apply mailbox configuration")
 	if err := o.restartOpGeth(ctx, composePath, envVars, deployedContracts); err != nil {
 		return nil, fmt.Errorf("failed to restart op-geth services after contract deployment. Error: '%w'", err)
+	}
+
+	if cfg.Sidecar.Enabled {
+		o.logger.Info("restarting compose-sidecar services to apply mailbox configuration")
+		if err := o.restartSidecar(ctx, composePath, flashblocksComposePath, sidecarComposePath, envVars); err != nil {
+			return nil, fmt.Errorf("failed to restart compose-sidecar services after contract deployment: %w", err)
+		}
 	}
 
 	o.logger.Info("Phase 3: L2 runtime operations completed successfully")
@@ -137,18 +159,59 @@ func (o *Orchestrator) restartOpGeth(ctx context.Context, composeFilePath string
 	return nil
 }
 
+func (o *Orchestrator) restartSidecar(ctx context.Context, composeFilePath, flashblocksComposePath, sidecarComposePath string, env map[string]string) error {
+	if sidecarComposePath == "" {
+		return fmt.Errorf("sidecar compose file path is empty")
+	}
+
+	composeFiles := []string{composeFilePath}
+	if flashblocksComposePath != "" {
+		composeFiles = append(composeFiles, flashblocksComposePath)
+	}
+	composeFiles = append(composeFiles, sidecarComposePath)
+
+	services := []string{"compose-sidecar-a", "compose-sidecar-b"}
+	if err := docker.ComposeRestartMultiFile(ctx, composeFiles, env, services...); err != nil {
+		return fmt.Errorf("failed to restart compose-sidecar: %w", err)
+	}
+
+	return nil
+}
+
 // buildComposeServices builds services using docker-compose
-// Only builds services that are built from source (publisher, op-geth)
-// op-node, op-batcher, and op-proposer now use public images
-func (o *Orchestrator) buildComposeServices(ctx context.Context, composeFilePath string, env map[string]string) error {
+func (o *Orchestrator) buildComposeServices(ctx context.Context, composeFilePath string, env map[string]string, cfg configs.L2) error {
 	services := []string{
 		"publisher",
 		"op-geth-a",
 		"op-geth-b",
 	}
 
-	if err := docker.ComposeBuild(ctx, composeFilePath, env, services...); err != nil {
-		return fmt.Errorf("failed to build compose services: %w", err)
+	composeFiles := []string{composeFilePath}
+
+	// Sidecar requires flashblocks, so add flashblocks compose file first
+	if cfg.Sidecar.Enabled {
+		flashblocksComposePath, err := docker.EnsureFlashblocksComposeFile(o.localnetDir)
+		if err != nil {
+			return fmt.Errorf("failed to prepare flashblocks compose file for build: %w", err)
+		}
+		composeFiles = append(composeFiles, flashblocksComposePath)
+
+		sidecarComposePath, err := docker.EnsureSidecarComposeFile(o.localnetDir)
+		if err != nil {
+			return fmt.Errorf("failed to prepare sidecar compose file for build: %w", err)
+		}
+		composeFiles = append(composeFiles, sidecarComposePath)
+		services = append(services, "compose-sidecar-a", "compose-sidecar-b")
+	}
+
+	if len(composeFiles) > 1 {
+		if err := docker.ComposeBuildMultiFile(ctx, composeFiles, env, services...); err != nil {
+			return fmt.Errorf("failed to build compose services: %w", err)
+		}
+	} else {
+		if err := docker.ComposeBuild(ctx, composeFilePath, env, services...); err != nil {
+			return fmt.Errorf("failed to build compose services: %w", err)
+		}
 	}
 
 	return nil

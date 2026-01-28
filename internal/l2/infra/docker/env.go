@@ -87,6 +87,17 @@ func (b *EnvBuilder) BuildComposeEnv(cfg configs.L2, gameFactoryAddr common.Addr
 	env["FLASHBLOCKS_ROLLUP_A_RPC_PORT"] = fmt.Sprintf("%d", cfg.Flashblocks.RollupARPCPort)
 	env["FLASHBLOCKS_ROLLUP_B_RPC_PORT"] = fmt.Sprintf("%d", cfg.Flashblocks.RollupBRPCPort)
 
+	env["SIDECAR_ROLLUP_A_API_PORT"] = fmt.Sprintf("%d", cfg.Sidecar.RollupAAPIPort)
+	env["SIDECAR_ROLLUP_B_API_PORT"] = fmt.Sprintf("%d", cfg.Sidecar.RollupBAPIPort)
+
+	if cfg.Sidecar.Enabled {
+		sidecarPath, err := b.ResolveRepoPath(cfg.Repositories[configs.RepositoryNameComposeSidecar], configs.RepositoryNameComposeSidecar)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve compose-sidecar path: %w", err)
+		}
+		env["COMPOSE_SIDECAR_PATH"] = sidecarPath
+	}
+
 	env["SP_L1_DISPUTE_GAME_FACTORY"] = gameFactoryAddr.Hex()
 
 	env["OP_BATCHER_IMAGE_TAG"] = cfg.Images[configs.ImageNameOpBatcher].Tag
