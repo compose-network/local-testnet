@@ -90,7 +90,7 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryA
 		if !cfg.Flashblocks.Enabled {
 			return nil, fmt.Errorf("sidecar requires flashblocks to be enabled")
 		}
-		o.logger.Info("sidecar enabled, configuring compose-sidecar services")
+		o.logger.Info("sidecar enabled, configuring sidecar services")
 		sidecarComposePath, err = docker.EnsureSidecarComposeFile(o.localnetDir)
 		if err != nil {
 			return nil, fmt.Errorf("failed to prepare sidecar compose file: %w", err)
@@ -123,9 +123,9 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryA
 	}
 
 	if cfg.Sidecar.Enabled {
-		o.logger.Info("restarting compose-sidecar services to apply mailbox configuration")
+		o.logger.Info("restarting sidecar services to apply mailbox configuration")
 		if err := o.restartSidecar(ctx, composePath, flashblocksComposePath, sidecarComposePath, envVars); err != nil {
-			return nil, fmt.Errorf("failed to restart compose-sidecar services after contract deployment: %w", err)
+			return nil, fmt.Errorf("failed to restart sidecar services after contract deployment: %w", err)
 		}
 	}
 
@@ -170,9 +170,9 @@ func (o *Orchestrator) restartSidecar(ctx context.Context, composeFilePath, flas
 	}
 	composeFiles = append(composeFiles, sidecarComposePath)
 
-	services := []string{"compose-sidecar-a", "compose-sidecar-b"}
+	services := []string{"sidecar-a", "sidecar-b"}
 	if err := docker.ComposeRestartMultiFile(ctx, composeFiles, env, services...); err != nil {
-		return fmt.Errorf("failed to restart compose-sidecar: %w", err)
+		return fmt.Errorf("failed to restart sidecar: %w", err)
 	}
 
 	return nil
@@ -201,7 +201,7 @@ func (o *Orchestrator) buildComposeServices(ctx context.Context, composeFilePath
 			return fmt.Errorf("failed to prepare sidecar compose file for build: %w", err)
 		}
 		composeFiles = append(composeFiles, sidecarComposePath)
-		services = append(services, "compose-sidecar-a", "compose-sidecar-b")
+		services = append(services, "sidecar-a", "sidecar-b")
 	}
 
 	if len(composeFiles) > 1 {

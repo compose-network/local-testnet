@@ -36,7 +36,7 @@ func (m *Manager) WithFlashblocks(flashblocksComposeFilePath string) *Manager {
 	return m
 }
 
-// WithSidecar enables compose-sidecar support with the specified compose file
+// WithSidecar enables sidecar support with the specified compose file
 func (m *Manager) WithSidecar(sidecarComposeFilePath string) *Manager {
 	m.sidecarComposeFilePath = sidecarComposeFilePath
 	m.sidecarEnabled = true
@@ -72,8 +72,8 @@ func (m *Manager) StartAll(ctx context.Context, env map[string]string) error {
 	if m.sidecarEnabled && m.sidecarComposeFilePath != "" {
 		composeFiles = append(composeFiles, m.sidecarComposeFilePath)
 		services = append(services,
-			"compose-sidecar-a",
-			"compose-sidecar-b",
+			"sidecar-a",
+			"sidecar-b",
 		)
 	}
 

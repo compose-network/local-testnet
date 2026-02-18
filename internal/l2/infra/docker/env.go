@@ -91,11 +91,11 @@ func (b *EnvBuilder) BuildComposeEnv(cfg configs.L2, gameFactoryAddr common.Addr
 	env["SIDECAR_ROLLUP_B_API_PORT"] = fmt.Sprintf("%d", cfg.Sidecar.RollupBAPIPort)
 
 	if cfg.Sidecar.Enabled {
-		sidecarPath, err := b.ResolveRepoPath(cfg.Repositories[configs.RepositoryNameComposeSidecar], configs.RepositoryNameComposeSidecar)
+		sidecarPath, err := b.ResolveRepoPath(cfg.Repositories[configs.RepositoryNameSidecar], configs.RepositoryNameSidecar)
 		if err != nil {
-			return nil, fmt.Errorf("failed to resolve compose-sidecar path: %w", err)
+			return nil, fmt.Errorf("failed to resolve sidecar path: %w", err)
 		}
-		env["COMPOSE_SIDECAR_PATH"] = sidecarPath
+		env["SIDECAR_PATH"] = sidecarPath
 	}
 
 	env["SP_L1_DISPUTE_GAME_FACTORY"] = gameFactoryAddr.Hex()

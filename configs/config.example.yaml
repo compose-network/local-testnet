@@ -67,10 +67,10 @@ l2:
     compose-contracts:
       url: https://github.com/contracts.git
       branch: main
-    compose-sidecar:
+    sidecar:
       # Required when sidecar.enabled: true
-      # local-path: ~/projects/compose-sidecar
-      url: https://github.com/compose-sidecar.git
+      # local-path: ~/projects/sidecar
+      url: https://github.com/sidecar.git
       branch: main
   dispute:
     network-name: network-name # e.g. hoodi

@@ -41,8 +41,8 @@ var (
 		{"publisher-branch", "l2.repositories.publisher.branch", "", "publisher repository branch"},
 		{"compose-contracts-url", "l2.repositories.compose-contracts.url", "", "compose-contracts repository URL"},
 		{"compose-contracts-branch", "l2.repositories.compose-contracts.branch", "", "compose-contracts repository branch"},
-		{"compose-sidecar-url", "l2.repositories.compose-sidecar.url", "", "compose-sidecar repository URL"},
-		{"compose-sidecar-branch", "l2.repositories.compose-sidecar.branch", "", "compose-sidecar repository branch"},
+		{"sidecar-url", "l2.repositories.sidecar.url", "", "sidecar repository URL"},
+		{"sidecar-branch", "l2.repositories.sidecar.branch", "", "sidecar repository branch"},
 
 		// Images
 		{"op-deployer-tag", "l2.images.op-deployer.tag", "v0.4.5", "op-deployer image tag"},
@@ -88,7 +88,7 @@ var (
 	boolFlags = []flagDef[bool]{
 		{"blockscout-enabled", "l2.blockscout.enabled", false, "Enable Blockscout block explorer"},
 		{"flashblocks-enabled", "l2.flashblocks.enabled", false, "Enable flashblocks support (op-rbuilder and rollup-boost)"},
-		{"sidecar-enabled", "l2.sidecar.enabled", false, "Enable compose-sidecar for cross-chain coordination (requires flashblocks)"},
+		{"sidecar-enabled", "l2.sidecar.enabled", false, "Enable sidecar for cross-chain coordination (requires flashblocks)"},
 	}
 )
 
