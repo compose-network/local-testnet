@@ -3,6 +3,8 @@ package configs
 import (
 	"errors"
 	"fmt"
+	"net/url"
+	"time"
 )
 
 var Values Config
@@ -36,6 +38,7 @@ type (
 		Dispute               DisputeConfig                 `mapstructure:"dispute"`
 		Blockscout            BlockscoutConfig              `mapstructure:"blockscout"`
 		Flashblocks           FlashblocksConfig             `mapstructure:"flashblocks"`
+		AltDA                 AltDAConfig                   `mapstructure:"alt-da"`
 	}
 
 	BlockscoutConfig struct {
@@ -48,6 +51,21 @@ type (
 		RollupBoostImageTag string `mapstructure:"rollup-boost-image-tag"`
 		RollupARPCPort      int    `mapstructure:"rollup-a-rpc-port"`
 		RollupBRPCPort      int    `mapstructure:"rollup-b-rpc-port"`
+	}
+
+	AltDAConfig struct {
+		Enabled                    bool   `mapstructure:"enabled"`
+		DAServer                   string `mapstructure:"da-server"`
+		VerifyOnRead               bool   `mapstructure:"verify-on-read"`
+		DAService                  bool   `mapstructure:"da-service"`
+		PutTimeout                 string `mapstructure:"put-timeout"`
+		GetTimeout                 string `mapstructure:"get-timeout"`
+		MaxConcurrentDARequests    uint64 `mapstructure:"max-concurrent-da-requests"`
+		DACommitmentType           string `mapstructure:"da-commitment-type"`
+		DAChallengeWindow          uint64 `mapstructure:"da-challenge-window"`
+		DAResolveWindow            uint64 `mapstructure:"da-resolve-window"`
+		DABondSize                 uint64 `mapstructure:"da-bond-size"`
+		DAResolverRefundPercentage uint64 `mapstructure:"da-resolver-refund-percentage"`
 	}
 
 	DisputeConfig struct {
@@ -100,6 +118,9 @@ const (
 
 	L2ChainNameRollupA L2ChainName = "rollup-a"
 	L2ChainNameRollupB L2ChainName = "rollup-b"
+
+	AltDACommitmentTypeKeccak  = "KeccakCommitment"
+	AltDACommitmentTypeGeneric = "GenericCommitment"
 )
 
 func (c *L2) Validate() error {
@@ -183,6 +204,41 @@ func (c *L2) Validate() error {
 		errs = append(errs, errors.New("l2.deployment-target is required"))
 	} else if c.DeploymentTarget != "live" && c.DeploymentTarget != "calldata" {
 		errs = append(errs, errors.New("l2.deployment-target must be either 'live' or 'calldata'"))
+	}
+
+	if c.AltDA.Enabled {
+		if c.AltDA.DAServer == "" {
+			errs = append(errs, errors.New("l2.alt-da.da-server is required when l2.alt-da.enabled is true"))
+		} else if _, err := url.ParseRequestURI(c.AltDA.DAServer); err != nil {
+			errs = append(errs, fmt.Errorf("l2.alt-da.da-server is invalid: %w", err))
+		}
+
+		if c.AltDA.DACommitmentType == "" {
+			errs = append(errs, errors.New("l2.alt-da.da-commitment-type is required when l2.alt-da.enabled is true"))
+		} else if c.AltDA.DACommitmentType != AltDACommitmentTypeKeccak && c.AltDA.DACommitmentType != AltDACommitmentTypeGeneric {
+			errs = append(errs, errors.New("l2.alt-da.da-commitment-type must be either 'KeccakCommitment' or 'GenericCommitment'"))
+		}
+
+		if c.AltDA.DAChallengeWindow == 0 {
+			errs = append(errs, errors.New("l2.alt-da.da-challenge-window must be positive when l2.alt-da.enabled is true"))
+		}
+		if c.AltDA.DAResolveWindow == 0 {
+			errs = append(errs, errors.New("l2.alt-da.da-resolve-window must be positive when l2.alt-da.enabled is true"))
+		}
+		if c.AltDA.MaxConcurrentDARequests == 0 {
+			errs = append(errs, errors.New("l2.alt-da.max-concurrent-da-requests must be positive when l2.alt-da.enabled is true"))
+		}
+
+		if c.AltDA.PutTimeout != "" {
+			if _, err := time.ParseDuration(c.AltDA.PutTimeout); err != nil {
+				errs = append(errs, fmt.Errorf("l2.alt-da.put-timeout is invalid: %w", err))
+			}
+		}
+		if c.AltDA.GetTimeout != "" {
+			if _, err := time.ParseDuration(c.AltDA.GetTimeout); err != nil {
+				errs = append(errs, fmt.Errorf("l2.alt-da.get-timeout is invalid: %w", err))
+			}
+		}
 	}
 
 	// Validate dispute config

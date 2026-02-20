@@ -19,6 +19,19 @@ l2:
     rollup-boost-image-tag: "latest"
     rollup-a-rpc-port: 17545  # op-rbuilder RPC port for Chain A (distinct from op-geth's rpc-port)
     rollup-b-rpc-port: 27545  # op-rbuilder RPC port for Chain B (distinct from op-geth's rpc-port)
+  alt-da:
+    enabled: false
+    da-server: http://host.docker.internal:3100
+    verify-on-read: true
+    da-service: true
+    put-timeout: 0s
+    get-timeout: 0s
+    max-concurrent-da-requests: 1
+    da-commitment-type: GenericCommitment
+    da-challenge-window: 100
+    da-resolve-window: 100
+    da-bond-size: 0
+    da-resolver-refund-percentage: 0
   chain-configs:
     rollup-a: 
       id: 77777

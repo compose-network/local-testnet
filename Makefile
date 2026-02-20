@@ -88,13 +88,32 @@ run-l2: build ## Run the L2 localnet (usage: make run-l2 L2_ARGS="--flashblocks-
 show-l2: ## Show L2 Docker containers
 	docker ps -a --filter "label=${L2_LABEL}"
 
+.PHONY: check-l2-altda
+check-l2-altda: ## Check Alt-DA server and verify both rollups are running with Alt-DA enabled
+	@echo "Checking op-alt-da health endpoint..."
+	@curl -fsS http://localhost:3100/health | grep -q '^OK$$'
+	@echo "Checking rollup configs include alt_da..."
+	@jq -e '.alt_da != null and .alt_da.da_commitment_type != null' .localnet/networks/rollup-a/rollup.json >/dev/null
+	@jq -e '.alt_da != null and .alt_da.da_commitment_type != null' .localnet/networks/rollup-b/rollup.json >/dev/null
+	@echo "Checking op-node Alt-DA env for both rollups..."
+	@for svc in op-node-a op-node-b; do \
+		docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' $$svc | grep -q '^OP_NODE_ALTDA_ENABLED=true$$' || { echo "$$svc missing OP_NODE_ALTDA_ENABLED=true"; exit 1; }; \
+	done
+	@echo "Checking op-batcher Alt-DA env for both rollups..."
+	@for svc in op-batcher-a op-batcher-b; do \
+		docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' $$svc | grep -q '^OP_BATCHER_ALTDA_ENABLED=true$$' || { echo "$$svc missing OP_BATCHER_ALTDA_ENABLED=true"; exit 1; }; \
+	done
+	@echo "Alt-DA checks passed for both rollups."
+
 .PHONY: stop-l2
 stop-l2: ## Stop L2 Docker containers
 	docker compose -f .localnet/docker-compose.yml down || true
 
 .PHONY: clean-l2
 clean-l2: ## Clean L2 Docker containers and volumes
-	docker compose -f internal/l2/infra/docker/docker-compose.yml down -v
+	@if [ -f .localnet/docker-compose.yml ]; then \
+		docker compose -f .localnet/docker-compose.yml down -v || true; \
+	fi
 	docker ps -aq --filter "label=${L2_LABEL}" | xargs -r docker rm -f
 	docker volume ls -q | grep -E "(rollup-a|rollup-b|blockscout|op-rbuilder)" | xargs -r docker volume rm
 	rm -rf ./.localnet/state ./.localnet/networks ./.localnet/compiled-contracts ./.localnet/docker-compose.yml ./.localnet/docker-compose.blockscout.yml ./.localnet/.tmp ./.localnet/registry ./.cache
