@@ -32,7 +32,7 @@ The binary will be available at `cmd/localnet/bin/localnet`.
 
 ## 🚀 Commands
 
-The tool provides three main commands, each managing a different part of the local network:
+The tool provides four main commands, each managing a different part of the local network:
 
 ### L1 Network (`localnet l1`)
 Manages the Layer 1 Ethereum test network using Kurtosis. Deploys execution and consensus clients along with SSV nodes.
@@ -43,6 +43,10 @@ Manages the Layer 1 Ethereum test network using Kurtosis. Deploys execution and 
 Manages Layer 2 rollup networks. Orchestrates a three-phase deployment process for multiple OP Stack rollups.
 
 **📖 [Read L2 Documentation](internal/l2/README.md)**
+
+### Celestia Stack (`localnet celestia`)
+Manages Celestia DA services used by Alt-DA mode, including Celestia app, bridge, op-alt-da, and optional Celenium services.
+Runtime assets are generated under `.localnet/celestia`, and Celenium repositories are sourced from configured forks/tags.
 
 ### Observability (`localnet observability`)
 Manages the observability stack for monitoring and debugging. Deploys Grafana, Prometheus, Loki, Tempo, and Alloy.
@@ -58,24 +62,28 @@ make run
 # Or run specific components:
 make run-l1              # Start L1 network
 make run-l2              # Start L2 networks
+make run-celestia        # Start Celestia stack
 make run-l2-compile      # Compile L2 contracts from publisher repo
 make run-observability   # Start observability stack
 
 # Inspect running services:
 make show-l1             # Show Kurtosis enclave
 make show-l2             # Show L2 docker containers
+make show-celestia       # Show Celestia docker containers
 make show-observability  # Show observability containers
 
 # Stop services (preserves configs):
 make stop                # Stop all components
 make stop-l1             # Stop L1 (Kurtosis)
 make stop-l2             # Stop L2 (Docker containers)
+make stop-celestia       # Stop Celestia stack
 make stop-observability  # Stop observability stack
 
 # Clean up (removes configs):
 make clean               # Clean all components
 make clean-l1            # Clean L1 (Kurtosis)
 make clean-l2            # Clean L2 (docker containers + generated files)
+make clean-celestia      # Clean Celestia stack
 make clean-observability # Clean observability stack
 ```
 
@@ -87,6 +95,7 @@ Each component has its own logging approach:
 
 - **L1**: Uses Kurtosis — see [L1 Documentation](internal/l1/README.md#viewing-logs)
 - **L2**: Uses Docker containers — see [L2 Documentation](internal/l2/README.md#viewing-logs)
+- **Celestia**: Uses generated Docker Compose assets in `.localnet/celestia`
 - **Observability**: Access Grafana at http://localhost:3000 for dashboards and Loki log aggregation
 
 ## ⏹️ Stopping Services
@@ -98,6 +107,7 @@ make stop
 # Or stop specific components:
 make stop-l1              # Stop L1 (Kurtosis enclave)
 make stop-l2              # Stop L2 (Docker containers)
+make stop-celestia        # Stop Celestia stack
 make stop-observability   # Stop observability stack
 ```
 
