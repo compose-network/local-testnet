@@ -119,7 +119,8 @@ clean-l2: ## Clean L2 Docker containers and volumes
 		docker compose -f .localnet/docker-compose.yml down -v || true; \
 	fi
 	docker ps -aq --filter "label=${L2_LABEL}" | xargs -r docker rm -f
-	docker volume ls -q | grep -E "(rollup-a|rollup-b|blockscout|op-rbuilder)" | xargs -r docker volume rm
+	docker ps -aq --filter "name=op-succinct" | xargs -r docker rm -f
+	docker volume ls -q | grep -E "(rollup-a|rollup-b|blockscout|op-rbuilder|op-succinct-db)" | xargs -r docker volume rm
 	rm -rf ./.localnet/state ./.localnet/networks ./.localnet/compiled-contracts ./.localnet/docker-compose.yml ./.localnet/docker-compose.blockscout.yml ./.localnet/.tmp ./.localnet/registry ./.cache
 
 .PHONY: clean-l2-full

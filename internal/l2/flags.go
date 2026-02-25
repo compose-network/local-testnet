@@ -49,6 +49,8 @@ var (
 		{"op-geth-branch", "l2.repositories.op-geth.branch", "", "op-geth repository branch"},
 		{"publisher-url", "l2.repositories.publisher.url", "", "publisher repository URL"},
 		{"publisher-branch", "l2.repositories.publisher.branch", "", "publisher repository branch"},
+		{"op-succinct-url", "l2.repositories.op-succinct.url", "", "op-succinct repository URL"},
+		{"op-succinct-branch", "l2.repositories.op-succinct.branch", "", "op-succinct repository branch"},
 		{"compose-contracts-url", "l2.repositories.compose-contracts.url", "", "compose-contracts repository URL"},
 		{"compose-contracts-branch", "l2.repositories.compose-contracts.branch", "", "compose-contracts repository branch"},
 
