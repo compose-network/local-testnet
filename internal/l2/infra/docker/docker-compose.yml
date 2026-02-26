@@ -85,6 +85,28 @@ services:
       - |
         set -eu
 
+        wait_for_file() {
+          file="$$1"
+          label="$$2"
+          i=0
+          while [ "$$i" -lt 120 ]; do
+            if [ -s "$$file" ]; then
+              return 0
+            fi
+            i=$$(($$i+1))
+            echo "[*] waiting for $$label ($$file)..."
+            sleep 1
+          done
+          echo "[error] $$label not available after 120s: $$file" >&2
+          exit 1
+        }
+
+        wait_for_file /config/genesis.json "genesis"
+        wait_for_file /config/jwt.txt "jwt"
+        if [ ! -f /config/password.txt ]; then
+          : > /config/password.txt
+        fi
+
         COORDINATOR_KEY=$${COORDINATOR_PRIVATE_KEY:-}
         if [ -z "$$COORDINATOR_KEY" ]; then
           echo "[error] COORDINATOR_PRIVATE_KEY is required" >&2
@@ -258,6 +280,28 @@ services:
       - -c
       - |
         set -eu
+
+        wait_for_file() {
+          file="$$1"
+          label="$$2"
+          i=0
+          while [ "$$i" -lt 120 ]; do
+            if [ -s "$$file" ]; then
+              return 0
+            fi
+            i=$$(($$i+1))
+            echo "[*] waiting for $$label ($$file)..."
+            sleep 1
+          done
+          echo "[error] $$label not available after 120s: $$file" >&2
+          exit 1
+        }
+
+        wait_for_file /config/genesis.json "genesis"
+        wait_for_file /config/jwt.txt "jwt"
+        if [ ! -f /config/password.txt ]; then
+          : > /config/password.txt
+        fi
 
         COORDINATOR_KEY=$${COORDINATOR_PRIVATE_KEY:-}
         if [ -z "$$COORDINATOR_KEY" ]; then

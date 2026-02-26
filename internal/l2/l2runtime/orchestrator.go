@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/compose-network/local-testnet/configs"
 	"github.com/compose-network/local-testnet/internal/l2/infra/docker"
@@ -98,6 +101,10 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryA
 		serviceManager.WithSidecar(sidecarComposePath)
 	}
 
+	if err := o.waitForNetworkFiles(); err != nil {
+		return nil, fmt.Errorf("required network files not ready: %w", err)
+	}
+
 	if err := serviceManager.StartAll(ctx, envVars); err != nil {
 		return nil, fmt.Errorf("failed to start L2 services: %w", err)
 	}
@@ -132,6 +139,55 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryA
 	o.logger.Info("Phase 3: L2 runtime operations completed successfully")
 
 	return deployedContracts, nil
+}
+
+func (o *Orchestrator) waitForNetworkFiles() error {
+	type fileSpec struct {
+		path  string
+		label string
+	}
+	files := []fileSpec{
+		{
+			path:  filepath.Join(o.networksDir, string(configs.L2ChainNameRollupA), "genesis.json"),
+			label: "rollup-a genesis",
+		},
+		{
+			path:  filepath.Join(o.networksDir, string(configs.L2ChainNameRollupA), "jwt.txt"),
+			label: "rollup-a jwt",
+		},
+		{
+			path:  filepath.Join(o.networksDir, string(configs.L2ChainNameRollupB), "genesis.json"),
+			label: "rollup-b genesis",
+		},
+		{
+			path:  filepath.Join(o.networksDir, string(configs.L2ChainNameRollupB), "jwt.txt"),
+			label: "rollup-b jwt",
+		},
+	}
+
+	deadline := time.Now().Add(120 * time.Second)
+	for {
+		missing := make([]fileSpec, 0, len(files))
+		for _, f := range files {
+			info, err := os.Stat(f.path)
+			if err != nil || info.Size() == 0 {
+				missing = append(missing, f)
+			}
+		}
+
+		if len(missing) == 0 {
+			return nil
+		}
+		if time.Now().After(deadline) {
+			msg := "missing files:"
+			for _, f := range missing {
+				msg += fmt.Sprintf(" %s(%s)", f.label, f.path)
+			}
+			return fmt.Errorf(msg)
+		}
+
+		time.Sleep(1 * time.Second)
+	}
 }
 
 func (o *Orchestrator) restartOpGeth(ctx context.Context, composeFilePath string, env map[string]string, deployedContracts map[configs.L2ChainName]map[contracts.ContractName]common.Address) error {
