@@ -58,7 +58,7 @@ services:
       MAILBOX_B: "${MAILBOX_B:-}"
     volumes:
       - rollup-a-geth:/data
-      - ${ROLLUP_A_CONFIG_PATH:-../../networks/rollup-a}:/config:ro
+      - ${ROLLUP_A_CONFIG_PATH:-../../networks/rollup-a}:/config
       - ${ROLLUP_B_CONFIG_PATH:-../../networks/rollup-b}:/config_b:ro
       - ${ROOT_DIR}/.localnet/registry:/registry:ro
     ports:
@@ -232,7 +232,7 @@ services:
       COMPOSE_NETWORK_NAME: "${COMPOSE_NETWORK_NAME}"
     volumes:
       - rollup-b-geth:/data
-      - ${ROLLUP_B_CONFIG_PATH:-../../networks/rollup-b}:/config:ro
+      - ${ROLLUP_B_CONFIG_PATH:-../../networks/rollup-b}:/config
       - ${ROLLUP_A_CONFIG_PATH:-../../networks/rollup-a}:/config_a:ro
       - ${ROOT_DIR}/.localnet/registry:/registry:ro
     ports:

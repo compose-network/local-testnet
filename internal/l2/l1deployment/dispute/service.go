@@ -199,31 +199,49 @@ func (s *Service) runJustCommand(ctx context.Context, args ...string) error {
 
 // parseDisputeGameFactoryAddress reads deployments.json and extracts DisputeGameFactory proxy address
 func (s *Service) parseDisputeGameFactoryAddress() (common.Address, error) {
+	// First try legacy deployments.json (used by older compose-contracts versions)
 	deploymentsPath := filepath.Join(s.contractsDir, "deployments.json")
+	if data, err := os.ReadFile(deploymentsPath); err == nil {
+		var deployments map[string]struct {
+			DisputeGameFactory struct {
+				Proxy string `json:"proxy"`
+			} `json:"DisputeGameFactory"`
+		}
+		if err := json.Unmarshal(data, &deployments); err == nil {
+			if network, ok := deployments[s.cfg.Dispute.NetworkName]; ok {
+				if network.DisputeGameFactory.Proxy != "" {
+					return common.HexToAddress(network.DisputeGameFactory.Proxy), nil
+				}
+				return common.Address{}, fmt.Errorf("DisputeGameFactory proxy address is empty")
+			}
+		}
+	}
 
-	data, err := os.ReadFile(deploymentsPath)
+	// Fallback to compose deployment layout: deployments/compose/<network>.json
+	composePath := filepath.Join(s.contractsDir, "deployments", "compose", s.cfg.Dispute.NetworkName+".json")
+	data, err := os.ReadFile(composePath)
 	if err != nil {
-		return common.Address{}, fmt.Errorf("failed to read deployments.json: %w", err)
+		return common.Address{}, fmt.Errorf("failed to read compose deployments file: %w", err)
 	}
 
-	var deployments map[string]struct {
-		DisputeGameFactory struct {
-			Proxy string `json:"proxy"`
-		} `json:"DisputeGameFactory"`
+	var composeDeployments map[string]struct {
+		Contracts struct {
+			DisputeGameFactory struct {
+				ProxyAddress string `json:"proxyAddress"`
+			} `json:"DisputeGameFactory"`
+		} `json:"contracts"`
+	}
+	if err := json.Unmarshal(data, &composeDeployments); err != nil {
+		return common.Address{}, fmt.Errorf("failed to parse compose deployments file: %w", err)
 	}
 
-	if err := json.Unmarshal(data, &deployments); err != nil {
-		return common.Address{}, fmt.Errorf("failed to parse deployments.json: %w", err)
-	}
-
-	network, ok := deployments[s.cfg.Dispute.NetworkName]
+	network, ok := composeDeployments[s.cfg.Dispute.NetworkName]
 	if !ok {
-		return common.Address{}, fmt.Errorf("%s deployment not found in deployments.json", s.cfg.Dispute.NetworkName)
+		return common.Address{}, fmt.Errorf("%s deployment not found in compose deployments file", s.cfg.Dispute.NetworkName)
 	}
-
-	if network.DisputeGameFactory.Proxy == "" {
+	if network.Contracts.DisputeGameFactory.ProxyAddress == "" {
 		return common.Address{}, fmt.Errorf("DisputeGameFactory proxy address is empty")
 	}
 
-	return common.HexToAddress(network.DisputeGameFactory.Proxy), nil
+	return common.HexToAddress(network.Contracts.DisputeGameFactory.ProxyAddress), nil
 }
