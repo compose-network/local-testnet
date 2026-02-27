@@ -62,10 +62,8 @@ func (c *Client) Run(ctx context.Context, opts RunOptions) (string, error) {
 
 	// Attach to container logs before starting (needed for AutoRemove containers)
 	var stdout, stderr bytes.Buffer
-	var copyDone chan struct{}
 
 	if opts.CaptureOut || opts.StreamLogs || opts.AutoRemove {
-		copyDone = make(chan struct{})
 		attachResp, err := c.cli.ContainerAttach(ctx, containerID, container.AttachOptions{
 			Stream: true,
 			Stdout: true,
@@ -78,7 +76,6 @@ func (c *Client) Run(ctx context.Context, opts RunOptions) (string, error) {
 
 		// Start copying output in background
 		go func() {
-			defer close(copyDone)
 			if opts.StreamLogs {
 				// Stream to console and capture
 				outWriter := io.MultiWriter(os.Stdout, &stdout)
@@ -110,11 +107,6 @@ func (c *Client) Run(ctx context.Context, opts RunOptions) (string, error) {
 			}
 			return "", fmt.Errorf("container exited with code %d", status.StatusCode)
 		}
-	}
-
-	// Ensure log copy has completed before reading captured output.
-	if copyDone != nil {
-		<-copyDone
 	}
 
 	// Return captured output

@@ -244,19 +244,14 @@ func (o *Orchestrator) buildComposeServices(ctx context.Context, composeFilePath
 
 	composeFiles := []string{composeFilePath}
 
-	// Flashblocks services (op-rbuilder + rollup-boost)
-	if cfg.Flashblocks.Enabled || cfg.Sidecar.Enabled {
+	// Sidecar requires flashblocks, so add flashblocks compose file first
+	if cfg.Sidecar.Enabled {
 		flashblocksComposePath, err := docker.EnsureFlashblocksComposeFile(o.localnetDir)
 		if err != nil {
 			return fmt.Errorf("failed to prepare flashblocks compose file for build: %w", err)
 		}
 		composeFiles = append(composeFiles, flashblocksComposePath)
-		// Build once; both services use the same image tag.
-		services = append(services, "op-rbuilder-a")
-	}
 
-	// Sidecar requires flashblocks, so add sidecar compose file after flashblocks.
-	if cfg.Sidecar.Enabled {
 		sidecarComposePath, err := docker.EnsureSidecarComposeFile(o.localnetDir)
 		if err != nil {
 			return fmt.Errorf("failed to prepare sidecar compose file for build: %w", err)

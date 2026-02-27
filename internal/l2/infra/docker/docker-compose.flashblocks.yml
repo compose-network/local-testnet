@@ -20,18 +20,14 @@ services:
   # Block builder for Chain A
   op-rbuilder-a:
     build:
-      context: ${ROOT_DIR}/../op-rbuilder
+      context: ${OP_RBUILDER_PATH:-../../op-rbuilder} # we use the local version of op-rbuilder
       dockerfile: Dockerfile
-      target: rbuilder-runtime
-    image: local/op-rbuilder:dev
+    image: local/op-rbuilder:dev #  image: ghcr.io/flashbots/op-rbuilder:${OP_RBUILDER_IMAGE_TAG:-latest}
     container_name: op-rbuilder-a
     labels:
       - "stack=localnet-l2"
     networks:
       - localnet-l2
-    environment:
-      RUST_LOG: "info"
-      RUST_BACKTRACE: "1"
     volumes:
       - op-rbuilder-a-data:/data
       - ${ROLLUP_A_CONFIG_PATH}:/config:ro
@@ -60,18 +56,14 @@ services:
   # Block builder for Chain B
   op-rbuilder-b:
     build:
-      context: ${ROOT_DIR}/../op-rbuilder
+      context: ${OP_RBUILDER_PATH:-../../op-rbuilder} # we use the local version of op-rbuilder
       dockerfile: Dockerfile
-      target: rbuilder-runtime
-    image: local/op-rbuilder:dev
+    image: local/op-rbuilder:dev #  image: ghcr.io/flashbots/op-rbuilder:${OP_RBUILDER_IMAGE_TAG:-latest}
     container_name: op-rbuilder-b
     labels:
       - "stack=localnet-l2"
     networks:
       - localnet-l2
-    environment:
-      RUST_LOG: "info"
-      RUST_BACKTRACE: "1"
     volumes:
       - op-rbuilder-b-data:/data
       - ${ROLLUP_B_CONFIG_PATH}:/config:ro
@@ -109,7 +101,6 @@ services:
       - op-rbuilder-a
       - op-geth-a
     environment:
-      # L2 engine endpoint (authrpc)
       L2_URL: "http://op-geth-a:8551"
       L2_JWT_PATH: "/config/jwt.txt"
       BUILDER_URL: "http://op-rbuilder-a:8551"
@@ -142,7 +133,6 @@ services:
       - op-rbuilder-b
       - op-geth-b
     environment:
-      # L2 engine endpoint (authrpc)
       L2_URL: "http://op-geth-b:8551"
       L2_JWT_PATH: "/config/jwt.txt"
       BUILDER_URL: "http://op-rbuilder-b:8551"
