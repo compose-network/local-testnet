@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/compose-network/local-testnet/configs"
@@ -179,11 +180,11 @@ func (o *Orchestrator) waitForNetworkFiles() error {
 			return nil
 		}
 		if time.Now().After(deadline) {
-			msg := "missing files:"
+			parts := make([]string, 0, len(missing))
 			for _, f := range missing {
-				msg += fmt.Sprintf(" %s(%s)", f.label, f.path)
+				parts = append(parts, fmt.Sprintf("%s(%s)", f.label, f.path))
 			}
-			return fmt.Errorf(msg)
+			return fmt.Errorf("missing files: %s", strings.Join(parts, " "))
 		}
 
 		time.Sleep(1 * time.Second)
