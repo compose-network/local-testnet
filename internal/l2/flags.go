@@ -119,6 +119,7 @@ func init() {
 	}
 	CMD.AddCommand(compileCmd)
 	CMD.AddCommand(deployCmd)
+	CMD.AddCommand(opSuccinctContractsCmd)
 }
 
 // declareFlags declares multiple flags and binds them to viper configuration keys.

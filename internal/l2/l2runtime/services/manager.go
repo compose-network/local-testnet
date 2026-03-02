@@ -39,18 +39,23 @@ func (m *Manager) WithFlashblocks(flashblocksComposeFilePath string) *Manager {
 }
 
 // StartAll starts the core L2 services (excluding op-succinct).
-func (m *Manager) StartAll(ctx context.Context, env map[string]string) error {
+func (m *Manager) StartAll(ctx context.Context, env map[string]string, localAltDAEnabled bool) error {
 	services := []string{
 		"publisher",
 		"op-geth-a",
 		"op-geth-b",
+	}
+	if localAltDAEnabled {
+		services = append(services, "op-alt-da-a", "op-alt-da-b")
+	}
+	services = append(services,
 		"op-node-a",
 		"op-node-b",
 		"op-batcher-a",
 		"op-batcher-b",
 		"op-proposer-a",
 		"op-proposer-b",
-	}
+	)
 
 	if m.flashblocksEnabled && m.flashblocksComposeFilePath != "" {
 		services = append(services,
@@ -79,22 +84,29 @@ func (m *Manager) StartAll(ctx context.Context, env map[string]string) error {
 }
 
 // StartOpSuccinct starts selected op-succinct services after the rest of L2 is running.
-func (m *Manager) StartOpSuccinct(ctx context.Context, env map[string]string, enabledChains []configs.L2ChainName) error {
+func (m *Manager) StartOpSuccinct(ctx context.Context, env map[string]string, enabledChains []configs.L2ChainName, celestiaDAEnabled bool) error {
 	if len(enabledChains) == 0 {
 		m.logger.Info("op-succinct has no enabled chains; skipping service startup")
 		return nil
 	}
 
 	dbServices := make([]string, 0, len(enabledChains))
+	indexerServices := make([]string, 0, len(enabledChains))
 	proposerServices := make([]string, 0, len(enabledChains))
 
 	for _, chain := range enabledChains {
 		switch chain {
 		case configs.L2ChainNameRollupA:
 			dbServices = append(dbServices, "op-succinct-db-a")
+			if celestiaDAEnabled {
+				indexerServices = append(indexerServices, "op-celestia-indexer-a")
+			}
 			proposerServices = append(proposerServices, "op-succinct-a")
 		case configs.L2ChainNameRollupB:
 			dbServices = append(dbServices, "op-succinct-db-b")
+			if celestiaDAEnabled {
+				indexerServices = append(indexerServices, "op-celestia-indexer-b")
+			}
 			proposerServices = append(proposerServices, "op-succinct-b")
 		default:
 			m.logger.With("chain", chain).Warn("unknown op-succinct chain; skipping")
@@ -113,6 +125,13 @@ func (m *Manager) StartOpSuccinct(ctx context.Context, env map[string]string, en
 
 	if err := m.clearOpSuccinctLocks(ctx, dbServices); err != nil {
 		return err
+	}
+
+	if len(indexerServices) > 0 {
+		m.logger.With("services", indexerServices).Info("starting op-celestia-indexer services")
+		if err := docker.ComposeUp(ctx, m.composeFilePath, env, indexerServices...); err != nil {
+			return fmt.Errorf("failed to start op-celestia-indexer services: %w", err)
+		}
 	}
 
 	m.logger.With("services", proposerServices).Info("starting op-succinct proposer services")
