@@ -11,6 +11,8 @@ import (
 
 	"github.com/compose-network/local-testnet/configs"
 	"github.com/compose-network/local-testnet/internal/l2/infra/docker"
+	"github.com/compose-network/local-testnet/internal/l2/l2config/genesis"
+	"github.com/compose-network/local-testnet/internal/l2/l2config/secrets"
 	"github.com/compose-network/local-testnet/internal/l2/l2runtime/contracts"
 	"github.com/compose-network/local-testnet/internal/l2/l2runtime/registry"
 	"github.com/compose-network/local-testnet/internal/l2/l2runtime/services"
@@ -149,19 +151,19 @@ func (o *Orchestrator) waitForNetworkFiles() error {
 	}
 	files := []fileSpec{
 		{
-			path:  filepath.Join(o.networksDir, string(configs.L2ChainNameRollupA), "genesis.json"),
+			path:  filepath.Join(o.networksDir, string(configs.L2ChainNameRollupA), genesis.GenesisFileName),
 			label: "rollup-a genesis",
 		},
 		{
-			path:  filepath.Join(o.networksDir, string(configs.L2ChainNameRollupA), "jwt.txt"),
+			path:  filepath.Join(o.networksDir, string(configs.L2ChainNameRollupA), secrets.JWTFileName),
 			label: "rollup-a jwt",
 		},
 		{
-			path:  filepath.Join(o.networksDir, string(configs.L2ChainNameRollupB), "genesis.json"),
+			path:  filepath.Join(o.networksDir, string(configs.L2ChainNameRollupB), genesis.GenesisFileName),
 			label: "rollup-b genesis",
 		},
 		{
-			path:  filepath.Join(o.networksDir, string(configs.L2ChainNameRollupB), "jwt.txt"),
+			path:  filepath.Join(o.networksDir, string(configs.L2ChainNameRollupB), secrets.JWTFileName),
 			label: "rollup-b jwt",
 		},
 	}

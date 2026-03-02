@@ -20,7 +20,7 @@ import (
 	"github.com/compose-network/local-testnet/internal/logger"
 )
 
-const genesisFileName = "genesis.json"
+const GenesisFileName = "genesis.json"
 
 // Generator generates genesis.json files for L2 chains
 type (
@@ -116,7 +116,7 @@ func (g *Generator) Generate(ctx context.Context, chainID int, path string, wall
 		return "", fmt.Errorf("failed to compute genesis hash: %w", err)
 	}
 
-	genesisPath := filepath.Join(path, genesisFileName)
+	genesisPath := filepath.Join(path, GenesisFileName)
 
 	g.logger.
 		With("hash", hash).

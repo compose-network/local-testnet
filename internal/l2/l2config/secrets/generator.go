@@ -13,7 +13,7 @@ import (
 
 const (
 	jwtSecretLength  = 32 // 32 bytes = 64 hex characters
-	jwtFileName      = "jwt.txt"
+	JWTFileName      = "jwt.txt"
 	passwordFileName = "password.txt"
 )
 
@@ -43,13 +43,13 @@ func (g *Generator) GenerateJWT(path string) error {
 	// Return as hex string without 0x prefix
 	hexSecret := []byte(hex.EncodeToString(secret))
 
-	jwtPath := filepath.Join(path, jwtFileName)
+	jwtPath := filepath.Join(path, JWTFileName)
 
 	g.logger.
 		With("file_path", jwtPath).
 		Info("JWT secret generated. Writing file")
 	if err := g.writer.WriteBytes(jwtPath, hexSecret); err != nil {
-		return fmt.Errorf("failed to write '%s': %w", jwtFileName, err)
+		return fmt.Errorf("failed to write '%s': %w", JWTFileName, err)
 	}
 
 	return nil
