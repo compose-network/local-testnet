@@ -3,32 +3,32 @@ l1:
 observability:
 
 l2:
-  l1-chain-id: 1
-  l1-el-url: http://127.0.0.1:8080
-  l1-cl-url: http://127.0.0.2:8080
-  compose-network-name: network-name # compose network name for publisher registry, e.g. hoodi
-  coordinator-private-key: 0x0000000000000000000000000000000000000000000000000000000000000000
+  l1-chain-id: 11155111
+  l1-el-url: https://sepolia.drpc.org
+  l1-cl-url: https://eth-sepolia.api.onfinality.io/beacon/public
+  compose-network-name: sepolia-stage # compose network name for publisher registry
+  coordinator-private-key: 0x336ff3f15e4a2356201939cbc486d8589585e3e67fb4664ba1912ad21ac1153a
   wallet:
-    private-key: 0000000000000000000000000000000000000000000000000000000000000000
-    address: 0x0000000000000000000000000000000000000000000
+    private-key: 336ff3f15e4a2356201939cbc486d8589585e3e67fb4664ba1912ad21ac1153a
+    address: 0x2251Ae69680A4F78078c95C602835B9368622Af7
   blockscout:
-    enabled: false
+    enabled: true
   flashblocks:
-    enabled: false
+    enabled: true
     op-rbuilder-image-tag: "latest"
     rollup-boost-image-tag: "latest"
     rollup-a-rpc-port: 17545
     rollup-b-rpc-port: 27545
   sidecar:
-    enabled: false  # requires flashblocks
+    enabled: true  # requires flashblocks
     rollup-a-api-port: 17090
     rollup-b-api-port: 27090
   chain-configs:
-    rollup-a: 
-      id: 77777
+    rollup-a:
+      id: 177777
       rpc-port: 18545
-    rollup-b: 
-      id: 88888
+    rollup-b:
+      id: 188888
       rpc-port: 28545
   deployment-target: live  # "live" or "calldata"
   genesis-balance-wei: "100000000000000000000000"  # 100_000 ETH for funded accounts
@@ -40,12 +40,12 @@ l2:
   images:
     op-deployer:
       tag: v0.4.5
-    op-node: 
-      tag: v1.16.2
-    op-proposer: 
+    op-node:
+      tag: v1.16.4
+    op-proposer:
       tag: v1.10.0
-    op-batcher: 
-      tag: v1.16.2
+    op-batcher:
+      tag: v1.16.3
   repositories:
     # Note: For local development, use local-path instead of url+branch.
     # Paths are resolved relative to the project root (where you run commands).
@@ -55,32 +55,24 @@ l2:
     #   local-path: ../../parent-dir/op-geth        # Relative path (two levels up)
     #   local-path: /absolute/path/to/op-geth       # Absolute path
     op-geth:
-      url: https://github.com/op-geth.git
-      branch: main
-      # For local development:
-      # local-path: ~/projects/op-geth
+      local-path: ../op-geth
     publisher:
-      url: https://github.com/publisher.git
-      branch: main
-      # For local development:
-      # local-path: ~/projects/publisher
+      local-path: ../publisher
     compose-contracts:
-      url: https://github.com/contracts.git
-      branch: main
+      url: git@github.com:compose-network/contracts.git
+      branch: develop
     sidecar:
       # Required when sidecar.enabled: true
-      # local-path: ~/projects/sidecar
-      url: https://github.com/sidecar.git
-      branch: main
+      local-path: ../sidecar
   dispute:
-    network-name: network-name # e.g. hoodi
-    explorer-url: http://127.0.0.1:8080 # e.g. http://hoodi.etherscan.io
-    explorer-api-url: http://127.0.0.1:8080/api # e.g. http://hoodi.etherscan.io/api
-    verifier-address: "0x0000000000000000000000000000000000000000000" # SP1 verifier contract address
-    owner-address: "0x0000000000000000000000000000000000000000000" # Owner address (can be equal to wallet.address)
-    proposer-address: "0x0000000000000000000000000000000000000000000" # Proposer address (can be equal to wallet.address)
-    aggregation-vkey: "0x0000000000000000000000000000000000000000000000000000000000000000" # Aggregation verification key
-    guardian-address: "0x0000000000000000000000000000000000000000000" # Guardian address (can be equal to wallet.address)
+    network-name: sepolia
+    explorer-url: https://sepolia.etherscan.io/
+    explorer-api-url: https://api-sepolia.etherscan.io/api
+    verifier-address: 0xC75715a3F0E026272A9Cf66089bd9B3F00651B87
+    owner-address: 0x2251Ae69680A4F78078c95C602835B9368622Af7
+    proposer-address: 0x2251Ae69680A4F78078c95C602835B9368622Af7
+    aggregation-vkey: "0x0000000000000000000000000000000000000000000000000000000000000001"
+    guardian-address: 0x2251Ae69680A4F78078c95C602835B9368622Af7
     proof-maturity-delay-seconds: 604800  # Proof maturity delay (default: 7 days = 604800 seconds)
     dispute-game-finality-delay-seconds: 302400  # Dispute game finality delay (default: 3.5 days = 302400 seconds)
     dispute-game-init-bond: 80000000000000000  # Initial bond for dispute games (default: 0.08 ether = 80000000000000000 wei)
