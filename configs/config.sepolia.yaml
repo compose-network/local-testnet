@@ -19,6 +19,7 @@ l2:
     rollup-boost-image-tag: "latest"
     rollup-a-rpc-port: 17545
     rollup-b-rpc-port: 27545
+    # op-rbuilder is built from a local path by docker-compose; set OP_RBUILDER_PATH on the stage host.
   sidecar:
     enabled: true  # requires flashblocks
     rollup-a-api-port: 17090
@@ -47,23 +48,19 @@ l2:
     op-batcher:
       tag: v1.16.3
   repositories:
-    # Note: For local development, use local-path instead of url+branch.
-    # Paths are resolved relative to the project root (where you run commands).
-    # Examples:
-    #   local-path: ~/projects/op-geth              # Home directory (recommended)
-    #   local-path: ../op-geth                      # Relative path (one level up)
-    #   local-path: ../../parent-dir/op-geth        # Relative path (two levels up)
-    #   local-path: /absolute/path/to/op-geth       # Absolute path
     op-geth:
-      local-path: ../op-geth
+      url: git@github.com:ethereum-optimism/op-geth.git
+      branch: v1.101603.4
     publisher:
-      local-path: ../publisher
+      url: git@github.com:compose-network/publisher.git
+      branch: feature/compose-sidecar
     compose-contracts:
       url: git@github.com:compose-network/contracts.git
       branch: develop
     sidecar:
       # Required when sidecar.enabled: true
-      local-path: ../sidecar
+      url: git@github.com:compose-network/sidecar.git
+      branch: stage
   dispute:
     network-name: sepolia
     explorer-url: https://sepolia.etherscan.io/
