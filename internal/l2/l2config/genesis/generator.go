@@ -143,7 +143,7 @@ func (g *Generator) computeGenesisHash(ctx context.Context, chainID int, genesis
 	}
 	defer os.RemoveAll(tmpDir)
 
-	genesisPath := filepath.Join(tmpDir, genesisFileName)
+	genesisPath := filepath.Join(tmpDir, GenesisFileName)
 	genesisJSON, err := json.Marshal(genesis)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal genesis: %w", err)
@@ -183,7 +183,7 @@ func (g *Generator) computeGenesisHash(ctx context.Context, chainID int, genesis
 			"init",
 			"--state.scheme=hash",
 			"--datadir=/datadir",
-			fmt.Sprintf("/genesis/%s", genesisFileName),
+			fmt.Sprintf("/genesis/%s", GenesisFileName),
 		},
 		Env: []string{
 			fmt.Sprintf("GETH_COORDINATOR_KEY=%s", coordinatorPrivateKey),
