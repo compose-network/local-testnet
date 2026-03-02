@@ -1,0 +1,75 @@
+l1:
+
+observability:
+
+l2:
+  l1-chain-id: 11155111
+  l1-el-url: https://sepolia.drpc.org
+  l1-cl-url: https://eth-sepolia.api.onfinality.io/beacon/public
+  compose-network-name: sepolia-stage # compose network name for publisher registry
+  coordinator-private-key: 0x336ff3f15e4a2356201939cbc486d8589585e3e67fb4664ba1912ad21ac1153a
+  wallet:
+    private-key: 336ff3f15e4a2356201939cbc486d8589585e3e67fb4664ba1912ad21ac1153a
+    address: 0x2251Ae69680A4F78078c95C602835B9368622Af7
+  blockscout:
+    enabled: true
+  flashblocks:
+    enabled: true
+    op-rbuilder-image-tag: "latest"
+    rollup-boost-image-tag: "latest"
+    rollup-a-rpc-port: 17545
+    rollup-b-rpc-port: 27545
+    # op-rbuilder is built from a local path by docker-compose; set OP_RBUILDER_PATH on the stage host.
+  sidecar:
+    enabled: true  # requires flashblocks
+    rollup-a-api-port: 17090
+    rollup-b-api-port: 27090
+  chain-configs:
+    rollup-a:
+      id: 177777
+      rpc-port: 18545
+    rollup-b:
+      id: 188888
+      rpc-port: 28545
+  deployment-target: live  # "live" or "calldata"
+  genesis-balance-wei: "100000000000000000000000"  # 100_000 ETH for funded accounts
+  # curl https://us-docker.pkg.dev/v2/oplabs-tools-artifacts/images/{REPOSITORY_NAME}/tags/list to fetch list of available tags
+  # these versions represent fully compatible builds that work together as expected in the local testnet setup.
+  # stage branch versions can be found here: https://github.com/ssvlabs/gitops-stage/blob/main/environments/ovh/optimism/optimism-stack.yaml
+  # prod branch versions can be found here: https://github.com/ssvlabs/gitops-production/blob/main/environments/aws/hoodi/compose/op-stack-a.yaml
+  # keep in mind - changing the versions may lead to unexpected behavior due to incompatibilities between different components and local testnet data structures.
+  images:
+    op-deployer:
+      tag: v0.4.5
+    op-node:
+      tag: v1.16.4
+    op-proposer:
+      tag: v1.10.0
+    op-batcher:
+      tag: v1.16.3
+  repositories:
+    op-geth:
+      url: git@github.com:ethereum-optimism/op-geth.git
+      branch: v1.101603.4
+    publisher:
+      url: git@github.com:compose-network/publisher.git
+      branch: feature/compose-sidecar
+    compose-contracts:
+      url: git@github.com:compose-network/contracts.git
+      branch: develop
+    sidecar:
+      # Required when sidecar.enabled: true
+      url: git@github.com:compose-network/sidecar.git
+      branch: stage
+  dispute:
+    network-name: sepolia
+    explorer-url: https://sepolia.etherscan.io/
+    explorer-api-url: https://api-sepolia.etherscan.io/api
+    verifier-address: 0xC75715a3F0E026272A9Cf66089bd9B3F00651B87
+    owner-address: 0x2251Ae69680A4F78078c95C602835B9368622Af7
+    proposer-address: 0x2251Ae69680A4F78078c95C602835B9368622Af7
+    aggregation-vkey: "0x0000000000000000000000000000000000000000000000000000000000000001"
+    guardian-address: 0x2251Ae69680A4F78078c95C602835B9368622Af7
+    proof-maturity-delay-seconds: 604800  # Proof maturity delay (default: 7 days = 604800 seconds)
+    dispute-game-finality-delay-seconds: 302400  # Dispute game finality delay (default: 3.5 days = 302400 seconds)
+    dispute-game-init-bond: 80000000000000000  # Initial bond for dispute games (default: 0.08 ether = 80000000000000000 wei)

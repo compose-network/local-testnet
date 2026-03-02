@@ -128,8 +128,18 @@ func (s *Service) Deploy(ctx context.Context, cfg configs.L2) error {
 }
 
 func generateBlockscoutConfig(cfg configs.L2, deploymentState l1deployment.DeploymentState) ([]blockscout.RollupConfig, error) {
-	var chainConfigs []blockscout.RollupConfig
-	for chainName, config := range cfg.ChainConfigs {
+	chainOrder := []configs.L2ChainName{
+		configs.L2ChainNameRollupA,
+		configs.L2ChainNameRollupB,
+	}
+	chainConfigs := make([]blockscout.RollupConfig, 0, len(chainOrder))
+
+	for _, chainName := range chainOrder {
+		config, ok := cfg.ChainConfigs[chainName]
+		if !ok {
+			return nil, fmt.Errorf("chain config not found for %s", chainName)
+		}
+
 		var hostName string
 		switch chainName {
 		case configs.L2ChainNameRollupA:

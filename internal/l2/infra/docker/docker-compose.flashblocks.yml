@@ -19,7 +19,10 @@ services:
 
   # Block builder for Chain A
   op-rbuilder-a:
-    image: ghcr.io/flashbots/op-rbuilder:${OP_RBUILDER_IMAGE_TAG:-latest}
+    build:
+      context: ${OP_RBUILDER_PATH:-../../op-rbuilder} # we use the local version of op-rbuilder
+      dockerfile: Dockerfile
+    image: local/op-rbuilder:dev #  image: ghcr.io/flashbots/op-rbuilder:${OP_RBUILDER_IMAGE_TAG:-latest}
     container_name: op-rbuilder-a
     labels:
       - "stack=localnet-l2"
@@ -52,7 +55,10 @@ services:
 
   # Block builder for Chain B
   op-rbuilder-b:
-    image: ghcr.io/flashbots/op-rbuilder:${OP_RBUILDER_IMAGE_TAG:-latest}
+    build:
+      context: ${OP_RBUILDER_PATH:-../../op-rbuilder} # we use the local version of op-rbuilder
+      dockerfile: Dockerfile
+    image: local/op-rbuilder:dev #  image: ghcr.io/flashbots/op-rbuilder:${OP_RBUILDER_IMAGE_TAG:-latest}
     container_name: op-rbuilder-b
     labels:
       - "stack=localnet-l2"
