@@ -19,7 +19,7 @@ l2:
     rollup-boost-image-tag: "latest"
     rollup-a-rpc-port: 17545
     rollup-b-rpc-port: 27545
-    # op-rbuilder is built from a local path by docker-compose; set OP_RBUILDER_PATH on the stage host.
+    # op-rbuilder defaults to compose-network/op-rbuilder#stage; set OP_RBUILDER_PATH to override with local path.
   sidecar:
     enabled: true  # requires flashblocks
     rollup-a-api-port: 17090

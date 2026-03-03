@@ -20,7 +20,7 @@ services:
   # Block builder for Chain A
   op-rbuilder-a:
     build:
-      context: ${OP_RBUILDER_PATH:-../../op-rbuilder} # we use the local version of op-rbuilder
+      context: ${OP_RBUILDER_PATH:-https://github.com/compose-network/op-rbuilder.git#stage} # default: remote stage; override with local path via OP_RBUILDER_PATH
       dockerfile: Dockerfile
     image: local/op-rbuilder:dev #  image: ghcr.io/flashbots/op-rbuilder:${OP_RBUILDER_IMAGE_TAG:-latest}
     container_name: op-rbuilder-a
@@ -56,7 +56,7 @@ services:
   # Block builder for Chain B
   op-rbuilder-b:
     build:
-      context: ${OP_RBUILDER_PATH:-../../op-rbuilder} # we use the local version of op-rbuilder
+      context: ${OP_RBUILDER_PATH:-https://github.com/compose-network/op-rbuilder.git#stage} # default: remote stage; override with local path via OP_RBUILDER_PATH
       dockerfile: Dockerfile
     image: local/op-rbuilder:dev #  image: ghcr.io/flashbots/op-rbuilder:${OP_RBUILDER_IMAGE_TAG:-latest}
     container_name: op-rbuilder-b
