@@ -49,6 +49,11 @@ Manages the observability stack for monitoring and debugging. Deploys Grafana, P
 
 **📖 [Read Observability Documentation](internal/observability/README.md)**
 
+### Compose Network Console (`frontend`)
+Web UI for testing cross-chain transactions. Requires L2 with flashblocks and sidecar enabled. Use `--frontend-enabled` to start with L2, or run locally with `make run-frontend`.
+
+**📖 [Read Frontend Documentation](frontend/README.md)** | **📖 [Port Reference](docs/ports.md)**
+
 ## 🔧 Usage
 
 ```bash
@@ -60,6 +65,8 @@ make run-l1              # Start L1 network
 make run-l2              # Start L2 networks
 make run-l2-compile      # Compile L2 contracts from publisher repo
 make run-observability   # Start observability stack
+make run-l2 L2_ARGS="--flashblocks-enabled --blockscout-enabled --sidecar-enabled --frontend-enabled"  # Full stack with Compose Console
+make run-frontend       # Run Compose Console locally (requires L2 + flashblocks + sidecar already running)
 
 # Inspect running services:
 make show-l1             # Show Kurtosis enclave
