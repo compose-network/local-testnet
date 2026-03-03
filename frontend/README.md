@@ -29,10 +29,11 @@ Open http://localhost:5173
 
 ## Configuration
 
-`.env` should match your local-testnet deployment. Contract addresses come from `output.yaml` after L2 deployment. See [docs/ports.md](../docs/ports.md) for the full port reference.
+`.env` should match your local-testnet deployment. Contract addresses come from `output.yaml` after L2 deployment.
+See [docs/ports.md](../docs/ports.md) for the full port reference.
 
-| Service      | Chain A | Chain B |
-|--------------|---------|---------|
-| Builder RPC  | 17545   | 27545   |
-| Sidecar API  | 17090   | 27090   |
-| Blockscout   | 19000   | 29000   |
+| Service     | Chain A | Chain B |
+|-------------|---------|---------|
+| Builder RPC | 17545   | 27545   |
+| Sidecar API | 17090   | 27090   |
+| Blockscout  | 19000   | 29000   |
