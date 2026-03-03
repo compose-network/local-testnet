@@ -59,14 +59,13 @@ function App() {
             />
             <div className="w-px h-4 bg-border-bright" />
             <span className="font-display text-[11px] tracking-[0.3em] uppercase text-text-secondary">
+              Local-Testnet
+            </span>
+            <div className="w-px h-4 bg-border-bright" />
+            <span className="font-display text-[11px] tracking-[0.3em] uppercase text-text-primary">
               Compose Network Console
             </span>
           </div>
-
-          {/* Center: title */}
-          <h1 className="font-display text-sm tracking-[0.15em] uppercase text-text-primary hidden md:block">
-            Cross-Chain Transaction Console
-          </h1>
 
           {/* Right: live status */}
           <div className="flex items-center gap-4">
