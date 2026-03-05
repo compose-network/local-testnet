@@ -44,6 +44,8 @@ Starts L2 services using Docker Compose:
 - **op-rbuilder**: External block builder for flashblocks (`--flashblocks-enabled`)
 - **rollup-boost**: Engine API multiplexer for flashblocks (`--flashblocks-enabled`)
 - **blockscout**: Block explorer UI (`--blockscout-enabled`)
+- **sidecar**: Cross-chain coordination (`--sidecar-enabled`, requires flashblocks)
+- **Compose Network Console**: Web UI for XT testing (`--frontend-enabled`, requires flashblocks and sidecar)
 
 Deploys Compose-specific contracts to L2:
 
@@ -82,6 +84,7 @@ make run-l2
 make run-l2 L2_ARGS="--flashblocks-enabled"              # Enable flashblocks
 make run-l2 L2_ARGS="--blockscout-enabled"               # Enable block explorer
 make run-l2 L2_ARGS="--flashblocks-enabled --blockscout-enabled"  # Both
+make run-l2 L2_ARGS="--flashblocks-enabled --blockscout-enabled --sidecar-enabled --frontend-enabled"  # Full stack
 
 # Or run directly
 ./cmd/localnet/bin/localnet l2
@@ -203,12 +206,13 @@ docker compose -f .localnet/docker-compose.yml logs -f publisher op-geth-a op-ge
 
 ## Service Ports
 
-| Service         | Chain A | Chain B | Description       |
-|-----------------|---------|---------|-------------------|
-| op-geth RPC     | 18545   | 28545   | Execution RPC     |
-| op-rbuilder RPC | 17545   | 27545   | Flashblocks RPC   |
-| sidecar         | 17090   | 27090   | Sidecar API       |
-| Blockscout      | 19000   | 29000   | Block explorer UI |
+| Service         | Chain A | Chain B | Description                 |
+|-----------------|---------|---------|-----------------------------|
+| op-geth RPC     | 18545   | 28545   | Execution RPC               |
+| op-rbuilder RPC | 17545   | 27545   | Flashblocks RPC             |
+| sidecar         | 17090   | 27090   | Sidecar API                 |
+| Blockscout      | 19000   | 29000   | Block explorer UI           |
+| Compose Console | 3000    | —       | Web UI (--frontend-enabled) |
 
 ## Sidecar Mode
 

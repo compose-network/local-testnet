@@ -90,6 +90,16 @@ func (b *EnvBuilder) BuildComposeEnv(cfg configs.L2, gameFactoryAddr common.Addr
 	env["SIDECAR_ROLLUP_A_API_PORT"] = fmt.Sprintf("%d", cfg.Sidecar.RollupAAPIPort)
 	env["SIDECAR_ROLLUP_B_API_PORT"] = fmt.Sprintf("%d", cfg.Sidecar.RollupBAPIPort)
 
+	frontendPath, err := path.GetHostPath(filepath.Join(b.rootDir, "frontend"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve frontend path: %w", err)
+	}
+	env["FRONTEND_PATH"] = frontendPath
+
+	if cfg.Frontend.Enabled && cfg.Frontend.Port > 0 {
+		env["CONSOLE_PORT"] = fmt.Sprintf("%d", cfg.Frontend.Port)
+	}
+
 	if cfg.Sidecar.Enabled {
 		sidecarPath, err := b.ResolveRepoPath(cfg.Repositories[configs.RepositoryNameSidecar], configs.RepositoryNameSidecar)
 		if err != nil {

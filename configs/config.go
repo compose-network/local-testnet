@@ -37,6 +37,12 @@ type (
 		Blockscout            BlockscoutConfig              `mapstructure:"blockscout"`
 		Flashblocks           FlashblocksConfig             `mapstructure:"flashblocks"`
 		Sidecar               SidecarConfig                 `mapstructure:"sidecar"`
+		Frontend              FrontendConfig                `mapstructure:"frontend"`
+	}
+
+	FrontendConfig struct {
+		Enabled bool `mapstructure:"enabled"`
+		Port    int  `mapstructure:"port"`
 	}
 
 	BlockscoutConfig struct {

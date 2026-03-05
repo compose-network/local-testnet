@@ -104,6 +104,18 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryA
 		serviceManager.WithSidecar(sidecarComposePath)
 	}
 
+	if cfg.Frontend.Enabled {
+		if !cfg.Flashblocks.Enabled || !cfg.Sidecar.Enabled {
+			return nil, fmt.Errorf("frontend requires flashblocks and sidecar to be enabled")
+		}
+		o.logger.Info("frontend enabled, configuring Compose Network Console")
+		frontendComposePath, err := docker.EnsureFrontendComposeFile(o.localnetDir)
+		if err != nil {
+			return nil, fmt.Errorf("failed to prepare frontend compose file: %w", err)
+		}
+		serviceManager.WithFrontend(frontendComposePath)
+	}
+
 	if err := o.waitForNetworkFiles(); err != nil {
 		return nil, fmt.Errorf("required network files not ready: %w", err)
 	}
@@ -136,6 +148,25 @@ func (o *Orchestrator) Execute(ctx context.Context, cfg configs.L2, gameFactoryA
 		o.logger.Info("restarting sidecar services to apply mailbox configuration")
 		if err := o.restartSidecar(ctx, composePath, flashblocksComposePath, sidecarComposePath, envVars); err != nil {
 			return nil, fmt.Errorf("failed to restart sidecar services after contract deployment: %w", err)
+		}
+	}
+
+	if cfg.Frontend.Enabled {
+		o.logger.Info("building and starting Compose Network Console")
+		chainContracts := deployedContracts[configs.L2ChainNameRollupA]
+		envVars["CONTRACT_BRIDGE_ADDRESS"] = chainContracts[contracts.ContractNameBridge].Hex()
+		envVars["CONTRACT_TOKEN_ADDRESS"] = chainContracts[contracts.ContractNameBridgeableToken].Hex()
+
+		composeFiles := []string{composePath}
+		if flashblocksComposePath != "" {
+			composeFiles = append(composeFiles, flashblocksComposePath)
+		}
+		if sidecarComposePath != "" {
+			composeFiles = append(composeFiles, sidecarComposePath)
+		}
+
+		if err := serviceManager.StartFrontend(ctx, composeFiles, envVars); err != nil {
+			return nil, fmt.Errorf("failed to start Compose Network Console: %w", err)
 		}
 	}
 
